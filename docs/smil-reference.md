@@ -21,7 +21,7 @@
 
 ```
 attributeName  — which attribute to animate (animate/set only)
-from / to      — start and end values
+from / to      — start and end values (omitting from = start from current animated value)
 by             — relative change from current value
 values         — semicolon-separated keyframe values ("0; 0.5; 1")
 keyTimes       — keyframe positions 0→1 ("0; 0.5; 1"), must match values count
@@ -30,13 +30,36 @@ calcMode       — discrete | linear | paced | spline
 dur            — duration ("1s", "500ms", "indefinite")
 repeatCount    — integer or "indefinite"
 repeatDur      — total duration of all repeats combined
+min            — floor of active duration ("0.5s" — animation runs at least 0.5s regardless of repeats/events)
+max            — ceiling of active duration ("3s" — animation stops after 3s regardless of repeatCount)
 fill           — freeze (stay at end value) | remove (reset to initial)
 begin          — when animation starts (see below)
-end            — when animation ends
+end            — when animation ends (accepts same values as begin)
 additive       — replace | sum (adds on top of element's current value)
-accumulate     — none | sum (accumulates value across each repeat)
+accumulate     — none | sum (accumulates value across repeats — see below)
 restart        — always | whenNotActive | never
 ```
+
+### `from` omission
+
+Omitting `from` makes the animation start from the element's **current animated value**, not its base/static value. Critical for chaining tweens that should pick up where the previous one left off:
+
+```xml
+<!-- anim2 picks up wherever anim1 left the element -->
+<animate id="anim1" attributeName="opacity" to="0.5" dur="1s" />
+<animate id="anim2" attributeName="opacity" to="1"   dur="1s" begin="anim1.end" />
+```
+
+### `accumulate="sum"`
+
+On each repeat, the animated value stacks on top of the previous repeat's end value:
+
+```xml
+<!-- repeat 1: 0→100, repeat 2: 100→200, repeat 3: 200→300 -->
+<animate attributeName="cx" from="0" to="100" repeatCount="3" accumulate="sum" />
+```
+
+Without `accumulate="sum"` (default `none`), each repeat resets to `from`.
 
 ---
 
@@ -75,6 +98,34 @@ begin="anim1.end+0.2s"    — 200ms after anim1 ends
 ```
 
 The offset is scoped to that single trigger and doesn't affect the others in the list.
+
+### Negative offsets
+
+Works exactly like negative delays in CSS animations — the animation starts already mid-progress:
+
+```
+begin="-1s"   — rendered 1s into the animation on page load (appears mid-animation)
+begin="-0.5s" — starts half a second in
+```
+
+Useful for loaders that should look like they're already running when the page appears, rather than starting from zero.
+
+### `dur="indefinite"` + event-based `end`
+
+Hold animated state between two events — no JS toggle needed:
+
+```xml
+<animate
+  attributeName="opacity"
+  from="1" to="0.5"
+  dur="indefinite"
+  begin="mouseover"
+  end="mouseout"
+  fill="freeze"
+/>
+```
+
+The animation plays on `mouseover` and holds at `to` until `mouseout` fires, then removes. Equivalent to a CSS hover state but entirely in SMIL.
 
 ### Valid event names for `begin` / `end`
 
@@ -145,6 +196,25 @@ Non-interpolated jump — useful for visibility toggles, string/boolean attribut
 <set attributeName="display" to="none" begin="anim1.end" />
 <set attributeName="visibility" to="visible" begin="2s" />
 ```
+
+---
+
+## `href` — Targeting Elements Externally
+
+By default an animation element targets its parent. The `href` attribute lets you target **any element in the document** — so you can stash all animations in `<defs>` and keep markup clean:
+
+```xml
+<defs>
+  <animate href="#spinner" attributeName="opacity" from="1" to="0" dur="1s" repeatCount="indefinite" />
+  <animateTransform href="#spinner" type="rotate" from="0 50 50" to="360 50 50" dur="2s" repeatCount="indefinite" />
+</defs>
+
+<circle id="spinner" cx="50" cy="50" r="20" />
+```
+
+All animation logic lives in `<defs>`, the SVG markup stays readable.
+
+> `xlink:href` is the old form — deprecated in SVG 2. Use `href`.
 
 ---
 
