@@ -1,36 +1,12 @@
 {
   "name": "bun-skeleton",
   "version": "1.0.0",
-  "description": "description",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
-  "typesVersion": {
-    "*": {
-      "*": [
-        "types"
-      ]
-    }
-  },
-  "scripts": {
-    "ts": "bun build ./src/index.ts --outdir lib",
-    "publish": "bun publish --access=public",
-    "update-version": "bun update-project-version.ts && git add . && git commit -m \"Update on the project version\" && git push",
-    "push-lib": "(git diff --quiet || (echo 'You have uncommitted changes. Please commit your changes first.' && exit 1)) && bun run update-version && bun run publish"
-  },
+  "author": "Younes LAHOUITI",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/LePhenix47/[URI COMPONENT].git"
   },
-  "homepage": "https://github.com/LePhenix47/[URI COMPONENT]#readme",
-  "bugs": {
-    "url": "https://github.com/LePhenix47/[URI COMPONENT]/issues"
-  },
-  "files": [
-    "lib/**/*"
-  ],
-  "keywords": [],
-  "author": "Younes LAHOUITI",
-  "license": "ISC",
+  "main": "lib/index.js",
   "devDependencies": {
     "@types/bun": "latest",
     "bun-plugin-dts-auto": "^0.10.0",
@@ -38,5 +14,29 @@
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/LePhenix47/[URI COMPONENT]/issues"
+  },
+  "description": "description",
+  "files": [
+    "lib/**/*"
+  ],
+  "homepage": "https://github.com/LePhenix47/[URI COMPONENT]#readme",
+  "keywords": [],
+  "license": "ISC",
+  "scripts": {
+    "ts": "bun build ./src/index.ts --outdir lib",
+    "publish": "bun publish --access=public",
+    "update-version": "bun update-project-version.ts && git add . && git commit -m \"Update on the project version\" && git push",
+    "push-lib": "(git diff --quiet || (echo 'You have uncommitted changes. Please commit your changes first.' && exit 1)) && bun run update-version && bun run publish"
+  },
+  "types": "lib/index.d.ts",
+  "typesVersion": {
+    "*": {
+      "*": [
+        "types"
+      ]
+    }
   }
 }
