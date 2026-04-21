@@ -269,6 +269,83 @@ On Safari under main thread load (e.g. heavy asset loading), a SMIL transform an
 
 ---
 
+## Gotchas
+
+### Easing
+
+**`keySplines` is silently ignored without `calcMode="spline"`.**
+You can define perfect bezier curves and nothing will happen if you forget `calcMode`.
+
+**`keySplines` requires `keyTimes` — even if you're not changing the defaults.**
+Can't use one without the other.
+
+**`keySplines` count must be exactly `values count - 1`.**
+2 keyframes → 1 spline. 3 keyframes → 2 splines. Wrong count = animation silently does nothing. No error thrown.
+
+**Trailing semicolon in `keySplines` breaks Chrome.**
+`"0.4 0 0.2 1;"` with a trailing `;` — Chrome silently drops the animation. Firefox is fine. Always strip trailing semicolons.
+
+---
+
+### Transforms
+
+**`animateTransform` rotate `cx cy` is in the parent's coordinate space, not the element's.**
+`from="0 50 50"` rotates around the point (50, 50) in the *parent* coordinate system — not the element's own center. If the element or its parent moves, the rotation center moves with it. CSS `transform-origin` has zero effect on SMIL.
+
+**Multiple `<animateTransform>` without `additive="sum"` — last one wins.**
+Without `additive="sum"`, each `<animateTransform>` replaces the previous one. If you have rotate + translate and forget `additive`, only the last element in document order runs.
+
+**`additive="sum"` stacking order matters.**
+Transforms are not commutative. Rotate-then-translate ≠ translate-then-rotate. Order is determined by document order of the `<animateTransform>` elements.
+
+**SMIL animates the `transform` *presentation attribute*, not the CSS `transform` *property*.**
+If the element also has `style="transform: ..."`, they fight each other. CSS wins on specificity in most browsers. Don't mix them.
+
+**Firefox is case-sensitive for `attributeName`.**
+`attributeName="Transform"` silently fails in Firefox. Always lowercase: `attributeName="transform"`.
+
+---
+
+### Timing & Chaining
+
+**`begin="otherAnim.end"` never fires if `otherAnim` has `dur="indefinite"` and no `end` trigger.**
+Chaining off an animation that has no defined end = the chain never starts.
+
+**`fill="freeze"` + `restart="always"` = re-triggering overwrites the frozen state.**
+If an animation with `fill="freeze"` is retriggered (e.g. rapid hover), the frozen value gets replaced mid-freeze. Use `restart="whenNotActive"` if you want the freeze to hold.
+
+**Rapid event triggers with `restart="always"` create overlapping instances.**
+Each `begin` event spawns a new animation instance. Fast `mouseover`/`mouseout` can stack multiple instances animating simultaneously. Default `restart="always"` — change to `restart="whenNotActive"` for hover-like patterns.
+
+**`accumulate="sum"` is ignored when using `values`.**
+It only works with `from`/`to`/`by`. Specifying `values` disables accumulation entirely.
+
+---
+
+### `<animateMotion>`
+
+**`calcMode` defaults to `"paced"` — `keyTimes` is ignored unless you override it.**
+Unlike every other animation element, `animateMotion` ignores `keyTimes` unless you explicitly set `calcMode="linear"` or `"spline"`. Easy to write `keyTimes` + `keySplines` and wonder why easing does nothing.
+
+**`keyPoints` count must exactly match `keyTimes` count.**
+Mismatch = undefined behavior, varies by browser.
+
+---
+
+### Colors
+
+**`from` and `to` must use the same color format.**
+Mixing `from="#ff0000"` with `to="rgb(0,0,255)"` produces inconsistent interpolation across browsers. Stick to one format (hex or `rgb()`) per animation.
+
+---
+
+### Embedding context
+
+**SVGs embedded via `<img>` block all event-based SMIL triggers.**
+`click`, `mouseover`, `mouseout` etc. in `begin` silently never fire when the SVG is loaded via `<img>`. Time-based and autoplay animations still work. Use inline SVG or `<object>`/`<iframe>` for interactive SMIL.
+
+---
+
 ## What SMIL Cannot Do
 
 | Missing feature | Notes |
