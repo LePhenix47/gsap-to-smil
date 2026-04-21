@@ -1,39 +1,9 @@
 import type { BunFile } from "bun";
 import readline from "readline";
 
-type PackageJson = {
-  name: string;
-  version: string;
-  description: string;
-  main: string;
-  types: string;
-  typesVersion: {
-    "*": {
-      "*": string[];
-    };
-  };
-  scripts: {
-    [key: string]: string;
-  };
-  repository: {
-    type: string;
-    url: string;
-  };
-  homepage: string;
-  bugs: {
-    url: string;
-  };
-  files: string[];
-  keywords: string[];
-  author: string;
-  license: string;
-  devDependencies: {
-    [key: string]: string;
-  };
-  peerDependencies: {
-    [key: string]: string;
-  };
-};
+import rawJson from "./package.json";
+
+type PackageJson = typeof rawJson;
 
 /**
  * Updates the project version in the package.json file based on the provided type.
@@ -83,7 +53,7 @@ async function updateVersion(type: string) {
     }
     default: {
       throw new Error(
-        '❎ Invalid version type. Use "patch", "minor", or "major".'
+        '❎ Invalid version type. Use "patch", "minor", or "major".',
       );
     }
   }
@@ -96,7 +66,7 @@ async function updateVersion(type: string) {
   const newVersion: string = packageJson.version;
 
   console.log(
-    `✅ Successfully updated version: ${currentVersion} → ${newVersion}`
+    `✅ Successfully updated version: ${currentVersion} → ${newVersion}`,
   );
 }
 
@@ -121,7 +91,7 @@ function startScript() {
       } finally {
         process.exit(1);
       }
-    }
+    },
   );
 }
 startScript();
