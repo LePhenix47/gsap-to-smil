@@ -319,12 +319,14 @@ gsap.context(fn, scope?)               // scoped context — collect and kill tw
 
 ## Properties GSAP Can Animate
 
-### CSS / DOM
+### Transform shorthands (top-level) — map to CSS `transform`
+
+These are GSAP's own shorthand keys. They do **not** animate SVG attributes — they animate the CSS `transform` property via a matrix:
 
 ```
-x, y, z                    — translate (maps to transform: translateX/Y/Z)
-xPercent, yPercent         — translate as % of element size
-rotation, rotationX, rotationY  — degrees (maps to transform: rotate/rotateX/rotateY)
+x, y, z                         — translateX/Y/Z (px by default)
+xPercent, yPercent              — translate as % of element's own size
+rotation, rotationX, rotationY  — degrees
 scale, scaleX, scaleY      — scale
 skewX, skewY               — skew
 transformOrigin            — "50% 50%" etc.
@@ -334,19 +336,48 @@ backgroundColor, color, borderColor, fill, stroke (etc.)
 any CSS property           — camelCase or quoted kebab-case
 ```
 
-### SVG presentation attributes
+### `attr: {}` — animate SVG presentation attributes directly
+
+To animate the actual SVG attribute (not a CSS transform), wrap it in `attr: {}`:
+
+```js
+// WRONG for SVG — animates CSS transform translateX, NOT the x attribute
+gsap.to("rect", { x: 100 })
+
+// CORRECT — animates the SVG x presentation attribute
+gsap.to("rect", { attr: { x: 100 } })
+```
+
+Everything inside `attr: {}` maps 1:1 to an SVG attribute name:
 
 ```
-fill, stroke
-strokeWidth, strokeDashoffset, strokeDasharray
-opacity, fillOpacity, strokeOpacity
-r, cx, cy                  — circle/ellipse
-x, y, width, height        — rect/image
-x1, y1, x2, y2            — line
-points                     — polygon/polyline
-d                          — path data (via MorphSVG)
-viewBox
+attr: { x, y }                        — rect, image, svg position
+attr: { cx, cy, r }                   — circle
+attr: { cx, cy, rx, ry }              — ellipse
+attr: { x1, y1, x2, y2 }             — line
+attr: { points }                      — polygon, polyline
+attr: { width, height }               — rect, image
+attr: { viewBox }                     — svg
+attr: { d }                           — path data (without MorphSVG — requires identical structure)
+attr: { fill, stroke }                — presentation attribute (vs CSS property)
+attr: { opacity, fillOpacity, strokeOpacity }
+attr: { strokeWidth, strokeDashoffset, strokeDasharray }
+attr: { stdDeviation }                — filter primitives (feGaussianBlur etc.)
+attr: { offset }                      — gradient stop
 ```
+
+> **This is the key distinction for SMIL mapping.** SMIL only animates SVG presentation attributes — so `attr: {}` values map cleanly to `<animate attributeName="...">`, while top-level transform shorthands map to `<animateTransform>`.
+
+### CSS properties (top-level, camelCase)
+
+```text
+opacity
+fill, stroke, backgroundColor, color, borderColor…  — as CSS (not SVG attr)
+width, height, margin, padding…                      — DOM layout
+any CSS property in camelCase or quoted kebab-case
+```
+
+Note: `fill` and `stroke` can be animated both top-level (as CSS) and via `attr: {}` (as SVG attribute). They produce the same visual result but differ in specificity — `attr: {}` is overridden by CSS, top-level is applied as a style.
 
 ### Any JS object property
 
