@@ -56,6 +56,43 @@ SMIL timelines without a single line of JS:
 "0; click"            — multiple triggers (semicolon-separated list)
 ```
 
+### Multiple triggers — fully composable
+
+`begin` is a **semicolon-separated list of independent triggers**. The animation fires whenever *any* of them is met. All types can be freely mixed:
+
+```
+begin="2s; click+0.5s; anim1.end"
+```
+
+↑ fires after 2s, OR 0.5s after a click, OR when anim1 ends — whichever comes first (then again each time any fires, controlled by `restart`).
+
+You can attach an offset to any event trigger individually:
+
+```
+begin="click+0.5s"        — 0.5s after click
+begin="mouseover+1s"      — 1s after hover
+begin="anim1.end+0.2s"    — 200ms after anim1 ends
+```
+
+The offset is scoped to that single trigger and doesn't affect the others in the list.
+
+### Valid event names for `begin` / `end`
+
+SMIL was specced against the old **DOM Mouse Events module** — predates Pointer Events entirely. The valid event names defined in the spec are:
+
+```
+click, dblclick
+mousedown, mouseup, mouseover, mousemove, mouseout
+focusin, focusout
+SVGLoad, SVGUnload, SVGAbort, SVGError, SVGResize, SVGScroll, SVGZoom
+```
+
+**`pointerenter`, `pointerleave`, `mouseenter`, `mouseleave` are NOT in the spec.**
+
+Chrome/Brave is permissive and accepts any DOM event name. Firefox is strict — unknown events silently do nothing.
+
+> **Cross-browser rule:** use `mouseover` / `mouseout` instead of `pointerenter` / `pointerleave`. The bubbling behavior of `mouseover`/`mouseout` is actually useful here — hover events from child elements bubble up to the SVG root, which is usually what you want.
+
 ---
 
 ## `<animateTransform>` Specifics
