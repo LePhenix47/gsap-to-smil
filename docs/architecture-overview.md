@@ -54,3 +54,25 @@ smil.to("#spinner", { rotation: 360, duration: 1 })
 5. Inject into #spinner
 6. Return SMILTween (has play/kill/revert etc.)
 ```
+
+
+```
+src/
+  index.ts                  — smil facade + public exports
+  core/
+    Animation.ts            — base class
+    SMILTween.ts
+    SMILTimeline.ts
+  utils/
+    property-router.ts
+    transform-composer.ts
+    easing.ts
+    stagger-resolver.ts
+    builders.ts             — buildAnimate, buildAnimateTransform, buildAnimateMotion
+  plugins/
+    SMILPlugin.ts           — base class
+    DrawSMILPlugin.ts
+    MotionSMILPlugin.ts
+    MorphSMILPlugin.ts
+  types.ts                  — TweenVars, TimelineVars, StaggerObject, EaseString…
+```
