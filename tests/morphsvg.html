@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test — MorphSVG Plugin</title>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "gsap": "https://cdn.jsdelivr.net/npm/gsap@3/+esm",
+          "gsap/MorphSVGPlugin": "https://cdn.jsdelivr.net/npm/gsap@3/dist/MorphSVGPlugin.min.js"
+        }
+      }
+    </script>
+
+    <script type="module" src="../src/index.ts"></script>
+    <script type="module">
+      import gsap from "gsap";
+      import { MorphSVGPlugin } from "gsap/MorphSVGPlugin";
+
+      gsap.registerPlugin(MorphSVGPlugin);
+
+      // --- Animations ---
+    </script>
+
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 2rem;
+        font-family: monospace;
+        background: #111;
+        color: #eee;
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .canvases {
+        position: relative;
+        display: flex;
+        gap: 2rem;
+      }
+
+      .canvas-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .canvas-wrap label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        opacity: 0.6;
+      }
+
+      svg {
+        border: 1px solid #333;
+        background: #1a1a1a;
+      }
+
+      #diff-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        mix-blend-mode: difference;
+        display: none;
+      }
+
+      #diff-overlay.active {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="controls">
+      <label>
+        <input type="checkbox" id="diff-toggle" />
+        Diff mode
+      </label>
+    </div>
+
+    <div class="canvases">
+      <div class="canvas-wrap">
+        <label>GSAP</label>
+        <svg id="svg-gsap" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+        </svg>
+      </div>
+
+      <div class="canvas-wrap">
+        <label>smil lib</label>
+        <svg id="svg-smil" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+          <svg id="diff-overlay" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+          </svg>
+        </svg>
+      </div>
+    </div>
+
+    <script>
+      document.getElementById("diff-toggle").addEventListener("change", (e) => {
+        document.getElementById("diff-overlay").classList.toggle("active", e.target.checked);
+      });
+    </script>
+  </body>
+</html>
