@@ -5,6 +5,16 @@
 - [@lephenix47/](#lephenix47)
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
+- [gsap-to-smil](#gsap-to-smil)
+  - [Origin story](#origin-story)
+  - [What it does](#what-it-does)
+  - [Why SMIL over CSS for this](#why-smil-over-css-for-this)
+  - [Scope](#scope)
+    - [Supported (phase 1 — SMIL)](#supported-phase-1--smil)
+    - [Intentionally out of scope](#intentionally-out-of-scope)
+    - [Phase 2 — CSS output](#phase-2--css-output)
+  - [API sketch](#api-sketch)
+  - [Roadmap](#roadmap)
   - [Usage](#usage)
     - [Importing the Library](#importing-the-library)
   - [Conclusion](#conclusion)
@@ -19,7 +29,7 @@
 
 ## Origin story
 
-While following [Three.js Journey](https://threejs.org/), the loading screen SVG animation was visibly lagging and freezing every time assets were loading (GLTF models, HDR env maps, textures).
+While following [Three.js Journey](https://threejs-journey.com/), the loading screen SVG animation was visibly lagging and freezing every time assets were loading (GLTF models, HDR env maps, textures).
 
 The root cause: GSAP runs on `requestAnimationFrame`, which lives on the main thread. When the main thread is saturated by heavy asset loading and GPU texture uploads, rAF callbacks get starved — the animation stutters or freezes entirely.
 
@@ -66,17 +76,17 @@ gsap.to("#spinner", { rotation: 360, duration: 1, repeat: -1, ease: "linear" });
 
 ### Supported (phase 1 — SMIL)
 
-| GSAP | SMIL equivalent |
-|------|----------------|
-| `x`, `y` | `<animateTransform type="translate">` |
-| `rotation` | `<animateTransform type="rotate">` |
-| `scale`, `scaleX`, `scaleY` | `<animateTransform type="scale">` |
-| `opacity` | `<animate attributeName="opacity">` |
-| `strokeDashoffset` | `<animate attributeName="stroke-dashoffset">` |
-| `fill`, `stroke` (color) | `<animate attributeName="fill/stroke">` |
-| `repeat: -1` | `repeatCount="indefinite"` |
-| `yoyo: true` | `autoreverse="true"` |
-| `stagger` | repeated elements with `begin` offsets |
+| GSAP                                                      | SMIL equivalent                                 |
+| --------------------------------------------------------- | ----------------------------------------------- |
+| `x`, `y`                                                  | `<animateTransform type="translate">`           |
+| `rotation`                                                | `<animateTransform type="rotate">`              |
+| `scale`, `scaleX`, `scaleY`                               | `<animateTransform type="scale">`               |
+| `opacity`                                                 | `<animate attributeName="opacity">`             |
+| `strokeDashoffset`                                        | `<animate attributeName="stroke-dashoffset">`   |
+| `fill`, `stroke` (color)                                  | `<animate attributeName="fill/stroke">`         |
+| `repeat: -1`                                              | `repeatCount="indefinite"`                      |
+| `yoyo: true`                                              | `autoreverse="true"`                            |
+| `stagger`                                                 | repeated elements with `begin` offsets          |
 | Common eases (`power1-3`, `sine`, `circ`, `expo`, `back`) | `calcMode="spline"` with pre-baked `keySplines` |
 
 ### Intentionally out of scope
