@@ -1,110 +1,283 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Test — No Plugins</title>
 
-    <script type="importmap">
-      {
-        "imports": {
-          "gsap": "https://cdn.jsdelivr.net/npm/gsap@3/+esm"
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test — No Plugins</title>
+
+  <script type="importmap">
+      { "imports": { "gsap": "https://cdn.jsdelivr.net/npm/gsap@3/+esm" } }
+    </script>
+
+  <script type="module">
+    console.log("No plugins");
+    import gsap from "gsap";
+    import { smil } from "../lib/index.js";
+
+    // 1. to() — translate
+    gsap.to("#g-translate", { x: 210, duration: 1.2, repeat: -1, ease: "power1.inOut" });
+    smil.to("#s-translate", { x: 210, duration: 1.2, repeat: -1, ease: "power1.inOut" });
+
+    // 2. to() — opacity
+    gsap.to("#g-opacity", { opacity: 0.1, duration: 1, repeat: -1, ease: "sine.inOut" });
+    smil.to("#s-opacity", { opacity: 0.1, duration: 1, repeat: -1, ease: "sine.inOut" });
+
+    // 3. to() — rotation (continuous 360, no easing)
+    gsap.to("#g-rotation", { rotation: 360, duration: 2, repeat: -1, ease: "none" });
+    smil.to("#s-rotation", { rotation: 360, duration: 2, repeat: -1, ease: "none" });
+
+    // 4. from() — dot slides in from x=-110 to its natural center position
+    gsap.from("#g-from", { x: -110, duration: 1, repeat: -1, ease: "power2.out" });
+    smil.from("#s-from", { x: -110, duration: 1, repeat: -1, ease: "power2.out" });
+
+    // 5. fromTo() — dot travels between two explicit x positions
+    gsap.fromTo("#g-fromto", { x: -100 }, { x: 100, duration: 1, repeat: -1, ease: "power1.inOut" });
+    smil.fromTo("#s-fromto", { x: -100 }, { x: 100, duration: 1, repeat: -1, ease: "power1.inOut" });
+
+    // 6. stagger — dots pop up one by one
+    gsap.to(".g-stagger", { y: -40, duration: 0.5, repeat: -1, stagger: 0.12, ease: "power1.out" });
+    smil.to(".s-stagger", { y: -40, duration: 0.5, repeat: -1, stagger: 0.12, ease: "power1.out" });
+
+    // Diff mode — repositions each .svg-smil absolutely over its .svg-gsap sibling
+    document.getElementById("diff-toggle").addEventListener("change", (e) => {
+      document.querySelectorAll(".pair").forEach((pair) => {
+        const gsapSvg = pair.querySelector(".svg-gsap");
+        const smilSvg = pair.querySelector(".svg-smil");
+
+        if (e.target.checked) {
+          const gsapRect = gsapSvg.getBoundingClientRect();
+          const pairRect = pair.getBoundingClientRect();
+          smilSvg.style.top = `${gsapRect.top - pairRect.top}px`;
+          smilSvg.classList.add("diff");
+        } else {
+          smilSvg.classList.remove("diff");
+          smilSvg.style.top = "";
         }
-      }
-    </script>
-
-    <script type="module" src="../src/index.ts"></script>
-    <script type="module">
-      import gsap from "gsap";
-
-      // --- Animations ---
-      // Write the same animation twice, swapping gsap ↔ smil
-    </script>
-
-    <style>
-      body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-        padding: 2rem;
-        font-family: monospace;
-        background: #111;
-        color: #eee;
-      }
-
-      .controls {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-      }
-
-      .canvases {
-        position: relative;
-        display: flex;
-        gap: 2rem;
-      }
-
-      .canvas-wrap {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      .canvas-wrap label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        opacity: 0.6;
-      }
-
-      svg {
-        border: 1px solid #333;
-        background: #1a1a1a;
-      }
-
-      #diff-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        mix-blend-mode: difference;
-        display: none;
-      }
-
-      #diff-overlay.active {
-        display: block;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="controls">
-      <label>
-        <input type="checkbox" id="diff-toggle" />
-        Diff mode
-      </label>
-    </div>
-
-    <div class="canvases">
-      <div class="canvas-wrap">
-        <label>GSAP</label>
-        <svg id="svg-gsap" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
-        </svg>
-      </div>
-
-      <div class="canvas-wrap">
-        <label>smil lib</label>
-        <svg id="svg-smil" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
-          <svg id="diff-overlay" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
-          </svg>
-        </svg>
-      </div>
-    </div>
-
-    <script>
-      document.getElementById("diff-toggle").addEventListener("change", (e) => {
-        document.getElementById("diff-overlay").classList.toggle("active", e.target.checked);
       });
-    </script>
-  </body>
+    });
+  </script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+      padding: 2rem;
+      font-family: monospace;
+      background: #111;
+      color: #eee;
+      margin: 0;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    h1 {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.45;
+      margin: 0;
+    }
+
+    /* Relative so the SMIL SVG can be positioned absolutely over the GSAP one in diff mode */
+    .pair {
+      position: relative;
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+    }
+
+    figure {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    figcaption {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.4;
+    }
+
+    svg {
+      display: block;
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+    }
+
+    /* Diff mode — toggled by JS */
+    .svg-smil.diff {
+      position: absolute;
+      top: 0;
+      /* JS sets correct top */
+      left: 0;
+      mix-blend-mode: difference;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>no-plugins tests</h1>
+    <label>
+      <input type="checkbox" id="diff-toggle" />
+      Diff mode
+    </label>
+  </header>
+
+  <!-- 1. to() — translate -->
+  <section>
+    <h3>to() — translate (x)</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
+          <circle id="g-translate" cx="30" cy="40" r="18" fill="#4f9cf9" />
+        </svg>
+      </figure>
+      <figure>
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
+          <circle id="s-translate" cx="30" cy="40" r="18" fill="#4f9cf9" />
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 2. to() — opacity -->
+  <section>
+    <h3>to() — opacity</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+          <circle id="g-opacity" cx="60" cy="60" r="40" fill="#f97316" />
+        </svg>
+      </figure>
+      <figure>
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+          <circle id="s-opacity" cx="60" cy="60" r="40" fill="#f97316" />
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 3. to() — rotation -->
+  <section>
+    <h3>to() — rotation (360°, linear)</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+          <rect id="g-rotation" x="30" y="30" width="60" height="60" fill="#a78bfa" />
+        </svg>
+      </figure>
+      <figure>
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+          <rect id="s-rotation" x="30" y="30" width="60" height="60" fill="#a78bfa" />
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 4. from() -->
+  <section>
+    <h3>from() — translate x</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
+          <circle id="g-from" cx="140" cy="40" r="18" fill="#fb923c" />
+        </svg>
+      </figure>
+      <figure>
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
+          <circle id="s-from" cx="140" cy="40" r="18" fill="#fb923c" />
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 5. fromTo() -->
+  <section>
+    <h3>fromTo() — translate x</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
+          <circle id="g-fromto" cx="140" cy="40" r="18" fill="#f43f5e" />
+        </svg>
+      </figure>
+      <figure>
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
+          <circle id="s-fromto" cx="140" cy="40" r="18" fill="#f43f5e" />
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 6. Stagger -->
+  <section>
+    <h3>stagger — translate y</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap" width="280" height="100" xmlns="http://www.w3.org/2000/svg">
+          <circle class="g-stagger" cx="30" cy="70" r="14" fill="#38bdf8" />
+          <circle class="g-stagger" cx="90" cy="70" r="14" fill="#38bdf8" />
+          <circle class="g-stagger" cx="150" cy="70" r="14" fill="#38bdf8" />
+          <circle class="g-stagger" cx="210" cy="70" r="14" fill="#38bdf8" />
+          <circle class="g-stagger" cx="250" cy="70" r="14" fill="#38bdf8" />
+        </svg>
+      </figure>
+      <figure>
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil" width="280" height="100" xmlns="http://www.w3.org/2000/svg">
+          <circle class="s-stagger" cx="30" cy="70" r="14" fill="#38bdf8" />
+          <circle class="s-stagger" cx="90" cy="70" r="14" fill="#38bdf8" />
+          <circle class="s-stagger" cx="150" cy="70" r="14" fill="#38bdf8" />
+          <circle class="s-stagger" cx="210" cy="70" r="14" fill="#38bdf8" />
+          <circle class="s-stagger" cx="250" cy="70" r="14" fill="#38bdf8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+</body>
+
 </html>
