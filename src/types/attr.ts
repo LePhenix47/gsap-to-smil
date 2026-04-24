@@ -1,3 +1,11 @@
+/**
+ * SVG presentation attributes you can animate directly via the `attr: {}` bucket in `TweenVars`.
+ *
+ * Maps 1:1 to SMIL `<animate attributeName="...">`.
+ * Use this instead of top-level keys when you want to animate the actual SVG attribute
+ * rather than a CSS transform — e.g. `attr: { cx: 50 }` moves a circle's center point,
+ * while top-level `x: 50` would produce a `<animateTransform type="translate">`.
+ */
 export type AttrVars = {
   x?: number | string;
   y?: number | string;

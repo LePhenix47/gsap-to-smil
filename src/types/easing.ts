@@ -8,6 +8,13 @@ type BackFamily = `back.${EaseDirection}`;
 type ElasticFamily = `elastic.${EaseDirection}`;
 type BounceFamily = `bounce.${EaseDirection}`;
 
+/**
+ * Named GSAP ease string, CSS shorthand, or any custom/parametrized ease like `"back.out(1.7)"`.
+ *
+ * Named eases map to a cubic-bezier in `utils/easing.ts`.
+ * `"elastic"` and `"bounce"` fall back to keyframe approximation (not a single bezier).
+ * `"none"` / `"linear"` skip keySplines entirely and use `calcMode="linear"`.
+ */
 export type EaseString =
   | "none"
   | "linear"
