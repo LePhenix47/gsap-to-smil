@@ -1,5 +1,5 @@
 {
-  "name": "bun-skeleton",
+  "name": "gsap-to-smil",
   "version": "1.0.0",
   "author": "Younes LAHOUITI",
   "repository": {
@@ -18,7 +18,7 @@
   "bugs": {
     "url": "https://github.com/LePhenix47/[URI COMPONENT]/issues"
   },
-  "description": "description",
+  "description": "Library to convert GSAP animations into SMIL so they run off the main thread — no JS required at runtime.",
   "files": [
     "lib/**/*"
   ],
