@@ -4,27 +4,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Test — MotionPath Plugin</title>
+  <title>Test — MorphSVG Plugin</title>
 
   <!-- * Importmap -->
   <script type="importmap">
       {
         "imports": {
           "gsap": "https://cdn.jsdelivr.net/npm/gsap@3/+esm",
-          "gsap/MotionPathPlugin": "https://cdn.jsdelivr.net/npm/gsap@3/dist/MotionPathPlugin.min.js"
+          "gsap/MorphSVGPlugin": "https://cdn.jsdelivr.net/npm/gsap@3/dist/MorphSVGPlugin.min.js"
         }
      }
     </script>
 
   <!-- * GSAP/SMIL script, Claude DO NOT RELOCATE THE SCRIPT TO THE BOTTOM OF THE <body> you smelly bastard -->
   <script type="module">
-    console.log("Motion path");
+    console.log("Morph svg");
     import gsap from "gsap";
-    import { MotionPathPlugin } from "gsap/MotionPathPlugin";
-    gsap.registerPlugin(MotionPathPlugin);
+    import { MorphSVGPlugin } from "gsap/MorphSVGPlugin";
+    gsap.registerPlugin(MorphSVGPlugin);
 
-    import { smil } from "../lib/index.js";
-
+    import { smil } from "../../lib/index.js";
   </script>
 
   <!-- * Claude DO NOT RELOCATE THE STYLES NOR UPDATE THEM -->
@@ -152,7 +151,7 @@
 
 <body>
   <header>
-    <h1>motion-path tests</h1>
+    <h1>morph-svg tests</h1>
     <label>
       <input type="checkbox" id="diff-toggle" />
       Diff mode
