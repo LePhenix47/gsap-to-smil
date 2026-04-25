@@ -30,8 +30,6 @@ describe("builders", () => {
   });
 
   describe("buildAnimateTransform", () => {
-    // ? one describe per function in the file
-    // * Test paths, HAPPY PATHs and EDGE CASEs, (order is important, fist HP then EC)
     it.todo("HAPPY PATH: should do stuff", () => {
       expect(1).toBe(1);
     });
@@ -48,8 +46,6 @@ describe("builders", () => {
   });
 
   describe("buildSet", () => {
-    // ? one describe per function in the file
-    // * Test paths, HAPPY PATHs and EDGE CASEs, (order is important, fist HP then EC)
     it.todo("HAPPY PATH: should do stuff", () => {
       expect(1).toBe(1);
     });
@@ -65,8 +61,6 @@ describe("builders", () => {
     });
   });
   describe("injectInto", () => {
-    // ? one describe per function in the file
-    // * Test paths, HAPPY PATHs and EDGE CASEs, (order is important, fist HP then EC)
     it.todo("HAPPY PATH: should do stuff", () => {
       expect(1).toBe(1);
     });
