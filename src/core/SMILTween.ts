@@ -262,27 +262,32 @@ export class SMILTween extends Animation {
     staggerOffset: number,
     groupDur: number,
   ): void => {
-    const S = staggerOffset;
-    const D = this._dur;
-    const G = groupDur;
-
     for (const el of elements) {
       const fromVal = el.getAttribute("from");
       const toVal = el.getAttribute("to");
       if (fromVal === null || toVal === null) continue;
 
-      const hasWait = S > 0;
-      const hasHold = S + D < G;
+      const hasWait: boolean = staggerOffset > 0;
+      const hasHold: boolean = staggerOffset + this._dur < groupDur;
 
-      const keyTimesArr: number[] = [0];
+      // Where within the [0–1] cycle the wait phase ends and the animation begins.
+      const animStartRatio: number = roundToFloat(staggerOffset / groupDur, 6);
+      // Where within the [0–1] cycle the animation ends and the hold phase begins.
+      const animEndRatio: number = hasHold
+        ? roundToFloat((staggerOffset + this._dur) / groupDur, 6)
+        : 1;
+
+      /** Keyframe states; serialized into the SMIL `values` attribute. */
       const valuesArr: string[] = [fromVal];
+      /** Normalized [0–1] time positions for each keyframe; written to SMIL `keyTimes`. */
+      const keyTimesArr: number[] = [0];
 
       if (hasWait) {
-        keyTimesArr.push(roundToFloat(S / G, 6));
+        keyTimesArr.push(animStartRatio);
         valuesArr.push(fromVal);
       }
 
-      keyTimesArr.push(hasHold ? roundToFloat((S + D) / G, 6) : 1);
+      keyTimesArr.push(animEndRatio);
       valuesArr.push(toVal);
 
       if (hasHold) {
