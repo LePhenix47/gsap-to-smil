@@ -3,6 +3,12 @@ import { GlobalRegistrator } from "@happy-dom/global-registrator";
 GlobalRegistrator.register();
 
 import { describe, expect, it } from "bun:test";
+import {
+  buildAnimate,
+  buildAnimateTransform,
+  buildSet,
+  injectInto,
+} from "@/utils/builders";
 
 describe("builders", () => {
   describe("buildAnimate", () => {
@@ -22,6 +28,7 @@ describe("builders", () => {
       expect(1).toBe(1);
     });
   });
+
   describe("buildAnimateTransform", () => {
     // ? one describe per function in the file
     // * Test paths, HAPPY PATHs and EDGE CASEs, (order is important, fist HP then EC)
@@ -39,6 +46,7 @@ describe("builders", () => {
       expect(1).toBe(1);
     });
   });
+
   describe("buildSet", () => {
     // ? one describe per function in the file
     // * Test paths, HAPPY PATHs and EDGE CASEs, (order is important, fist HP then EC)
