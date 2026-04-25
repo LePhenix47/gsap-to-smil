@@ -98,6 +98,7 @@ describe("property-router", () => {
       expect(special.delay).toBe(0);
       expect(special.ease).toBe("power1.out");
       expect(special.repeat).toBe(0);
+      // TODO: add dedicated yoyo tests once yoyo is implemented in SMILTween
       expect(special.yoyo).toBe(false);
     });
 
@@ -130,5 +131,11 @@ describe("property-router", () => {
       expect(special.yoyo).toBe(false);
       expect(special.paused).toBe(false);
     });
+
+    // ===== PENDING — yoyo not yet implemented in SMILTween =====
+
+    it.todo("HAPPY PATH: yoyo: true routes to special bucket and SMILTween produces ping-pong animation");
+    it.todo("HAPPY PATH: yoyo: false (default) produces a normal forward-only animation");
+    it.todo("EDGE CASE: yoyoEase overrides the return-trip ease when yoyo is active");
   });
 });
