@@ -171,6 +171,47 @@ gsap.to(".item", {
 })
 ```
 
+> **`stagger` and `keyframes` are mutually exclusive.** If both are present on the same tween, GSAP gives stagger priority and silently ignores keyframes. (Verified in gsap-core.js: the `if (stagger) { … } else if (keyframes) { … }` branch means only one path runs.)
+
+---
+
+## Keyframes
+
+Keyframes animate a single target through multiple states within one tween — described in GSAP internals as "a sub-timeline nested inside a tween."
+
+Three formats are supported:
+
+```js
+// 1. Array of vars objects — each entry is a sequential step with its own duration
+gsap.to(el, {
+  keyframes: [
+    { x: 100, duration: 0.5 },
+    { y: 50,  duration: 1 },
+    { opacity: 0, duration: 0.25 },
+  ]
+})
+
+// 2. Percentage keys — explicit time positions within the total duration
+gsap.to(el, {
+  duration: 2,
+  keyframes: {
+    "0%":   { opacity: 0 },
+    "50%":  { x: 100 },
+    "100%": { opacity: 1 },
+  }
+})
+
+// 3. Property arrays — values distributed evenly across the duration
+gsap.to(el, {
+  duration: 2,
+  keyframes: { x: [0, 100, 50], opacity: [1, 0.5, 1] },
+})
+```
+
+Internally, GSAP compiles all three formats into the same structure: a nested `Timeline` of sequential `.to()` calls. The outer tween's progress (0→1) is mapped to the inner timeline's duration on every render frame.
+
+> **`stagger` and `keyframes` are mutually exclusive** — see Stagger section above.
+
 ---
 
 ## Easing
