@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 import { describe, expect, it, spyOn } from "bun:test";
-import { composeTransforms } from "@/utils/transform-composer";
+import { composeTransforms, resolveRotationOrigin } from "@/utils/transform-composer";
 import { SVG_NS } from "@/utils/builders";
 
 const makeSvgEl = () => document.createElementNS(SVG_NS, "rect");
@@ -255,6 +255,56 @@ describe("transform-composer", () => {
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining("rotationX"),
       );
+
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe("resolveRotationOrigin", () => {
+    // ===== HAPPY PATHS =====
+
+    it("HAPPY PATH: two pixel values → exact {cx, cy}", () => {
+      const result = resolveRotationOrigin(makeSvgEl(), "40 60");
+
+      expect(result).toEqual({ cx: 40, cy: 60 });
+    });
+
+    it("HAPPY PATH: single pixel value → both axes use that value", () => {
+      const result = resolveRotationOrigin(makeSvgEl(), "50");
+
+      expect(result).toEqual({ cx: 50, cy: 50 });
+    });
+
+    it("HAPPY PATH: negative pixel values are accepted as-is", () => {
+      const result = resolveRotationOrigin(makeSvgEl(), "-10 -20");
+
+      expect(result).toEqual({ cx: -10, cy: -20 });
+    });
+
+    it("HAPPY PATH: no transformOrigin → getBBoxCenter; returns {0,0} when getBBox reports empty box", () => {
+      // happy-dom getBBox() returns {x:0, y:0, width:0, height:0} for unrendered elements
+      const result = resolveRotationOrigin(makeSvgEl());
+
+      expect(result).toEqual({ cx: 0, cy: 0 });
+    });
+
+    // ===== EDGE CASES =====
+
+    it("EDGE CASE: % transformOrigin resolves to 0 when getBBox dimensions are zero (happy-dom)", () => {
+      const result = resolveRotationOrigin(makeSvgEl(), "50% 50%");
+
+      // 50% * 0 = 0
+      expect(result).toEqual({ cx: 0, cy: 0 });
+    });
+
+    it("EDGE CASE: non-SVGGraphicsElement with no transformOrigin → warns and returns {0, 0}", () => {
+      const el = document.createElement("div"); // definitely not SVGGraphicsElement
+      const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = resolveRotationOrigin(el);
+
+      expect(result).toEqual({ cx: 0, cy: 0 });
+      expect(warnSpy).toHaveBeenCalled();
 
       warnSpy.mockRestore();
     });
