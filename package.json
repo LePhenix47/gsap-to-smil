@@ -29,7 +29,8 @@
   "scripts": {
     "ts": "bun build ./src/index.ts --outdir lib",
     "ts-types": "bun run tsc --noEmit",
-    "test": "bun test tests/unit/non-dom/**/*.ts",
+    "test": "bun run test:non-dom && bun run test:dom && bun run test:smoke",
+    "test:non-dom": "bun test tests/unit/non-dom/**/*.ts",
     "test:dom": "bun test --preload ./happydom.ts tests/unit/dom/**/*.ts",
     "test:smoke": "bun test --preload ./happydom.ts tests/smoke/dom/**/*.ts tests/smoke/non-dom/**/*.ts",
     "publish": "bun publish --access=public",
