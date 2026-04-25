@@ -6,12 +6,12 @@
 
 ## Animation Elements
 
-| Element | Purpose |
-|---|---|
-| `<animate>` | Animate any SVG presentation attribute (opacity, fill, stroke, r, cx…) |
+| Element              | Purpose                                                                    |
+| -------------------- | -------------------------------------------------------------------------- |
+| `<animate>`          | Animate any SVG presentation attribute (opacity, fill, stroke, r, cx…)     |
 | `<animateTransform>` | Animate the `transform` attribute — translate, rotate, scale, skewX, skewY |
-| `<animateMotion>` | Move an element along a path |
-| `<set>` | Jump to a value at a given time (no interpolation — keyframe snap) |
+| `<animateMotion>`    | Move an element along a path                                               |
+| `<set>`              | Jump to a value at a given time (no interpolation — keyframe snap)         |
 
 > `<discard>` exists in SVG 2 (removes an element at a given time) but has no meaningful browser support — skip it.
 
@@ -251,13 +251,13 @@ svgEl.setCurrentTime(seconds);
 
 ## Browser Compatibility
 
-| Browser | Support | Notes |
-|---|---|---|
-| Chrome | Full | Deprecation proposed in 2015, never actually happened |
-| Firefox | Full | |
-| Edge (Chromium) | Full | |
-| Safari | Partial | See critical note below |
-| IE | None | Dead, irrelevant |
+| Browser         | Support | Notes                                                 |
+| --------------- | ------- | ----------------------------------------------------- |
+| Chrome          | Full    | Deprecation proposed in 2015, never actually happened |
+| Firefox         | Full    |                                                       |
+| Edge (Chromium) | Full    |                                                       |
+| Safari          | Partial | See critical note below                               |
+| IE              | None    | Dead, irrelevant                                      |
 
 ### Critical Safari/WebKit caveat
 
@@ -270,6 +270,12 @@ On Safari under main thread load (e.g. heavy asset loading), a SMIL transform an
 ---
 
 ## Gotchas
+
+### Tabs switch
+
+When you switch to another tab animation "freezes" and doesn't catch up to where it should be
+
+Ref: https://stackoverflow.com/questions/64711450/prevent-smil-animation-from-pausing-when-switching-between-browser-tabs
 
 ### Easing
 
@@ -348,16 +354,16 @@ Mixing `from="#ff0000"` with `to="rgb(0,0,255)"` produces inconsistent interpola
 
 ## What SMIL Cannot Do
 
-| Missing feature | Notes |
-|---|---|
-| `onComplete` / `onUpdate` / `onStart` | `beginEvent`/`endEvent` exist but are limited |
-| CSS custom property animation | Not supported |
-| Non-SVG DOM properties | SMIL only touches SVG presentation attributes |
-| Path morphing with different command counts | Same path command structure required |
-| Compound transforms in one element | Workaround: multiple elements with `additive="sum"` |
-| Elastic / bounce eases | Can't express as a single cubic-bezier — needs keyframe approximation |
-| ScrollTrigger equivalent | JS-only concept, no SMIL translation |
-| Physics / inertia | No equivalent |
+| Missing feature                             | Notes                                                                 |
+| ------------------------------------------- | --------------------------------------------------------------------- |
+| `onComplete` / `onUpdate` / `onStart`       | `beginEvent`/`endEvent` exist but are limited                         |
+| CSS custom property animation               | Not supported                                                         |
+| Non-SVG DOM properties                      | SMIL only touches SVG presentation attributes                         |
+| Path morphing with different command counts | Same path command structure required                                  |
+| Compound transforms in one element          | Workaround: multiple elements with `additive="sum"`                   |
+| Elastic / bounce eases                      | Can't express as a single cubic-bezier — needs keyframe approximation |
+| ScrollTrigger equivalent                    | JS-only concept, no SMIL translation                                  |
+| Physics / inertia                           | No equivalent                                                         |
 
 ---
 
@@ -380,24 +386,24 @@ SMIL easing is controlled by two attributes working together:
 
 Common cubic-bezier approximations for GSAP named eases:
 
-| GSAP ease | cubic-bezier |
-|---|---|
-| `linear` | `calcMode="linear"` (no keySplines needed) |
-| `ease-in-out` / `power1.inOut` | `0.42 0 0.58 1` |
-| `power2.in` | `0.55 0 1 0.45` |
-| `power2.out` | `0 0.55 0.45 1` |
-| `power2.inOut` | `0.65 0 0.35 1` |
-| `sine.in` | `0.47 0 0.745 0.715` |
-| `sine.out` | `0.39 0.575 0.565 1` |
-| `sine.inOut` | `0.445 0.05 0.55 0.95` |
-| `expo.in` | `0.95 0.05 0.795 0.035` |
-| `expo.out` | `0.19 1 0.22 1` |
-| `expo.inOut` | `1 0 0 1` |
-| `circ.in` | `0.6 0.04 0.98 0.335` |
-| `circ.out` | `0.075 0.82 0.165 1` |
-| `circ.inOut` | `0.785 0.135 0.15 0.86` |
-| `back.in` | `0.6 -0.28 0.735 0.045` |
-| `back.out` | `0.175 0.885 0.32 1.275` |
-| `back.inOut` | `0.68 -0.55 0.265 1.55` |
+| GSAP ease                      | cubic-bezier                               |
+| ------------------------------ | ------------------------------------------ |
+| `linear`                       | `calcMode="linear"` (no keySplines needed) |
+| `ease-in-out` / `power1.inOut` | `0.42 0 0.58 1`                            |
+| `power2.in`                    | `0.55 0 1 0.45`                            |
+| `power2.out`                   | `0 0.55 0.45 1`                            |
+| `power2.inOut`                 | `0.65 0 0.35 1`                            |
+| `sine.in`                      | `0.47 0 0.745 0.715`                       |
+| `sine.out`                     | `0.39 0.575 0.565 1`                       |
+| `sine.inOut`                   | `0.445 0.05 0.55 0.95`                     |
+| `expo.in`                      | `0.95 0.05 0.795 0.035`                    |
+| `expo.out`                     | `0.19 1 0.22 1`                            |
+| `expo.inOut`                   | `1 0 0 1`                                  |
+| `circ.in`                      | `0.6 0.04 0.98 0.335`                      |
+| `circ.out`                     | `0.075 0.82 0.165 1`                       |
+| `circ.inOut`                   | `0.785 0.135 0.15 0.86`                    |
+| `back.in`                      | `0.6 -0.28 0.735 0.045`                    |
+| `back.out`                     | `0.175 0.885 0.32 1.275`                   |
+| `back.inOut`                   | `0.68 -0.55 0.265 1.55`                    |
 
 > `elastic` and `bounce` cannot be expressed as a single cubic-bezier — they require keyframe approximation with many `values`.
