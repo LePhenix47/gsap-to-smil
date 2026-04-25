@@ -179,21 +179,21 @@ describe("easing", () => {
 
     it("HAPPY PATH: undefined ease returns linear mode with no keyTimes or keySplines", () => {
       const result = resolveCalcMode(undefined, 1);
-      const value = { calcMode: "linear", keySplines: null, keyTimes: null };
+      const value = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
 
       expect(result).toEqual(value);
     });
 
     it("HAPPY PATH: 'none' returns linear mode", () => {
       const result = resolveCalcMode("none", 1);
-      const value = { calcMode: "linear", keySplines: null, keyTimes: null };
+      const value = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
 
       expect(result).toEqual(value);
     });
 
     it("HAPPY PATH: 'linear' returns linear mode", () => {
       const result = resolveCalcMode("linear", 1);
-      const value = { calcMode: "linear", keySplines: null, keyTimes: null };
+      const value = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
 
       expect(result).toEqual(value);
     });
@@ -229,7 +229,7 @@ describe("easing", () => {
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
       const result = resolveCalcMode("elastic.out", 1);
-      const value = { calcMode: "linear", keySplines: null, keyTimes: null };
+      const value = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
 
       expect(result).toEqual(value);
       expect(warnSpy).toHaveBeenCalledTimes(1);
@@ -241,7 +241,7 @@ describe("easing", () => {
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
       const result = resolveCalcMode("bounce.out", 1);
-      const value = { calcMode: "linear", keySplines: null, keyTimes: null };
+      const value = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
 
       expect(result).toEqual(value);
       expect(warnSpy).toHaveBeenCalledTimes(1);
