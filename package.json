@@ -27,6 +27,7 @@
   "license": "ISC",
   "scripts": {
     "ts": "bun build ./src/index.ts --outdir lib",
+    "ts-types": "bun run tsc --noEmit",
     "publish": "bun publish --access=public",
     "update-version": "bun update-project-version.ts && git add . && git commit -m \"Update on the project version\" && git push",
     "push-lib": "(git diff --quiet || (echo 'You have uncommitted changes. Please commit your changes first.' && exit 1)) && bun run update-version && bun run publish"
