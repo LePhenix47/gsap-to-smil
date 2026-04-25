@@ -226,6 +226,21 @@ describe("transform-composer", () => {
       expect(result[0].getAttribute("to")).toBe("0 30");
     });
 
+    it("EDGE CASE: transformOrigin with % resolves to 0 when element has no rendered dimensions (getBBox returns zeros)", () => {
+      const target = makeSvgEl();
+
+      const result = composeTransforms({
+        toTransforms: { rotation: 90 },
+        target,
+        transformOrigin: "50% 50%",
+        dur: 1,
+      });
+
+      // happy-dom getBBox() returns {x:0, y:0, width:0, height:0} → 50% * 0 = 0
+      expect(result[0].getAttribute("from")).toBe("0 0 0");
+      expect(result[0].getAttribute("to")).toBe("90 0 0");
+    });
+
     it("EDGE CASE: rotationX/rotationY warns and produces no elements", () => {
       const target = makeSvgEl();
       const warnSpy = spyOn(console, "warn");
