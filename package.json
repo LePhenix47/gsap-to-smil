@@ -8,6 +8,7 @@
   },
   "main": "lib/index.js",
   "devDependencies": {
+    "@happy-dom/global-registrator": "^20.9.0",
     "@types/bun": "latest",
     "bun-plugin-dts-auto": "^0.10.0",
     "typescript": "^5.4.4"
