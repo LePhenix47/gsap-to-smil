@@ -5,7 +5,7 @@ import type {
 import type { EaseString } from "@/types/easing.ts";
 import { resolveCalcMode } from "./easing.ts";
 
-const SVG_NS: SVGElement["namespaceURI"] = "http://www.w3.org/2000/svg";
+export const SVG_NS: SVGElement["namespaceURI"] = "http://www.w3.org/2000/svg";
 
 // ===== Shared helpers =====
 
