@@ -1,113 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Test — DrawSVG Plugin</title>
 
-    <script type="importmap">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test — DrawSVG Plugin</title>
+
+  <!-- * Importmap -->
+  <script type="importmap">
       {
         "imports": {
           "gsap": "https://cdn.jsdelivr.net/npm/gsap@3/+esm",
           "gsap/DrawSVGPlugin": "https://cdn.jsdelivr.net/npm/gsap@3/dist/DrawSVGPlugin.min.js"
         }
-      }
+     }
     </script>
 
-    <script type="module" src="../src/index.ts"></script>
-    <script type="module">
-      import gsap from "gsap";
-      import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
+  <!-- * GSAP/SMIL script, Claude DO NOT RELOCATE THE SCRIPT TO THE BOTTOM OF THE <body> you smelly bastard -->
+  <script type="module">
+    console.log("Draw svg");
+    import gsap from "gsap";
+    import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
+    gsap.registerPlugin(DrawSVGPlugin);
 
-      gsap.registerPlugin(DrawSVGPlugin);
+    import { smil } from "../lib/index.js";
+  </script>
 
-      // --- Animations ---
-    </script>
+  <!-- * Claude DO NOT RELOCATE THE STYLES NOR UPDATE THEM -->
+  <style>
+    :root {
+      color-scheme: dark;
+    }
 
-    <style>
-      body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-        padding: 2rem;
-        font-family: monospace;
-        background: #111;
-        color: #eee;
-      }
+    :root:has(#diff-toggle:checked) .pair>.test-smil {
+      position: absolute;
+      top: 0;
+      left: 0;
+      mix-blend-mode: difference;
+      pointer-events: none;
+    }
 
-      .controls {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-      }
+    :root:has(#diff-toggle:checked) .pair>.test>figcaption {
+      color: transparent;
+    }
 
-      .canvases {
-        position: relative;
-        display: flex;
-        gap: 2rem;
-      }
+    :root:has(#diff-toggle:checked) .pair>.test>figcaption::before {
+      content: "Diff";
 
-      .canvas-wrap {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-      }
+      position: absolute;
+      top: 0;
+      left: 0;
 
-      .canvas-wrap label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        opacity: 0.6;
-      }
+      color: white;
+    }
 
-      svg {
-        border: 1px solid #333;
-        background: #1a1a1a;
-      }
 
-      #diff-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        mix-blend-mode: difference;
-        display: none;
-      }
+    body {
+      --_p: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+      padding: var(--_p);
+      font-family: monospace;
+      background: #111;
+      color: #eee;
+      margin: 0;
+    }
 
-      #diff-overlay.active {
-        display: block;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="controls">
-      <label>
-        <input type="checkbox" id="diff-toggle" />
-        Diff mode
-      </label>
-    </div>
+    header {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
 
-    <div class="canvases">
-      <div class="canvas-wrap">
-        <label>GSAP</label>
-        <svg id="svg-gsap" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+      padding: var(--_p);
+      margin: calc(var(--_p) * -1);
+
+      position: sticky;
+      top: 0;
+      background: #111;
+
+      z-index: 3;
+    }
+
+    h1 {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.45;
+      margin: 0;
+    }
+
+    /* Relative so the SMIL SVG can be positioned absolutely over the GSAP one in diff mode */
+    .pair {
+      position: relative;
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+    }
+
+    figure {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    figcaption {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.4;
+    }
+
+    svg {
+      display: block;
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+    }
+
+
+    .svg-smil.diff {
+      position: absolute;
+      top: 0;
+
+      left: 0;
+      mix-blend-mode: difference;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>draw-svg-path tests</h1>
+    <label>
+      <input type="checkbox" id="diff-toggle" />
+      Diff mode
+    </label>
+  </header>
+
+  <!-- 1. ??? -->
+  <section>
+    <h3>???</h3>
+    <div class="pair">
+      <figure class="test test-gsap">
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
+          <!-- SVG stuff -->
         </svg>
-      </div>
-
-      <div class="canvas-wrap">
-        <label>smil lib</label>
-        <svg id="svg-smil" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
-          <svg id="diff-overlay" width="300" height="300" xmlns="http://www.w3.org/2000/svg">
-          </svg>
+      </figure>
+      <figure class="test test-smil">
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
+          <!-- SVG stuff -->
         </svg>
-      </div>
+      </figure>
     </div>
+  </section>
 
-    <script>
-      document.getElementById("diff-toggle").addEventListener("change", (e) => {
-        document.getElementById("diff-overlay").classList.toggle("active", e.target.checked);
-      });
-    </script>
-  </body>
+
+</body>
+
 </html>
