@@ -17,46 +17,46 @@ describe("easing", () => {
       const easeName = "power2.out";
 
       const result = resolveEase(easeName);
-      const value: [number, number, number, number] = [0, 0.55, 0.45, 1];
+      const expected: [number, number, number, number] = [0, 0.55, 0.45, 1];
 
-      expect(result).toEqual(value);
+      expect(result).toEqual(expected);
     });
 
     it("HAPPY PATH: raw [x1,y1,x2,y2] array is returned as-is", () => {
       const customBezier: [number, number, number, number] = [0.42, 0, 0.58, 1];
 
       const result = resolveEase(customBezier);
-      const value = customBezier;
+      const expected = customBezier;
 
-      expect(result).toEqual(value);
+      expect(result).toEqual(expected);
     });
 
     it("HAPPY PATH: 'none' returns null — caller should use calcMode=linear", () => {
       const result = resolveEase("none");
-      const value = null;
+      const expected = null;
 
-      expect(result).toBe(value);
+      expect(result).toBe(expected);
     });
 
     it("HAPPY PATH: 'linear' returns null — caller should use calcMode=linear", () => {
       const result = resolveEase("linear");
-      const value = null;
+      const expected = null;
 
-      expect(result).toBe(value);
+      expect(result).toBe(expected);
     });
 
     it("HAPPY PATH: elastic ease returns null — cannot be expressed as a single bezier", () => {
       const result = resolveEase("elastic.out");
-      const value = null;
+      const expected = null;
 
-      expect(result).toBe(value);
+      expect(result).toBe(expected);
     });
 
     it("HAPPY PATH: bounce ease returns null — cannot be expressed as a single bezier", () => {
       const result = resolveEase("bounce.in");
-      const value = null;
+      const expected = null;
 
-      expect(result).toBe(value);
+      expect(result).toBe(expected);
     });
 
     it("HAPPY PATH: parametrized suffix is stripped before lookup — 'back.out(1.7)' resolves as 'back.out'", () => {
@@ -64,9 +64,9 @@ describe("easing", () => {
       const canonical = "back.out";
 
       const result = resolveEase(parametrized);
-      const value = resolveEase(canonical);
+      const expected = resolveEase(canonical);
 
-      expect(result).toEqual(value);
+      expect(result).toEqual(expected);
     });
 
     // ===== EDGE CASES =====
@@ -91,27 +91,27 @@ describe("easing", () => {
       const keyframeCount = 2;
 
       const result = getSvgUniformKeyTimes(keyframeCount);
-      const value = "0; 1";
+      const expected = "0; 1";
 
-      expect(result).toBe(value);
+      expect(result).toBe(expected);
     });
 
     it("HAPPY PATH: 3 keyframes produces '0; 0.5; 1'", () => {
       const keyframeCount = 3;
 
       const result = getSvgUniformKeyTimes(keyframeCount);
-      const value = "0; 0.5; 1";
+      const expected = "0; 0.5; 1";
 
-      expect(result).toBe(value);
+      expect(result).toBe(expected);
     });
 
     it("HAPPY PATH: 5 keyframes produces 4 evenly spaced intervals", () => {
       const keyframeCount = 5;
 
       const result = getSvgUniformKeyTimes(keyframeCount);
-      const value = "0; 0.25; 0.5; 0.75; 1";
+      const expected = "0; 0.25; 0.5; 0.75; 1";
 
-      expect(result).toBe(value);
+      expect(result).toBe(expected);
     });
   });
 
@@ -126,9 +126,9 @@ describe("easing", () => {
       const [x1, y1, x2, y2] = resolveEase(easeName)!;
 
       const result = getSvgKeySplines(easeName, keyframeCount);
-      const value = `${x1} ${y1} ${x2} ${y2}`;
+      const expected = `${x1} ${y1} ${x2} ${y2}`;
 
-      expect(result).toBe(value);
+      expect(result).toBe(expected);
     });
 
     it("HAPPY PATH: 3 keyframes (2 intervals) repeats the bezier twice separated by semicolon", () => {
@@ -138,9 +138,9 @@ describe("easing", () => {
       const singleSpline = `${x1} ${y1} ${x2} ${y2}`;
 
       const result = getSvgKeySplines(easeName, keyframeCount);
-      const value = `${singleSpline}; ${singleSpline}`;
+      const expected = `${singleSpline}; ${singleSpline}`;
 
-      expect(result).toBe(value);
+      expect(result).toBe(expected);
     });
 
     // ===== EDGE CASES =====
@@ -166,9 +166,9 @@ describe("easing", () => {
       const expectedKeySplines = getSvgKeySplines(easeName, keyframeCount);
 
       const result = getSvgTimingFunctionString(keyframeCount, easeName);
-      const value = `keyTimes="${expectedKeyTimes}" calcMode="spline" keySplines="${expectedKeySplines}"`;
+      const expected = `keyTimes="${expectedKeyTimes}" calcMode="spline" keySplines="${expectedKeySplines}"`;
 
-      expect(result).toBe(value);
+      expect(result).toBe(expected);
     });
   });
 
@@ -179,23 +179,23 @@ describe("easing", () => {
 
     it("HAPPY PATH: undefined ease returns linear mode with no keyTimes or keySplines", () => {
       const result = resolveCalcMode(undefined, 1);
-      const value = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
+      const expected = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
 
-      expect(result).toEqual(value);
+      expect(result).toEqual(expected);
     });
 
     it("HAPPY PATH: 'none' returns linear mode", () => {
       const result = resolveCalcMode("none", 1);
-      const value = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
+      const expected = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
 
-      expect(result).toEqual(value);
+      expect(result).toEqual(expected);
     });
 
     it("HAPPY PATH: 'linear' returns linear mode", () => {
       const result = resolveCalcMode("linear", 1);
-      const value = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
+      const expected = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
 
-      expect(result).toEqual(value);
+      expect(result).toEqual(expected);
     });
 
     it("HAPPY PATH: cubic bezier ease with 1 interval returns spline mode", () => {
@@ -229,9 +229,9 @@ describe("easing", () => {
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
       const result = resolveCalcMode("elastic.out", 1);
-      const value = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
+      const expected = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
 
-      expect(result).toEqual(value);
+      expect(result).toEqual(expected);
       expect(warnSpy).toHaveBeenCalledTimes(1);
 
       warnSpy.mockRestore();
@@ -241,9 +241,9 @@ describe("easing", () => {
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
       const result = resolveCalcMode("bounce.out", 1);
-      const value = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
+      const expected = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
 
-      expect(result).toEqual(value);
+      expect(result).toEqual(expected);
       expect(warnSpy).toHaveBeenCalledTimes(1);
 
       warnSpy.mockRestore();

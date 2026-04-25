@@ -104,10 +104,10 @@ describe("property-router", () => {
 
     it("EDGE CASE: unknown key falls into the direct bucket as a best-effort SVG attribute", () => {
       const { direct, transforms } = routeProperties({
-        "data-custom": "value",
+        "data-custom": "expected",
       } as never);
 
-      expect(direct["data-custom"]).toBe("value");
+      expect(direct["data-custom"]).toBe("expected");
       expect(transforms).toEqual({});
     });
 
