@@ -98,14 +98,8 @@ export class SMILTween extends Animation {
 
     const kf = this._vars.keyframes;
     if (kf !== undefined) {
-      if (this._vars.stagger) {
-        console.warn(
-          "[gsap-to-smil] keyframes and stagger are mutually exclusive — keyframes ignored.",
-        );
-      } else {
-        this._buildKeyframes(kf);
-        return;
-      }
+      this._buildKeyframes(kf);
+      return;
     }
 
     const { transforms, direct } = routeProperties(this._vars);
@@ -277,8 +271,15 @@ export class SMILTween extends Animation {
    * Each step becomes a child SMILTween with an accumulated delay. No SMILTimeline needed.
    */
   private _buildObjectArrayKeyframes = (steps: TweenVars[]): void => {
-    // Collect all animated attributes across every step so revert() can restore them.
-    for (const target of this._targets) {
+    const staggerDelays = this._vars.stagger
+      ? resolveStaggerDelays(this._targets.length, this._vars.stagger)
+      : null;
+
+    for (let i = 0; i < this._targets.length; i++) {
+      const target = this._targets[i]!;
+      const staggerOffset = staggerDelays?.[i] ?? 0;
+
+      // Save originals for this target across all steps.
       const originals: Record<string, string | null> = {};
       for (const step of steps) {
         const { transforms, direct } = routeProperties(step);
@@ -290,22 +291,23 @@ export class SMILTween extends Animation {
         }
       }
       this._originalValues.set(target, originals);
+
+      // Build each step as a single-target child tween with its accumulated delay.
+      let accTime = this._delay + staggerOffset;
+      for (const step of steps) {
+        const stepDur = step.duration ?? 0.5;
+        const child = new SMILTween([target], { ...step, delay: accTime });
+        this._elements.push(...child._elements);
+        accTime += stepDur;
+      }
     }
 
-    let accTime = this._delay;
-    for (const step of steps) {
-      const stepDur = step.duration ?? 0.5;
-      const child = new SMILTween(this._targets, { ...step, delay: accTime });
-      this._elements.push(...child._elements);
-      accTime += stepDur;
-    }
-
-    const contentDur = accTime - this._delay;
-    this._dur = contentDur;
+    const totalStepDur = steps.reduce((sum, s) => sum + (s.duration ?? 0.5), 0);
+    this._dur = totalStepDur;
     this._tDur =
       this._repeat === -1
         ? Infinity
-        : contentDur * (this._repeat + 1) + this._rDelay * this._repeat;
+        : totalStepDur * (this._repeat + 1) + this._rDelay * this._repeat;
     this._initialized = true;
   };
 
@@ -341,14 +343,22 @@ export class SMILTween extends Animation {
     const hasSkewY = !!skewYArr;
     const hasTransforms = hasTranslate || hasRotation || hasScale || hasSkewX || hasSkewY;
 
-    const shared = {
-      dur: this._dur,
-      delay: this._delay || undefined,
-      repeat: this._repeat,
-      ease: this._vars.ease,
-    };
+    const staggerDelays = this._vars.stagger
+      ? resolveStaggerDelays(this._targets.length, this._vars.stagger)
+      : null;
 
-    for (const target of this._targets) {
+    for (let i = 0; i < this._targets.length; i++) {
+      const target = this._targets[i]!;
+      const staggerOffset = staggerDelays?.[i] ?? 0;
+      const delay = this._delay + staggerOffset;
+
+      const shared = {
+        dur: this._dur,
+        delay: delay || undefined,
+        repeat: this._repeat,
+        ease: this._vars.ease,
+      };
+
       const originals: Record<string, string | null> = {};
       const elements: SVGAnimationElement[] = [];
 
@@ -430,14 +440,22 @@ export class SMILTween extends Animation {
     const hasSkewY = allTransforms.has("skewY");
     const hasTransforms = hasTranslate || hasRotation || hasScale || hasSkewX || hasSkewY;
 
-    const shared = {
-      dur: this._dur,
-      delay: this._delay || undefined,
-      repeat: this._repeat,
-      ease: this._vars.ease,
-    };
+    const staggerDelays = this._vars.stagger
+      ? resolveStaggerDelays(this._targets.length, this._vars.stagger)
+      : null;
 
-    for (const target of this._targets) {
+    for (let i = 0; i < this._targets.length; i++) {
+      const target = this._targets[i]!;
+      const staggerOffset = staggerDelays?.[i] ?? 0;
+      const delay = this._delay + staggerOffset;
+
+      const shared = {
+        dur: this._dur,
+        delay: delay || undefined,
+        repeat: this._repeat,
+        ease: this._vars.ease,
+      };
+
       const originals: Record<string, string | null> = {};
       const elements: SVGAnimationElement[] = [];
 
