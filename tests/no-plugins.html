@@ -15,6 +15,8 @@
     import gsap from "gsap";
     import { smil } from "../lib/index.js";
 
+    // TODO: Pause GSAP tween on document visibility change, SMIL animations do that automatically
+
     // 1. to() — translate
     gsap.to("#g-translate", { x: 210, duration: 1.2, repeat: -1, ease: "power1.inOut" });
     smil.to("#s-translate", { x: 210, duration: 1.2, repeat: -1, ease: "power1.inOut" });
@@ -38,30 +40,35 @@
     // 6. stagger — dots pop up one by one
     gsap.to(".g-stagger", { y: -40, duration: 0.5, repeat: -1, stagger: 0.12, ease: "power1.out" });
     smil.to(".s-stagger", { y: -40, duration: 0.5, repeat: -1, stagger: 0.12, ease: "power1.out" });
-
-    // Diff mode — repositions each .svg-smil absolutely over its .svg-gsap sibling
-    document.getElementById("diff-toggle").addEventListener("change", (e) => {
-      document.querySelectorAll(".pair").forEach((pair) => {
-        const gsapSvg = pair.querySelector(".svg-gsap");
-        const smilSvg = pair.querySelector(".svg-smil");
-
-        if (e.target.checked) {
-          const gsapRect = gsapSvg.getBoundingClientRect();
-          const pairRect = pair.getBoundingClientRect();
-          smilSvg.style.top = `${gsapRect.top - pairRect.top}px`;
-          smilSvg.classList.add("diff");
-        } else {
-          smilSvg.classList.remove("diff");
-          smilSvg.style.top = "";
-        }
-      });
-    });
   </script>
 
   <style>
     :root {
       color-scheme: dark;
     }
+
+    :root:has(#diff-toggle:checked) .pair>.test-smil {
+      position: absolute;
+      top: 0;
+      left: 0;
+      mix-blend-mode: difference;
+      pointer-events: none;
+    }
+
+    :root:has(#diff-toggle:checked) .pair>.test>figcaption {
+      color: transparent;
+    }
+
+    :root:has(#diff-toggle:checked) .pair>.test>figcaption::before {
+      content: "Diff";
+
+      position: absolute;
+      top: 0;
+      left: 0;
+
+      color: white;
+    }
+
 
     body {
       display: flex;
@@ -160,13 +167,13 @@
   <section>
     <h3>to() — translate (x)</h3>
     <div class="pair">
-      <figure>
+      <figure class="test test-gsap">
         <figcaption>GSAP</figcaption>
         <svg class="svg-gsap" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
           <circle id="g-translate" cx="30" cy="40" r="18" fill="#4f9cf9" />
         </svg>
       </figure>
-      <figure>
+      <figure class="test test-smil">
         <figcaption>SMIL lib</figcaption>
         <svg class="svg-smil" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
           <circle id="s-translate" cx="30" cy="40" r="18" fill="#4f9cf9" />
@@ -179,13 +186,13 @@
   <section>
     <h3>to() — opacity</h3>
     <div class="pair">
-      <figure>
+      <figure class="test test-gsap">
         <figcaption>GSAP</figcaption>
         <svg class="svg-gsap" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
           <circle id="g-opacity" cx="60" cy="60" r="40" fill="#f97316" />
         </svg>
       </figure>
-      <figure>
+      <figure class="test test-smil">
         <figcaption>SMIL lib</figcaption>
         <svg class="svg-smil" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
           <circle id="s-opacity" cx="60" cy="60" r="40" fill="#f97316" />
@@ -198,13 +205,13 @@
   <section>
     <h3>to() — rotation (360°, linear)</h3>
     <div class="pair">
-      <figure>
+      <figure class="test test-gsap">
         <figcaption>GSAP</figcaption>
         <svg class="svg-gsap" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
           <rect id="g-rotation" x="30" y="30" width="60" height="60" fill="#a78bfa" />
         </svg>
       </figure>
-      <figure>
+      <figure class="test test-smil">
         <figcaption>SMIL lib</figcaption>
         <svg class="svg-smil" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
           <rect id="s-rotation" x="30" y="30" width="60" height="60" fill="#a78bfa" />
@@ -217,13 +224,13 @@
   <section>
     <h3>from() — translate x</h3>
     <div class="pair">
-      <figure>
+      <figure class="test test-gsap">
         <figcaption>GSAP</figcaption>
         <svg class="svg-gsap" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
           <circle id="g-from" cx="140" cy="40" r="18" fill="#fb923c" />
         </svg>
       </figure>
-      <figure>
+      <figure class="test test-smil">
         <figcaption>SMIL lib</figcaption>
         <svg class="svg-smil" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
           <circle id="s-from" cx="140" cy="40" r="18" fill="#fb923c" />
@@ -236,13 +243,13 @@
   <section>
     <h3>fromTo() — translate x</h3>
     <div class="pair">
-      <figure>
+      <figure class="test test-gsap">
         <figcaption>GSAP</figcaption>
         <svg class="svg-gsap" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
           <circle id="g-fromto" cx="140" cy="40" r="18" fill="#f43f5e" />
         </svg>
       </figure>
-      <figure>
+      <figure class="test test-smil">
         <figcaption>SMIL lib</figcaption>
         <svg class="svg-smil" width="280" height="80" xmlns="http://www.w3.org/2000/svg">
           <circle id="s-fromto" cx="140" cy="40" r="18" fill="#f43f5e" />
@@ -255,7 +262,7 @@
   <section>
     <h3>stagger — translate y</h3>
     <div class="pair">
-      <figure>
+      <figure class="test test-gsap">
         <figcaption>GSAP</figcaption>
         <svg class="svg-gsap" width="280" height="100" xmlns="http://www.w3.org/2000/svg">
           <circle class="g-stagger" cx="30" cy="70" r="14" fill="#38bdf8" />
@@ -265,7 +272,7 @@
           <circle class="g-stagger" cx="250" cy="70" r="14" fill="#38bdf8" />
         </svg>
       </figure>
-      <figure>
+      <figure class="test test-smil">
         <figcaption>SMIL lib</figcaption>
         <svg class="svg-smil" width="280" height="100" xmlns="http://www.w3.org/2000/svg">
           <circle class="s-stagger" cx="30" cy="70" r="14" fill="#38bdf8" />
