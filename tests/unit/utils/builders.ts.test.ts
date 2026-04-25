@@ -1,10 +1,8 @@
 /// <reference lib="dom" />
+import { GlobalRegistrator } from "@happy-dom/global-registrator";
+GlobalRegistrator.register();
 
 import { describe, expect, it } from "bun:test";
-
-import { GlobalRegistrator } from "@happy-dom/global-registrator";
-
-GlobalRegistrator.register();
 
 describe("builders", () => {
   describe("buildAnimate", () => {
