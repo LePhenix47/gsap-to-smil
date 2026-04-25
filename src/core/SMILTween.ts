@@ -9,6 +9,8 @@ import { routeProperties } from "@/utils/property-router.ts";
 import { composeTransforms } from "@/utils/transform-composer.ts";
 import { resolveStaggerDelays } from "@/utils/stagger-resolver.ts";
 import { buildAnimate, injectInto } from "@/utils/builders.ts";
+import { resolveEase } from "@/utils/easing.ts";
+import { roundToFloat } from "@/utils/helpers/math.functions.ts";
 
 /**
  * A single GSAP-style tween that generates SMIL elements and injects them into the DOM.
@@ -77,7 +79,12 @@ export class SMILTween extends Animation {
     if ("x" in transforms || "xPercent" in transforms) identity.x = 0;
     if ("y" in transforms || "yPercent" in transforms) identity.y = 0;
     if ("rotation" in transforms) identity.rotation = 0;
-    if ("scale" in transforms || "scaleX" in transforms || "scaleY" in transforms) identity.scale = 1;
+    if (
+      "scale" in transforms ||
+      "scaleX" in transforms ||
+      "scaleY" in transforms
+    )
+      identity.scale = 1;
     if ("skewX" in transforms) identity.skewX = 0;
     if ("skewY" in transforms) identity.skewY = 0;
     return identity;
@@ -96,16 +103,39 @@ export class SMILTween extends Animation {
       ? resolveStaggerDelays(this._targets.length, this._vars.stagger)
       : null;
 
+    const maxStagger = staggerDelays ? Math.max(...staggerDelays) : 0;
+    // When stagger+repeat is active, each target's cycle is extended to groupDuration so they
+    // all restart together. The stagger offset is encoded in values/keyTimes instead of begin.
+    const hasStaggerRepeat =
+      staggerDelays !== null && this._repeat !== 0 && maxStagger > 0;
+    const groupDuration = hasStaggerRepeat ? this._dur + maxStagger : this._dur;
+
     for (let i = 0; i < this._targets.length; i++) {
       const target = this._targets[i]!;
-      const delay = this._delay + (staggerDelays?.[i] ?? 0);
+      const staggerOffset = staggerDelays?.[i] ?? 0;
+      const beginDelay = this._delay + (hasStaggerRepeat ? 0 : staggerOffset);
 
       this._saveOriginals(target, transforms, direct);
 
       const elements: SVGAnimationElement[] = [
-        ...this._buildTransforms(target, transforms, fromRouted?.transforms, delay),
-        ...this._buildDirect(direct, fromRouted?.direct, delay),
+        ...this._buildTransforms(
+          target,
+          transforms,
+          fromRouted?.transforms,
+          beginDelay,
+          groupDuration,
+        ),
+        ...this._buildDirect(
+          direct,
+          fromRouted?.direct,
+          beginDelay,
+          groupDuration,
+        ),
       ];
+
+      if (hasStaggerRepeat) {
+        this._applyStaggerEncoding(elements, staggerOffset, groupDuration);
+      }
 
       injectInto(target, ...elements);
       this._elements.push(...elements);
@@ -138,9 +168,10 @@ export class SMILTween extends Animation {
     transforms: TransformProps,
     fromTransforms: TransformProps | undefined,
     delay: number,
+    dur: number,
   ): SVGAnimateTransformElement[] => {
     const timing = {
-      dur: this._dur,
+      dur,
       delay: delay || undefined,
       repeat: this._repeat,
       ease: this._vars.ease,
@@ -179,6 +210,7 @@ export class SMILTween extends Animation {
     direct: DirectProps,
     fromDirect: DirectProps | undefined,
     delay: number,
+    dur: number,
   ): SVGAnimateElement[] => {
     const elements: SVGAnimateElement[] = [];
 
@@ -187,7 +219,7 @@ export class SMILTween extends Animation {
 
       const shared = {
         attributeName: attr,
-        dur: this._dur,
+        dur,
         delay: delay || undefined,
         repeat: this._repeat,
         ease: this._vars.ease,
@@ -197,17 +229,110 @@ export class SMILTween extends Animation {
         elements.push(buildAnimate({ ...shared, from: String(value) }));
       } else if (fromDirect) {
         const fromValue = fromDirect[attr];
-        elements.push(buildAnimate({
-          ...shared,
-          from: fromValue !== undefined ? String(fromValue) : undefined,
-          to: String(value),
-        }));
+        elements.push(
+          buildAnimate({
+            ...shared,
+            from: fromValue !== undefined ? String(fromValue) : undefined,
+            to: String(value),
+          }),
+        );
       } else {
         elements.push(buildAnimate({ ...shared, to: String(value) }));
       }
     }
 
     return elements;
+  };
+
+  // ===== Stagger + repeat synchronization =====
+
+  /**
+   * Rewrites `from`/`to` on each element to `values`/`keyTimes` so all staggered targets
+   * share the same `dur = groupDuration` cycle and repeat as a synchronized group.
+   *
+   * For a target with stagger offset S, animation dur D, group dur G:
+   *   - [0, S]     → hold at `from`  (wait)
+   *   - [S, S+D]   → animate from → to
+   *   - [S+D, G]   → hold at `to`   (pad)
+   *
+   * Elements without both `from` and `to` are skipped — they keep independent timing.
+   */
+  private _applyStaggerEncoding = (
+    elements: SVGAnimationElement[],
+    staggerOffset: number,
+    groupDur: number,
+  ): void => {
+    const S = staggerOffset;
+    const D = this._dur;
+    const G = groupDur;
+
+    for (const el of elements) {
+      const fromVal = el.getAttribute("from");
+      const toVal = el.getAttribute("to");
+      if (fromVal === null || toVal === null) continue;
+
+      const hasWait = S > 0;
+      const hasHold = S + D < G;
+
+      const keyTimesArr: number[] = [0];
+      const valuesArr: string[] = [fromVal];
+
+      if (hasWait) {
+        keyTimesArr.push(roundToFloat(S / G, 6));
+        valuesArr.push(fromVal);
+      }
+
+      keyTimesArr.push(hasHold ? roundToFloat((S + D) / G, 6) : 1);
+      valuesArr.push(toVal);
+
+      if (hasHold) {
+        keyTimesArr.push(1);
+        valuesArr.push(toVal);
+      }
+
+      el.removeAttribute("from");
+      el.removeAttribute("to");
+      el.setAttribute("values", valuesArr.join("; "));
+      el.setAttribute("keyTimes", keyTimesArr.join("; "));
+
+      this._applyStaggerEasing(el, this._vars.ease, hasWait, hasHold);
+    }
+  };
+
+  /**
+   * Sets `calcMode` and `keySplines` on an element whose `keyTimes` encodes
+   * wait/animate/hold intervals. Hold and wait intervals get a linear bezier (`0 0 1 1`);
+   * the animate interval gets the actual ease curve.
+   */
+  private _applyStaggerEasing = (
+    el: SVGAnimationElement,
+    ease: TweenVars["ease"],
+    hasWait: boolean,
+    hasHold: boolean,
+  ): void => {
+    if (!ease || ease === "none" || ease === "linear") {
+      el.setAttribute("calcMode", "linear");
+      el.removeAttribute("keySplines");
+      return;
+    }
+
+    const bezier = resolveEase(ease);
+    if (!bezier) {
+      el.setAttribute("calcMode", "linear");
+      el.removeAttribute("keySplines");
+      return;
+    }
+
+    const animSpline = bezier.join(" ");
+    const holdSpline = "0 0 1 1";
+
+    const splines: string[] = [];
+    if (hasWait) splines.push(holdSpline);
+    splines.push(animSpline);
+    if (hasHold) splines.push(holdSpline);
+
+    el.setAttribute("calcMode", "spline");
+    el.setAttribute("keySplines", splines.join("; "));
   };
 
   // ===== Playback =====
