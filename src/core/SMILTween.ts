@@ -6,9 +6,9 @@ import type {
   DirectProps,
 } from "@/types/index.ts";
 import { routeProperties } from "@/utils/property-router.ts";
-import { composeTransforms } from "@/utils/transform-composer.ts";
+import { composeTransforms, resolveRotationOrigin } from "@/utils/transform-composer.ts";
 import { resolveStaggerDelays } from "@/utils/stagger-resolver.ts";
-import { buildAnimate, injectInto } from "@/utils/builders.ts";
+import { buildAnimate, buildAnimateTransform, injectInto } from "@/utils/builders.ts";
 import { resolveEase } from "@/utils/easing.ts";
 import { roundToFloat } from "@/utils/helpers/math.functions.ts";
 
@@ -94,6 +94,18 @@ export class SMILTween extends Animation {
   private _build = (): void => {
     if (this._yoyo) {
       console.warn("[gsap-to-smil] yoyo is not yet supported — ignored.");
+    }
+
+    const kf = this._vars.keyframes;
+    if (kf !== undefined) {
+      if (this._vars.stagger) {
+        console.warn(
+          "[gsap-to-smil] keyframes and stagger are mutually exclusive — keyframes ignored.",
+        );
+      } else {
+        this._buildKeyframes(kf);
+        return;
+      }
     }
 
     const { transforms, direct } = routeProperties(this._vars);
@@ -242,6 +254,275 @@ export class SMILTween extends Animation {
     }
 
     return elements;
+  };
+
+  // ===== Keyframes =====
+
+  private _buildKeyframes = (kf: NonNullable<TweenVars["keyframes"]>): void => {
+    if (Array.isArray(kf)) {
+      this._buildObjectArrayKeyframes(kf as TweenVars[]);
+      return;
+    }
+    const keys = Object.keys(kf);
+    if (keys.length === 0) return;
+    if (keys[0]!.endsWith("%")) {
+      this._buildPercentageKeyframes(kf as Record<string, TweenVars>);
+    } else {
+      this._buildPropertyArrayKeyframes(kf as Record<string, Array<number | string>>);
+    }
+  };
+
+  /**
+   * Object array form: `[{ x: 100, duration: 0.5 }, { opacity: 0, duration: 1 }]`
+   * Each step becomes a child SMILTween with an accumulated delay. No SMILTimeline needed.
+   */
+  private _buildObjectArrayKeyframes = (steps: TweenVars[]): void => {
+    // Collect all animated attributes across every step so revert() can restore them.
+    for (const target of this._targets) {
+      const originals: Record<string, string | null> = {};
+      for (const step of steps) {
+        const { transforms, direct } = routeProperties(step);
+        if (Object.keys(transforms).length > 0 && !("transform" in originals)) {
+          originals["transform"] = target.getAttribute("transform");
+        }
+        for (const attr of Object.keys(direct)) {
+          if (!(attr in originals)) originals[attr] = target.getAttribute(attr);
+        }
+      }
+      this._originalValues.set(target, originals);
+    }
+
+    let accTime = this._delay;
+    for (const step of steps) {
+      const stepDur = step.duration ?? 0.5;
+      const child = new SMILTween(this._targets, { ...step, delay: accTime });
+      this._elements.push(...child._elements);
+      accTime += stepDur;
+    }
+
+    const contentDur = accTime - this._delay;
+    this._dur = contentDur;
+    this._tDur =
+      this._repeat === -1
+        ? Infinity
+        : contentDur * (this._repeat + 1) + this._rDelay * this._repeat;
+    this._initialized = true;
+  };
+
+  private static readonly _KF_TRANSFORM_KEYS = new Set([
+    "x", "y", "rotation", "scale", "scaleX", "scaleY", "skewX", "skewY",
+  ]);
+
+  /**
+   * Property array form: `{ x: [0, 100, 50], opacity: [1, 0.5, 1] }`
+   * Values are distributed evenly across `_dur`. x+y are merged into translate values.
+   */
+  private _buildPropertyArrayKeyframes = (
+    kf: Record<string, Array<number | string>>,
+  ): void => {
+    const entries = Object.entries(kf);
+    if (entries.length === 0) return;
+    const frameCount = entries[0]![1].length;
+    if (frameCount < 2) return;
+
+    const xArr = kf["x"];
+    const yArr = kf["y"];
+    const rotationArr = kf["rotation"];
+    const scaleArr = kf["scale"];
+    const scaleXArr = kf["scaleX"];
+    const scaleYArr = kf["scaleY"];
+    const skewXArr = kf["skewX"];
+    const skewYArr = kf["skewY"];
+
+    const hasTranslate = !!(xArr || yArr);
+    const hasRotation = !!rotationArr;
+    const hasScale = !!(scaleArr || scaleXArr || scaleYArr);
+    const hasSkewX = !!skewXArr;
+    const hasSkewY = !!skewYArr;
+    const hasTransforms = hasTranslate || hasRotation || hasScale || hasSkewX || hasSkewY;
+
+    const shared = {
+      dur: this._dur,
+      delay: this._delay || undefined,
+      repeat: this._repeat,
+      ease: this._vars.ease,
+    };
+
+    for (const target of this._targets) {
+      const originals: Record<string, string | null> = {};
+      const elements: SVGAnimationElement[] = [];
+
+      if (hasTransforms) {
+        originals["transform"] = target.getAttribute("transform");
+
+        if (hasTranslate) {
+          const x = xArr ?? Array<number>(frameCount).fill(0);
+          const y = yArr ?? Array<number>(frameCount).fill(0);
+          const values = (x as Array<number | string>).map((xi, i) => `${xi} ${(y as Array<number | string>)[i]}`).join("; ");
+          elements.push(buildAnimateTransform({ type: "translate", values, additive: "sum", ...shared }));
+        }
+
+        if (hasRotation) {
+          const { cx, cy } = resolveRotationOrigin(target, this._vars.transformOrigin);
+          const values = rotationArr!.map(r => `${r} ${cx} ${cy}`).join("; ");
+          elements.push(buildAnimateTransform({ type: "rotate", values, additive: "sum", ...shared }));
+        }
+
+        if (hasScale) {
+          const sx = (scaleArr ?? scaleXArr ?? Array<number>(frameCount).fill(1)) as Array<number | string>;
+          const sy = (scaleArr ?? scaleYArr ?? Array<number>(frameCount).fill(1)) as Array<number | string>;
+          const values = sx.map((s, i) => `${s} ${sy[i]}`).join("; ");
+          elements.push(buildAnimateTransform({ type: "scale", values, additive: "sum", ...shared }));
+        }
+
+        if (hasSkewX) {
+          elements.push(buildAnimateTransform({ type: "skewX", values: skewXArr!.join("; "), additive: "sum", ...shared }));
+        }
+
+        if (hasSkewY) {
+          elements.push(buildAnimateTransform({ type: "skewY", values: skewYArr!.join("; "), additive: "sum", ...shared }));
+        }
+      }
+
+      for (const [attr, values] of entries) {
+        if (SMILTween._KF_TRANSFORM_KEYS.has(attr)) continue;
+        originals[attr] = target.getAttribute(attr);
+        elements.push(buildAnimate({ attributeName: attr, values: values.join("; "), ...shared }));
+      }
+
+      this._originalValues.set(target, originals);
+      injectInto(target, ...elements);
+      this._elements.push(...elements);
+    }
+
+    this._initialized = true;
+  };
+
+  /**
+   * Percentage object form: `{ "0%": { opacity: 0 }, "100%": { opacity: 1 } }`
+   * Keys are time percentages; values are TweenVars objects. keyTimes reflect the percentages.
+   * Missing properties at a stop carry forward from the previous stop (or default to 0).
+   */
+  private _buildPercentageKeyframes = (kf: Record<string, TweenVars>): void => {
+    const stops = Object.entries(kf)
+      .map(([k, v]) => ({ pct: parseFloat(k) / 100, vars: v }))
+      .sort((a, b) => a.pct - b.pct);
+
+    if (stops.length < 2) return;
+
+    const keyTimesStr = stops.map(s => roundToFloat(s.pct, 6)).join("; ");
+
+    // Pre-route each stop once.
+    const routedStops = stops.map(({ pct, vars }) => ({ pct, ...routeProperties(vars) }));
+
+    // Collect all property names across all stops.
+    const allTransforms = new Set<string>();
+    const allDirect = new Set<string>();
+    for (const { transforms, direct } of routedStops) {
+      for (const k of Object.keys(transforms)) allTransforms.add(k);
+      for (const k of Object.keys(direct)) allDirect.add(k);
+    }
+
+    const hasTranslate = allTransforms.has("x") || allTransforms.has("y");
+    const hasRotation = allTransforms.has("rotation");
+    const hasScale = allTransforms.has("scale") || allTransforms.has("scaleX") || allTransforms.has("scaleY");
+    const hasSkewX = allTransforms.has("skewX");
+    const hasSkewY = allTransforms.has("skewY");
+    const hasTransforms = hasTranslate || hasRotation || hasScale || hasSkewX || hasSkewY;
+
+    const shared = {
+      dur: this._dur,
+      delay: this._delay || undefined,
+      repeat: this._repeat,
+      ease: this._vars.ease,
+    };
+
+    for (const target of this._targets) {
+      const originals: Record<string, string | null> = {};
+      const elements: SVGAnimationElement[] = [];
+
+      if (hasTransforms) {
+        originals["transform"] = target.getAttribute("transform");
+
+        if (hasTranslate) {
+          let lastX = 0, lastY = 0;
+          const values = routedStops.map(({ transforms }) => {
+            if ("x" in transforms) lastX = Number(transforms.x ?? 0);
+            if ("y" in transforms) lastY = Number(transforms.y ?? 0);
+            return `${lastX} ${lastY}`;
+          }).join("; ");
+          const el = buildAnimateTransform({ type: "translate", values, additive: "sum", ...shared });
+          el.setAttribute("keyTimes", keyTimesStr);
+          elements.push(el);
+        }
+
+        if (hasRotation) {
+          const { cx, cy } = resolveRotationOrigin(target, this._vars.transformOrigin);
+          let lastR = 0;
+          const values = routedStops.map(({ transforms }) => {
+            if ("rotation" in transforms) lastR = Number(transforms.rotation ?? 0);
+            return `${lastR} ${cx} ${cy}`;
+          }).join("; ");
+          const el = buildAnimateTransform({ type: "rotate", values, additive: "sum", ...shared });
+          el.setAttribute("keyTimes", keyTimesStr);
+          elements.push(el);
+        }
+
+        if (hasScale) {
+          let lastSx = 1, lastSy = 1;
+          const values = routedStops.map(({ transforms }) => {
+            const sx = transforms.scale ?? transforms.scaleX;
+            const sy = transforms.scale ?? transforms.scaleY;
+            if (sx !== undefined) lastSx = Number(sx);
+            if (sy !== undefined) lastSy = Number(sy);
+            return `${lastSx} ${lastSy}`;
+          }).join("; ");
+          const el = buildAnimateTransform({ type: "scale", values, additive: "sum", ...shared });
+          el.setAttribute("keyTimes", keyTimesStr);
+          elements.push(el);
+        }
+
+        if (hasSkewX) {
+          let lastV = 0;
+          const values = routedStops.map(({ transforms }) => {
+            if ("skewX" in transforms) lastV = Number(transforms.skewX ?? 0);
+            return String(lastV);
+          }).join("; ");
+          const el = buildAnimateTransform({ type: "skewX", values, additive: "sum", ...shared });
+          el.setAttribute("keyTimes", keyTimesStr);
+          elements.push(el);
+        }
+
+        if (hasSkewY) {
+          let lastV = 0;
+          const values = routedStops.map(({ transforms }) => {
+            if ("skewY" in transforms) lastV = Number(transforms.skewY ?? 0);
+            return String(lastV);
+          }).join("; ");
+          const el = buildAnimateTransform({ type: "skewY", values, additive: "sum", ...shared });
+          el.setAttribute("keyTimes", keyTimesStr);
+          elements.push(el);
+        }
+      }
+
+      for (const attr of allDirect) {
+        originals[attr] = target.getAttribute(attr);
+        let lastVal = "";
+        const values = routedStops.map(({ direct }) => {
+          if (attr in direct && direct[attr] !== undefined) lastVal = String(direct[attr]);
+          return lastVal;
+        }).join("; ");
+        const el = buildAnimate({ attributeName: attr, values, ...shared });
+        el.setAttribute("keyTimes", keyTimesStr);
+        elements.push(el);
+      }
+
+      this._originalValues.set(target, originals);
+      injectInto(target, ...elements);
+      this._elements.push(...elements);
+    }
+
+    this._initialized = true;
   };
 
   // ===== Stagger + repeat synchronization =====

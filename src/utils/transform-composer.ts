@@ -9,7 +9,7 @@ type TransformType = "translate" | "rotate" | "scale" | "skewX" | "skewY";
  * Resolves the rotation center `(cx, cy)` in the parent's coordinate space.
  * Priority: parsed `transformOrigin` string → `getBBox()` center → `(0, 0)` fallback.
  */
-const resolveRotationOrigin = (
+export const resolveRotationOrigin = (
   el: Element,
   transformOrigin?: string,
 ): { cx: number; cy: number } => {

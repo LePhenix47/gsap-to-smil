@@ -50,6 +50,16 @@ export type TweenVars = {
   /** Render start values immediately on creation. Default `true` for `from()` / `fromTo()`. */
   immediateRender?: boolean;
 
+  /**
+   * Multi-step animation within a single tween. Three forms:
+   * - Object array: `[{ x: 100, duration: 0.5 }, { opacity: 0, duration: 1 }]` — sequential steps
+   * - Percentage object: `{ "0%": { opacity: 0 }, "100%": { opacity: 1 } }` — explicit time positions
+   * - Property arrays: `{ x: [0, 100, 50], opacity: [1, 0.5, 1] }` — values distributed evenly
+   *
+   * Mutually exclusive with `stagger` — if both are set, keyframes are dropped with a warning.
+   */
+  keyframes?: TweenVars[] | Record<string, TweenVars | Array<number | string>>;
+
   /** Animate SVG presentation attributes directly (maps to `<animate attributeName="...">`). */
   attr?: AttrVars;
 
