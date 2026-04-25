@@ -44,6 +44,46 @@
     // 6. stagger — dots pop up one by one
     gsap.to(".g-stagger", { y: -40, duration: 0.5, repeat: -1, stagger: 0.12, ease: "power1.out" });
     smil.to(".s-stagger", { y: -40, duration: 0.5, repeat: -1, stagger: 0.12, ease: "power1.out" });
+
+    // 7. timeline() — three circles fade in sequentially
+    const gTl = gsap.timeline();
+    gTl.to("#g-tl-a", { opacity: 1, duration: 0.6, ease: "power2.out" });
+    gTl.to("#g-tl-b", { opacity: 1, duration: 0.6, ease: "power2.out" });
+    gTl.to("#g-tl-c", { opacity: 1, duration: 0.6, ease: "power2.out" });
+
+    const sTl = smil.timeline();
+    sTl.to("#s-tl-a", { opacity: 1, duration: 0.6, ease: "power2.out" });
+    sTl.to("#s-tl-b", { opacity: 1, duration: 0.6, ease: "power2.out" });
+    sTl.to("#s-tl-c", { opacity: 1, duration: 0.6, ease: "power2.out" });
+
+    // 8. keyframes — property-array form (dot traces a square path)
+    gsap.to("#g-kf", {
+      keyframes: { x: [0, 120, 120, 0, 0], y: [0, 0, 60, 60, 0] },
+      duration: 2,
+      ease: "power1.inOut",
+    });
+    smil.to("#s-kf", {
+      keyframes: { x: [0, 120, 120, 0, 0], y: [0, 0, 60, 60, 0] },
+      duration: 2,
+      ease: "power1.inOut",
+    });
+
+    // 9. timeline() + keyframes — first dot moves right, then second traces a triangle
+    const gTl2 = gsap.timeline();
+    gTl2.to("#g-tlkf-a", { x: 100, duration: 0.7, ease: "sine.inOut" });
+    gTl2.to("#g-tlkf-b", {
+      keyframes: { x: [0, 100, 0], y: [0, 50, 0] },
+      duration: 1,
+      ease: "power1.inOut",
+    }, ">");
+
+    const sTl2 = smil.timeline();
+    sTl2.to("#s-tlkf-a", { x: 100, duration: 0.7, ease: "sine.inOut" });
+    sTl2.to("#s-tlkf-b", {
+      keyframes: { x: [0, 100, 0], y: [0, 50, 0] },
+      duration: 1,
+      ease: "power1.inOut",
+    }, ">");
   </script>
 
   <style>
@@ -294,6 +334,69 @@
           <circle class="s-stagger" cx="150" cy="70" r="14" fill="#38bdf8" />
           <circle class="s-stagger" cx="210" cy="70" r="14" fill="#38bdf8" />
           <circle class="s-stagger" cx="250" cy="70" r="14" fill="#38bdf8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 7. timeline() -->
+  <section>
+    <h3>timeline() — sequential fade-in</h3>
+    <div class="pair">
+      <figure class="test test-gsap">
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap" width="240" height="70" xmlns="http://www.w3.org/2000/svg">
+          <circle id="g-tl-a" cx="40" cy="35" r="18" fill="#22d3ee" opacity="0" />
+          <circle id="g-tl-b" cx="120" cy="35" r="18" fill="#22d3ee" opacity="0" />
+          <circle id="g-tl-c" cx="200" cy="35" r="18" fill="#22d3ee" opacity="0" />
+        </svg>
+      </figure>
+      <figure class="test test-smil">
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil" width="240" height="70" xmlns="http://www.w3.org/2000/svg">
+          <circle id="s-tl-a" cx="40" cy="35" r="18" fill="#22d3ee" opacity="0" />
+          <circle id="s-tl-b" cx="120" cy="35" r="18" fill="#22d3ee" opacity="0" />
+          <circle id="s-tl-c" cx="200" cy="35" r="18" fill="#22d3ee" opacity="0" />
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 8. keyframes — property-array form -->
+  <section>
+    <h3>keyframes — property-array form (square path)</h3>
+    <div class="pair">
+      <figure class="test test-gsap">
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap" width="170" height="110" xmlns="http://www.w3.org/2000/svg">
+          <circle id="g-kf" cx="20" cy="20" r="14" fill="#f59e0b" />
+        </svg>
+      </figure>
+      <figure class="test test-smil">
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil" width="170" height="110" xmlns="http://www.w3.org/2000/svg">
+          <circle id="s-kf" cx="20" cy="20" r="14" fill="#f59e0b" />
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 9. timeline() + keyframes -->
+  <section>
+    <h3>timeline() + keyframes — sequential chain then triangle trace</h3>
+    <div class="pair">
+      <figure class="test test-gsap">
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap" width="160" height="160" xmlns="http://www.w3.org/2000/svg">
+          <circle id="g-tlkf-a" cx="20" cy="30" r="14" fill="#a3e635" />
+          <circle id="g-tlkf-b" cx="20" cy="100" r="14" fill="#fb7185" />
+        </svg>
+      </figure>
+      <figure class="test test-smil">
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil" width="160" height="160" xmlns="http://www.w3.org/2000/svg">
+          <circle id="s-tlkf-a" cx="20" cy="30" r="14" fill="#a3e635" />
+          <circle id="s-tlkf-b" cx="20" cy="100" r="14" fill="#fb7185" />
         </svg>
       </figure>
     </div>
