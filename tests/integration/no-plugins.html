@@ -24,6 +24,8 @@
     // ex: https://codepen.io/BlogFire/pen/rNEoPVR
     // ex: https://codepen.io/snorkltv/pen/wvvzGEX
 
+    // ! There's a problem with the easings, they're slightly different between the two
+
     // 1. to() — translate
     gsap.to("#g-translate", { x: 210, duration: 1.2, repeat: -1, ease: "power1.inOut" });
     smil.to("#s-translate", { x: 210, duration: 1.2, repeat: -1, ease: "power1.inOut" });
@@ -34,6 +36,7 @@
 
     // 3. to() — rotation (continuous 360, no easing)
     gsap.to("#g-rotation", { rotation: 360, duration: 2, repeat: -1, ease: "none" });
+    // ! Issue: transform origin ain't referring to the element, but the parent container
     smil.to("#s-rotation", { rotation: 360, duration: 2, repeat: -1, ease: "none" });
 
     // 4. from() — dot slides in from x=-110 to its natural center position
