@@ -39,7 +39,7 @@ describe("transform-composer", () => {
       expect(result[0].getAttribute("to")).toBe("90 0 0");
     });
 
-    it("HAPPY PATH: transformOrigin as pixel string is used as rotation center", () => {
+    it("HAPPY PATH: transformOrigin as pixel string offsets by bbox position — passes through as-is when element is unrendered (bbox zero in happy-dom)", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -50,6 +50,8 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
+      // happy-dom getBBox() → {x:0,y:0,...} so offset+px = 0+px = px.
+      // In a real browser with the element at (bx,by), cx would be bx+40, cy would be by+60.
       expect(result).toHaveLength(1);
       expect(result[0].getAttribute("from")).toBe("0 40 60");
       expect(result[0].getAttribute("to")).toBe("180 40 60");
@@ -226,7 +228,7 @@ describe("transform-composer", () => {
       expect(result[0].getAttribute("to")).toBe("0 30");
     });
 
-    it("EDGE CASE: transformOrigin with % resolves to 0 when element has no rendered dimensions (getBBox returns zeros)", () => {
+    it("EDGE CASE: transformOrigin with % resolves to 0 when element is unrendered — happy-dom getBBox returns zeros so offset+pct*dim = 0", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -236,7 +238,8 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      // happy-dom getBBox() returns {x:0, y:0, width:0, height:0} → 50% * 0 = 0
+      // happy-dom getBBox() → {x:0,y:0,width:0,height:0} → cx = 0+0.5*0 = 0, cy = 0+0.5*0 = 0.
+      // In a real browser the element center would be used. Visual coverage: no-plugins.html.
       expect(result[0].getAttribute("from")).toBe("0 0 0");
       expect(result[0].getAttribute("to")).toBe("90 0 0");
     });
@@ -263,7 +266,12 @@ describe("transform-composer", () => {
   describe("resolveRotationOrigin", () => {
     // ===== HAPPY PATHS =====
 
-    it("HAPPY PATH: two pixel values → exact {cx, cy}", () => {
+    // NOTE: happy-dom's getBBox() always returns {x:0,y:0,width:0,height:0} regardless of
+    // element attributes or DOM attachment. All tests here operate on unrendered elements,
+    // so offset+px = 0+px = px. Real bbox-aware behavior (cx = bbox.x + px) is exercised
+    // visually in tests/integration/no-plugins.html.
+
+    it("HAPPY PATH: two pixel values — passes through as-is when bbox is zero (unrendered element)", () => {
       const result = resolveRotationOrigin(makeSvgEl(), "40 60");
 
       expect(result).toEqual({ cx: 40, cy: 60 });
@@ -275,14 +283,13 @@ describe("transform-composer", () => {
       expect(result).toEqual({ cx: 50, cy: 50 });
     });
 
-    it("HAPPY PATH: negative pixel values are accepted as-is", () => {
+    it("HAPPY PATH: negative pixel values are accepted", () => {
       const result = resolveRotationOrigin(makeSvgEl(), "-10 -20");
 
       expect(result).toEqual({ cx: -10, cy: -20 });
     });
 
-    it("HAPPY PATH: no transformOrigin → getBBoxCenter; returns {0,0} when getBBox reports empty box", () => {
-      // happy-dom getBBox() returns {x:0, y:0, width:0, height:0} for unrendered elements
+    it("HAPPY PATH: no transformOrigin → getBBoxCenter; returns {0,0} for unrendered element", () => {
       const result = resolveRotationOrigin(makeSvgEl());
 
       expect(result).toEqual({ cx: 0, cy: 0 });
@@ -290,10 +297,10 @@ describe("transform-composer", () => {
 
     // ===== EDGE CASES =====
 
-    it("EDGE CASE: % transformOrigin resolves to 0 when getBBox dimensions are zero (happy-dom)", () => {
+    it("EDGE CASE: % transformOrigin resolves to 0 for unrendered element (bbox dimensions are zero)", () => {
       const result = resolveRotationOrigin(makeSvgEl(), "50% 50%");
 
-      // 50% * 0 = 0
+      // cx = 0 + 0.5*0 = 0, cy = 0 + 0.5*0 = 0
       expect(result).toEqual({ cx: 0, cy: 0 });
     });
 
