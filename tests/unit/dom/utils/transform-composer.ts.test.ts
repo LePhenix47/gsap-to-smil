@@ -57,7 +57,7 @@ describe("transform-composer", () => {
       expect(result[0].getAttribute("to")).toBe("180 40 60");
     });
 
-    it("HAPPY PATH: scale → one scale element with uniform from/to", () => {
+    it("HAPPY PATH: scale → compensating translate (no-op for unrendered bbox=0) + scale element", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -66,13 +66,18 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].getAttribute("type")).toBe("scale");
-      expect(result[0].getAttribute("from")).toBe("1 1");
-      expect(result[0].getAttribute("to")).toBe("2 2");
+      // Scale always emits a translate for origin compensation. With bbox=(0,0) origin=(0,0)
+      // the compensation is 0*(1-sx)=0, so translate is a no-op "0 0"→"0 0".
+      expect(result).toHaveLength(2);
+      expect(result[0].getAttribute("type")).toBe("translate");
+      expect(result[0].getAttribute("from")).toBe("0 0");
+      expect(result[0].getAttribute("to")).toBe("0 0");
+      expect(result[1].getAttribute("type")).toBe("scale");
+      expect(result[1].getAttribute("from")).toBe("1 1");
+      expect(result[1].getAttribute("to")).toBe("2 2");
     });
 
-    it("HAPPY PATH: scaleX + scaleY → separate axis values in from/to", () => {
+    it("HAPPY PATH: scaleX + scaleY → compensating translate (no-op for unrendered bbox=0) + scale element", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -82,10 +87,13 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].getAttribute("type")).toBe("scale");
-      expect(result[0].getAttribute("from")).toBe("1 1");
-      expect(result[0].getAttribute("to")).toBe("3 0.5");
+      expect(result).toHaveLength(2);
+      expect(result[0].getAttribute("type")).toBe("translate");
+      expect(result[0].getAttribute("from")).toBe("0 0");
+      expect(result[0].getAttribute("to")).toBe("0 0");
+      expect(result[1].getAttribute("type")).toBe("scale");
+      expect(result[1].getAttribute("from")).toBe("1 1");
+      expect(result[1].getAttribute("to")).toBe("3 0.5");
     });
 
     it("HAPPY PATH: skewX → one skewX element", () => {
