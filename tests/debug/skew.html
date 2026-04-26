@@ -41,71 +41,143 @@
   <label><input type="checkbox" id="diff"> Diff</label>
 </header>
 
-<!-- 1 -->
+<!-- rect -->
 <section>
-  <h3>1 — skewX: 30</h3>
+  <h3>rect — skewX: 30</h3>
   <div class="pair">
     <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 600 300" width="400" height="200">
-        <rect id="g1" x="200" y="75" width="200" height="150" fill="steelblue" opacity="0.8"/>
+      <svg viewBox="0 0 500 200" width="350" height="140">
+        <rect id="g-rect" x="150" y="25" width="200" height="150" fill="steelblue" opacity="0.8"/>
       </svg>
     </figure>
     <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 600 300" width="400" height="200">
-        <rect id="s1" x="200" y="75" width="200" height="150" fill="steelblue" opacity="0.8"/>
+      <svg viewBox="0 0 500 200" width="350" height="140">
+        <rect id="s-rect" x="150" y="25" width="200" height="150" fill="steelblue" opacity="0.8"/>
       </svg>
     </figure>
   </div>
 </section>
 
-<!-- 2 -->
+<!-- circle -->
 <section>
-  <h3>2 — skewY: 20</h3>
+  <h3>circle — skewX: 30</h3>
   <div class="pair">
     <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 600 400" width="400" height="267">
-        <rect id="g2" x="200" y="100" width="200" height="150" fill="coral" opacity="0.8"/>
+      <svg viewBox="0 0 500 200" width="350" height="140">
+        <circle id="g-circle" cx="250" cy="100" r="70" fill="coral" opacity="0.8"/>
       </svg>
     </figure>
     <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 600 400" width="400" height="267">
-        <rect id="s2" x="200" y="100" width="200" height="150" fill="coral" opacity="0.8"/>
+      <svg viewBox="0 0 500 200" width="350" height="140">
+        <circle id="s-circle" cx="250" cy="100" r="70" fill="coral" opacity="0.8"/>
       </svg>
     </figure>
   </div>
 </section>
 
-<!-- 3 -->
+<!-- ellipse -->
 <section>
-  <h3>3 — skewX: 20 + skewY: 10</h3>
+  <h3>ellipse — skewY: 20</h3>
   <div class="pair">
     <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 600 400" width="400" height="267">
-        <rect id="g3" x="200" y="100" width="200" height="150" fill="mediumseagreen" opacity="0.8"/>
+      <svg viewBox="0 0 500 300" width="350" height="210">
+        <ellipse id="g-ellipse" cx="250" cy="150" rx="120" ry="60" fill="mediumseagreen" opacity="0.8"/>
       </svg>
     </figure>
     <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 600 400" width="400" height="267">
-        <rect id="s3" x="200" y="100" width="200" height="150" fill="mediumseagreen" opacity="0.8"/>
+      <svg viewBox="0 0 500 300" width="350" height="210">
+        <ellipse id="s-ellipse" cx="250" cy="150" rx="120" ry="60" fill="mediumseagreen" opacity="0.8"/>
       </svg>
     </figure>
   </div>
 </section>
 
-<!-- 4 -->
+<!-- text -->
 <section>
-  <h3>4 — skewX: 30 + scaleX: 2 · transformOrigin: "50% 50%"</h3>
+  <h3>text — skewX: 25</h3>
   <div class="pair">
     <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 800 300" width="400" height="150">
-        <line x1="400" y1="0" x2="400" y2="300" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <rect id="g4" x="300" y="75" width="200" height="150" fill="orchid" opacity="0.8"/>
+      <svg viewBox="0 0 500 100" width="350" height="70">
+        <text id="g-text" x="250" y="70" text-anchor="middle" font-size="40" fill="orchid" opacity="0.9">Hello</text>
       </svg>
     </figure>
     <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 800 300" width="400" height="150">
-        <line x1="400" y1="0" x2="400" y2="300" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <rect id="s4" x="300" y="75" width="200" height="150" fill="orchid" opacity="0.8"/>
+      <svg viewBox="0 0 500 100" width="350" height="70">
+        <text id="s-text" x="250" y="70" text-anchor="middle" font-size="40" fill="orchid" opacity="0.9">Hello</text>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- path -->
+<section>
+  <h3>path — skewX: 20 + skewY: 10</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 500 300" width="350" height="210">
+        <path id="g-path" d="M250,40 L350,200 L150,200 Z" fill="gold" opacity="0.8"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 500 300" width="350" height="210">
+        <path id="s-path" d="M250,40 L350,200 L150,200 Z" fill="gold" opacity="0.8"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- polygon -->
+<section>
+  <h3>polygon — skewX: 30</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 500 200" width="350" height="140">
+        <polygon id="g-polygon" points="250,20 350,180 150,180" fill="tomato" opacity="0.8"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 500 200" width="350" height="140">
+        <polygon id="s-polygon" points="250,20 350,180 150,180" fill="tomato" opacity="0.8"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- line -->
+<section>
+  <h3>line — skewY: 20</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 500 200" width="350" height="140">
+        <line id="g-line" x1="100" y1="100" x2="400" y2="100" stroke="cyan" stroke-width="6" opacity="0.8"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 500 200" width="350" height="140">
+        <line id="s-line" x1="100" y1="100" x2="400" y2="100" stroke="cyan" stroke-width="6" opacity="0.8"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- g (group) -->
+<section>
+  <h3>g (group) — skewX: 25</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 500 200" width="350" height="140">
+        <g id="g-group">
+          <rect x="150" y="25" width="80" height="80" fill="plum" opacity="0.8"/>
+          <rect x="250" y="25" width="80" height="80" fill="lightblue" opacity="0.8"/>
+        </g>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 500 200" width="350" height="140">
+        <g id="s-group">
+          <rect x="150" y="25" width="80" height="80" fill="plum" opacity="0.8"/>
+          <rect x="250" y="25" width="80" height="80" fill="lightblue" opacity="0.8"/>
+        </g>
       </svg>
     </figure>
   </div>
@@ -117,17 +189,29 @@
 
   const opts = { duration: 1.5, repeat: -1, yoyo: true, ease: "power1.inOut" };
 
-  gsap.to("#g1", { skewX: 30, ...opts });
-  smil.to("#s1", { skewX: 30, ...opts });
+  gsap.to("#g-rect",    { skewX: 30,              ...opts });
+  smil.to("#s-rect",    { skewX: 30,              ...opts });
 
-  gsap.to("#g2", { skewY: 20, ...opts });
-  smil.to("#s2", { skewY: 20, ...opts });
+  gsap.to("#g-circle",  { skewX: 30,              ...opts });
+  smil.to("#s-circle",  { skewX: 30,              ...opts });
 
-  gsap.to("#g3", { skewX: 20, skewY: 10, ...opts });
-  smil.to("#s3", { skewX: 20, skewY: 10, ...opts });
+  gsap.to("#g-ellipse", { skewY: 20,              ...opts });
+  smil.to("#s-ellipse", { skewY: 20,              ...opts });
 
-  gsap.to("#g4", { skewX: 30, scaleX: 2, transformOrigin: "50% 50%", ...opts });
-  smil.to("#s4", { skewX: 30, scaleX: 2, transformOrigin: "50% 50%", ...opts });
+  gsap.to("#g-text",    { skewX: 25,              ...opts });
+  smil.to("#s-text",    { skewX: 25,              ...opts });
+
+  gsap.to("#g-path",    { skewX: 20, skewY: 10,  ...opts });
+  smil.to("#s-path",    { skewX: 20, skewY: 10,  ...opts });
+
+  gsap.to("#g-polygon", { skewX: 30,              ...opts });
+  smil.to("#s-polygon", { skewX: 30,              ...opts });
+
+  gsap.to("#g-line",    { skewY: 20,              ...opts });
+  smil.to("#s-line",    { skewY: 20,              ...opts });
+
+  gsap.to("#g-group",   { skewX: 25,              ...opts });
+  smil.to("#s-group",   { skewX: 25,              ...opts });
 </script>
 
 </body>

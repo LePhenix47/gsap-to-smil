@@ -219,6 +219,10 @@ export const composeTransforms = (opts: ComposeOptions): SVGAnimateTransformElem
     const fromSy = Number(from.scale ?? from.scaleY ?? 1);
     const toSx = Number(to.scale ?? to.scaleX ?? 1);
     const toSy = Number(to.scale ?? to.scaleY ?? 1);
+    const fromTanSkewX = Math.tan(Number(from.skewX ?? 0) * Math.PI / 180);
+    const fromTanSkewY = Math.tan(Number(from.skewY ?? 0) * Math.PI / 180);
+    const toTanSkewX = Math.tan(Number(to.skewX ?? 0) * Math.PI / 180);
+    const toTanSkewY = Math.tan(Number(to.skewY ?? 0) * Math.PI / 180);
     const [baseFx, baseFy] = translatePair
       ? translatePair.from.split(" ").map(Number)
       : [Number(from.x ?? 0), Number(from.y ?? 0)];
@@ -227,8 +231,14 @@ export const composeTransforms = (opts: ComposeOptions): SVGAnimateTransformElem
       : [Number(to.x ?? 0), Number(to.y ?? 0)];
     translatePair = {
       type: "translate",
-      from: translateStr(baseFx + originX * (1 - fromSx), baseFy + originY * (1 - fromSy)),
-      to: translateStr(baseTx + originX * (1 - toSx), baseTy + originY * (1 - toSy)),
+      from: translateStr(
+        baseFx + originX * (1 - fromSx) - fromSx * originY * fromTanSkewX,
+        baseFy + originY * (1 - fromSy) - fromSy * originX * fromTanSkewY,
+      ),
+      to: translateStr(
+        baseTx + originX * (1 - toSx) - toSx * originY * toTanSkewX,
+        baseTy + originY * (1 - toSy) - toSy * originX * toTanSkewY,
+      ),
     };
   }
 

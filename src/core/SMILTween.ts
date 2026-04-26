@@ -490,12 +490,26 @@ export class SMILTween extends Animation {
       if (hasTransforms) {
         originals["transform"] = target.getAttribute("transform");
 
-        if (hasTranslate) {
-          let lastX = 0, lastY = 0;
+        const { cx: originX, cy: originY } = hasScale
+          ? resolveRotationOrigin(target, this._vars.transformOrigin)
+          : { cx: 0, cy: 0 };
+
+        if (hasTranslate || hasScale) {
+          let lastX = 0, lastY = 0, lastSx = 1, lastSy = 1, lastSkewX = 0, lastSkewY = 0;
           const values = routedStops.map(({ transforms }) => {
             if ("x" in transforms) lastX = Number(transforms.x ?? 0);
             if ("y" in transforms) lastY = Number(transforms.y ?? 0);
-            return `${lastX} ${lastY}`;
+            const sx = transforms.scale ?? transforms.scaleX;
+            const sy = transforms.scale ?? transforms.scaleY;
+            if (sx !== undefined) lastSx = Number(sx);
+            if (sy !== undefined) lastSy = Number(sy);
+            if ("skewX" in transforms) lastSkewX = Number(transforms.skewX ?? 0);
+            if ("skewY" in transforms) lastSkewY = Number(transforms.skewY ?? 0);
+            const tanSkewX = Math.tan(lastSkewX * Math.PI / 180);
+            const tanSkewY = Math.tan(lastSkewY * Math.PI / 180);
+            const tx = lastX + originX * (1 - lastSx) - lastSx * originY * tanSkewX;
+            const ty = lastY + originY * (1 - lastSy) - lastSy * originX * tanSkewY;
+            return `${tx} ${ty}`;
           }).join("; ");
           const el = buildAnimateTransform({ type: "translate", values, additive: "sum", ...shared });
           el.setAttribute("keyTimes", keyTimesStr);

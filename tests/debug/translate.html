@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Debug — x / y / xPercent / yPercent</title>
+  <title>Debug — translate (x / y)</title>
   <script type="importmap">
     { "imports": { "gsap": "https://cdn.jsdelivr.net/npm/gsap@3/+esm" } }
   </script>
@@ -37,73 +37,147 @@
 <body>
 
 <header>
-  <h1>translate — x / y / xPercent / yPercent</h1>
+  <h1>translate — x / y</h1>
   <label><input type="checkbox" id="diff"> Diff</label>
 </header>
 
-<!-- 1 -->
+<!-- rect -->
 <section>
-  <h3>1 — x: 200</h3>
+  <h3>rect — x: 150</h3>
   <div class="pair">
     <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 800 200" width="400" height="100">
-        <rect id="g1" x="100" y="50" width="100" height="100" fill="steelblue" opacity="0.8"/>
+      <svg viewBox="0 0 500 150" width="400" height="120">
+        <rect id="g-rect" x="50" y="25" width="100" height="100" fill="steelblue" opacity="0.8"/>
       </svg>
     </figure>
     <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 800 200" width="400" height="100">
-        <rect id="s1" x="100" y="50" width="100" height="100" fill="steelblue" opacity="0.8"/>
+      <svg viewBox="0 0 500 150" width="400" height="120">
+        <rect id="s-rect" x="50" y="25" width="100" height="100" fill="steelblue" opacity="0.8"/>
       </svg>
     </figure>
   </div>
 </section>
 
-<!-- 2 -->
+<!-- circle -->
 <section>
-  <h3>2 — y: 100</h3>
+  <h3>circle — x: 150</h3>
   <div class="pair">
     <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 800 400" width="400" height="200">
-        <rect id="g2" x="100" y="50" width="100" height="100" fill="coral" opacity="0.8"/>
+      <svg viewBox="0 0 500 150" width="400" height="120">
+        <circle id="g-circle" cx="100" cy="75" r="50" fill="coral" opacity="0.8"/>
       </svg>
     </figure>
     <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 800 400" width="400" height="200">
-        <rect id="s2" x="100" y="50" width="100" height="100" fill="coral" opacity="0.8"/>
+      <svg viewBox="0 0 500 150" width="400" height="120">
+        <circle id="s-circle" cx="100" cy="75" r="50" fill="coral" opacity="0.8"/>
       </svg>
     </figure>
   </div>
 </section>
 
-<!-- 3 -->
+<!-- ellipse -->
 <section>
-  <h3>3 — x: 300 + y: 150</h3>
+  <h3>ellipse — x: 100, y: 40</h3>
   <div class="pair">
     <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 800 400" width="400" height="200">
-        <rect id="g3" x="100" y="50" width="100" height="100" fill="mediumseagreen" opacity="0.8"/>
+      <svg viewBox="0 0 500 200" width="400" height="160">
+        <ellipse id="g-ellipse" cx="100" cy="75" rx="80" ry="40" fill="mediumseagreen" opacity="0.8"/>
       </svg>
     </figure>
     <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 800 400" width="400" height="200">
-        <rect id="s3" x="100" y="50" width="100" height="100" fill="mediumseagreen" opacity="0.8"/>
+      <svg viewBox="0 0 500 200" width="400" height="160">
+        <ellipse id="s-ellipse" cx="100" cy="75" rx="80" ry="40" fill="mediumseagreen" opacity="0.8"/>
       </svg>
     </figure>
   </div>
 </section>
 
-<!-- 4 -->
+<!-- text -->
 <section>
-  <h3>4 — fromTo: x 0→400</h3>
+  <h3>text — x: 150</h3>
   <div class="pair">
     <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 800 200" width="400" height="100">
-        <rect id="g4" x="100" y="50" width="100" height="100" fill="orchid" opacity="0.8"/>
+      <svg viewBox="0 0 500 100" width="400" height="80">
+        <text id="g-text" x="50" y="65" font-size="36" fill="orchid" opacity="0.9">Hello</text>
       </svg>
     </figure>
     <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 800 200" width="400" height="100">
-        <rect id="s4" x="100" y="50" width="100" height="100" fill="orchid" opacity="0.8"/>
+      <svg viewBox="0 0 500 100" width="400" height="80">
+        <text id="s-text" x="50" y="65" font-size="36" fill="orchid" opacity="0.9">Hello</text>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- path -->
+<section>
+  <h3>path — x: 150</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 500 150" width="400" height="120">
+        <path id="g-path" d="M100,25 L150,125 L50,125 Z" fill="gold" opacity="0.8"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 500 150" width="400" height="120">
+        <path id="s-path" d="M100,25 L150,125 L50,125 Z" fill="gold" opacity="0.8"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- polygon -->
+<section>
+  <h3>polygon — x: 150</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 500 150" width="400" height="120">
+        <polygon id="g-polygon" points="100,20 160,130 40,130" fill="tomato" opacity="0.8"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 500 150" width="400" height="120">
+        <polygon id="s-polygon" points="100,20 160,130 40,130" fill="tomato" opacity="0.8"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- line -->
+<section>
+  <h3>line — x: 150</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 500 150" width="400" height="120">
+        <line id="g-line" x1="50" y1="75" x2="150" y2="75" stroke="cyan" stroke-width="6" opacity="0.8"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 500 150" width="400" height="120">
+        <line id="s-line" x1="50" y1="75" x2="150" y2="75" stroke="cyan" stroke-width="6" opacity="0.8"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- g (group) -->
+<section>
+  <h3>g (group) — x: 150, y: 30</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 500 200" width="400" height="160">
+        <g id="g-group">
+          <rect x="30" y="30" width="60" height="60" fill="plum" opacity="0.8"/>
+          <circle cx="110" cy="60" r="30" fill="lightblue" opacity="0.8"/>
+        </g>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 500 200" width="400" height="160">
+        <g id="s-group">
+          <rect x="30" y="30" width="60" height="60" fill="plum" opacity="0.8"/>
+          <circle cx="110" cy="60" r="30" fill="lightblue" opacity="0.8"/>
+        </g>
       </svg>
     </figure>
   </div>
@@ -115,17 +189,29 @@
 
   const opts = { duration: 1.5, repeat: -1, yoyo: true, ease: "power1.inOut" };
 
-  gsap.to("#g1", { x: 200, ...opts });
-  smil.to("#s1", { x: 200, ...opts });
+  gsap.to("#g-rect",    { x: 150, ...opts });
+  smil.to("#s-rect",    { x: 150, ...opts });
 
-  gsap.to("#g2", { y: 100, ...opts });
-  smil.to("#s2", { y: 100, ...opts });
+  gsap.to("#g-circle",  { x: 150, ...opts });
+  smil.to("#s-circle",  { x: 150, ...opts });
 
-  gsap.to("#g3", { x: 300, y: 150, ...opts });
-  smil.to("#s3", { x: 300, y: 150, ...opts });
+  gsap.to("#g-ellipse", { x: 100, y: 40, ...opts });
+  smil.to("#s-ellipse", { x: 100, y: 40, ...opts });
 
-  gsap.fromTo("#g4", { x: 0 }, { x: 400, ...opts });
-  smil.fromTo("#s4", { x: 0 }, { x: 400, ...opts });
+  gsap.to("#g-text",    { x: 150, ...opts });
+  smil.to("#s-text",    { x: 150, ...opts });
+
+  gsap.to("#g-path",    { x: 150, ...opts });
+  smil.to("#s-path",    { x: 150, ...opts });
+
+  gsap.to("#g-polygon", { x: 150, ...opts });
+  smil.to("#s-polygon", { x: 150, ...opts });
+
+  gsap.to("#g-line",    { x: 150, ...opts });
+  smil.to("#s-line",    { x: 150, ...opts });
+
+  gsap.to("#g-group",   { x: 150, y: 30, ...opts });
+  smil.to("#s-group",   { x: 150, y: 30, ...opts });
 </script>
 
 </body>
