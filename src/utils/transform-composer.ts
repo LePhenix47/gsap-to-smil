@@ -27,24 +27,27 @@ const parseTransformOrigin = (
   const [rawX = "50%", rawY = rawX] = transformOrigin.trim().split(/\s+/);
 
   const resolve = (raw: string, dim: "width" | "height"): number => {
-    if (!raw.endsWith("%")) {
-      return parseFloat(raw);
-    }
+    if (!(el instanceof SVGGraphicsElement)) return 0;
 
-    const pct = parseFloat(raw) / 100;
-    if (!(el instanceof SVGGraphicsElement)) {
-      return 0;
-    }
+    let bbox: DOMRect;
     try {
-      const bbox = el.getBBox();
-      return bbox[dim === "width" ? "x" : "y"] + pct * bbox[dim];
+      bbox = el.getBBox();
     } catch {
-      // not in rendered DOM
       console.warn(
         "[gsap-to-smil] Cannot determine rotation center — element not in rendered DOM. Falling back to 0.",
       );
       return 0;
     }
+
+    const offset = dim === "width" ? bbox.x : bbox.y;
+
+    if (raw.endsWith("%")) {
+      return offset + (parseFloat(raw) / 100) * bbox[dim];
+    }
+
+    // Absolute px are relative to the element's own origin (CSS/GSAP convention),
+    // so we add the element's position in parent coordinate space.
+    return offset + parseFloat(raw);
   };
 
   return { cx: resolve(rawX, "width"), cy: resolve(rawY, "height") };
