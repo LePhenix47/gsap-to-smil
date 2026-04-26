@@ -1,5 +1,5 @@
 /// <reference lib="dom" />
-import { describe, expect, it, spyOn } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { SMILTween } from "@/core/SMILTween.ts";
 import { SVG_NS } from "@/utils/builders.ts";
 
@@ -342,21 +342,33 @@ describe("SMILTween", () => {
       expect(animT.getAttribute("dur")).toBe("2s");
     });
 
-    it("EDGE CASE: yoyo + stagger + odd total plays → warns, yoyo skipped", () => {
-      const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+    it("HAPPY PATH: yoyo + stagger + odd total plays (repeat:2 = 3 plays) → full F/B/F sequence encoded per target", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+      el1.setAttribute("opacity", "1");
+      el2.setAttribute("opacity", "1");
 
-      // GSAP repeat:N = N extra plays after the first → repeat:2 = 3 total (1+2), which is odd.
-      // Odd total plays can't be encoded as whole F+B cycles in the stagger group.
-      new SMILTween([makeEl(), makeEl()], {
+      // repeat:2 = 1 initial + 2 repeats = 3 total plays (F+B+F), which is odd.
+      new SMILTween([el1, el2], {
         opacity: 0,
         duration: 1,
         repeat: 2,
         yoyo: true,
-        stagger: 0.2,
+        stagger: 0.3,
       });
 
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("yoyo"));
-      warnSpy.mockRestore();
+      const anim1 = el1.querySelector("animate")!;
+      const anim2 = el2.querySelector("animate")!;
+
+      // repeatCount=1: all 3 plays encoded in a single SMIL cycle
+      expect(anim1.getAttribute("repeatCount")).toBe("1");
+      expect(anim2.getAttribute("repeatCount")).toBe("1");
+
+      // values encode F+B+F then hold: from; to; from; to; to (5 keyframes)
+      // 3 plays end at "to", so the hold phase also holds at "to"
+      expect(anim1.getAttribute("values")).toBe("1; 0; 1; 0; 0");
+      // el2 (last target) has a wait phase but fills exactly to groupDur → no hold
+      expect(anim2.getAttribute("values")).toBe("1; 1; 0; 1; 0");
     });
   });
 

@@ -354,6 +354,67 @@ describe("SMILTween (smoke)", () => {
       expect(anim.getAttribute("dur")).toBe("2s");
     });
 
+    it("SMOKE TEST: yoyo + stagger + even repeat — clean F/B cycles, dur and repeatCount correct", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+      el1.setAttribute("opacity", "1");
+      el2.setAttribute("opacity", "1");
+
+      // repeat:1 = 2 total plays (even) → 1 clean F+B yoyo cycle per target
+      // groupDur = 2*1 + 0.2 (maxStagger) = 2.2s
+      new SMILTween([el1, el2], {
+        opacity: 0,
+        duration: 1,
+        repeat: 1,
+        yoyo: true,
+        stagger: 0.2,
+      });
+
+      const anim1 = el1.querySelector("animate")!;
+      const anim2 = el2.querySelector("animate")!;
+
+      expect(anim1.getAttribute("dur")).toBe("2.2s");
+      expect(anim2.getAttribute("dur")).toBe("2.2s");
+      expect(anim1.getAttribute("repeatCount")).toBe("1");
+      expect(anim2.getAttribute("repeatCount")).toBe("1");
+      // el1 (no wait): from→to→from + hold at from
+      expect(anim1.getAttribute("values")).toContain("1; 0; 1");
+      // el2 (wait): from hold → from→to→from (no hold — fills exactly to groupDur)
+      expect(anim2.getAttribute("values")).toContain("1; 1; 0; 1");
+      // neither element should have raw from/to
+      expect(anim1.getAttribute("from")).toBeNull();
+      expect(anim1.getAttribute("to")).toBeNull();
+    });
+
+    it("SMOKE TEST: yoyo + stagger + odd repeat — full sequence per target, repeatCount=1", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+      el1.setAttribute("opacity", "1");
+      el2.setAttribute("opacity", "1");
+
+      // repeat:2 = 3 total plays (odd, F+B+F) → all plays in one SMIL cycle
+      // groupDur = 3*1 + 0.2 (maxStagger) = 3.2s
+      new SMILTween([el1, el2], {
+        opacity: 0,
+        duration: 1,
+        repeat: 2,
+        yoyo: true,
+        stagger: 0.2,
+      });
+
+      const anim1 = el1.querySelector("animate")!;
+      const anim2 = el2.querySelector("animate")!;
+
+      expect(anim1.getAttribute("dur")).toBe("3.2s");
+      expect(anim2.getAttribute("dur")).toBe("3.2s");
+      expect(anim1.getAttribute("repeatCount")).toBe("1");
+      expect(anim2.getAttribute("repeatCount")).toBe("1");
+      // el1 (no wait, 3 plays end at "to", then hold at "to")
+      expect(anim1.getAttribute("values")).toBe("1; 0; 1; 0; 0");
+      // el2 (wait, fills exactly to groupDur → no hold)
+      expect(anim2.getAttribute("values")).toBe("1; 1; 0; 1; 0");
+    });
+
     it("SMOKE TEST: revert() after yoyo tween restores original attributes", () => {
       const target = makeEl();
       target.setAttribute("opacity", "0.7");
