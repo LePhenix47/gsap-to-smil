@@ -110,7 +110,18 @@ export class SMILTween extends Animation {
     // all restart together. The stagger offset is encoded in values/keyTimes instead of begin.
     const hasStaggerRepeat =
       staggerDelays !== null && this._repeat !== 0 && maxStagger > 0;
-    const groupDuration = hasStaggerRepeat ? this._dur + maxStagger : this._dur;
+
+    // Yoyo doubles the active animation phase (forward + backward). For odd total plays
+    // (e.g. repeat:2 = 3 plays = F+B+F) the stagger group encoding can't represent the
+    // half-cycle cleanly, so yoyo is skipped for those and a warning is emitted.
+    const totalPlays = this._repeat === -1 ? Infinity : this._repeat + 1;
+    const yoyoInStagger =
+      this._yoyo && hasStaggerRepeat && (this._repeat === -1 || totalPlays % 2 === 0);
+
+    // When yoyo runs inside the stagger group, each cycle encodes F+B so groupDuration doubles.
+    const groupDuration = hasStaggerRepeat
+      ? (yoyoInStagger ? 2 * this._dur : this._dur) + maxStagger
+      : this._dur;
 
     for (let i = 0; i < this._targets.length; i++) {
       const target = this._targets[i]!;
@@ -137,7 +148,7 @@ export class SMILTween extends Animation {
       ];
 
       if (hasStaggerRepeat) {
-        this._applyStaggerEncoding(elements, staggerOffset, groupDuration);
+        this._applyStaggerEncoding(elements, staggerOffset, groupDuration, yoyoInStagger);
       }
 
       injectInto(target, ...elements);
@@ -145,11 +156,12 @@ export class SMILTween extends Animation {
     }
 
     if (this._yoyo) {
-      if (hasStaggerRepeat) {
-        console.warn("[gsap-to-smil] yoyo + stagger + repeat is not yet supported — yoyo ignored.");
-      } else {
+      if (hasStaggerRepeat && !yoyoInStagger) {
+        console.warn("[gsap-to-smil] yoyo + stagger + odd repeat count is not yet supported — yoyo ignored.");
+      } else if (!hasStaggerRepeat) {
         this._applyYoyoEncoding(this._elements);
       }
+      // yoyoInStagger: already woven into _applyStaggerEncoding above.
     }
 
     this._initialized = true;
@@ -565,10 +577,16 @@ export class SMILTween extends Animation {
    * Rewrites `from`/`to` on each element to `values`/`keyTimes` so all staggered targets
    * share the same `dur = groupDuration` cycle and repeat as a synchronized group.
    *
-   * For a target with stagger offset S, animation dur D, group dur G:
+   * Without yoyo, for a target with stagger offset S, animation dur D, group dur G = D + maxStagger:
    *   - [0, S]     → hold at `from`  (wait)
    *   - [S, S+D]   → animate from → to
    *   - [S+D, G]   → hold at `to`   (pad)
+   *
+   * With yoyo, G = 2D + maxStagger and a backward phase is inserted:
+   *   - [0, S]     → hold at `from`  (wait)
+   *   - [S, S+D]   → animate from → to  (forward)
+   *   - [S+D, S+2D]→ animate to → from  (backward)
+   *   - [S+2D, G]  → hold at `from` (pad)
    *
    * Elements without both `from` and `to` are skipped — they keep independent timing.
    */
@@ -576,6 +594,7 @@ export class SMILTween extends Animation {
     elements: SVGAnimationElement[],
     staggerOffset: number,
     groupDur: number,
+    yoyo = false,
   ): void => {
     for (const el of elements) {
       const fromVal = el.getAttribute("from");
@@ -583,39 +602,57 @@ export class SMILTween extends Animation {
       if (fromVal === null || toVal === null) continue;
 
       const hasWait: boolean = staggerOffset > 0;
-      const hasHold: boolean = staggerOffset + this._dur < groupDur;
-
-      // Where within the [0–1] cycle the wait phase ends and the animation begins.
       const animStartRatio: number = roundToFloat(staggerOffset / groupDur, 6);
-      // Where within the [0–1] cycle the animation ends and the hold phase begins.
-      const animEndRatio: number = hasHold
-        ? roundToFloat((staggerOffset + this._dur) / groupDur, 6)
-        : 1;
-
-      /** Keyframe states; serialized into the SMIL `values` attribute. */
-      const valuesArr: string[] = [fromVal];
-      /** Normalized [0–1] time positions for each keyframe; written to SMIL `keyTimes`. */
-      const keyTimesArr: number[] = [0];
-
-      if (hasWait) {
-        keyTimesArr.push(animStartRatio);
-        valuesArr.push(fromVal);
-      }
-
-      keyTimesArr.push(animEndRatio);
-      valuesArr.push(toVal);
-
-      if (hasHold) {
-        keyTimesArr.push(1);
-        valuesArr.push(toVal);
-      }
 
       el.removeAttribute("from");
       el.removeAttribute("to");
-      el.setAttribute("values", valuesArr.join("; "));
-      el.setAttribute("keyTimes", keyTimesArr.join("; "));
 
-      this._applyStaggerEasing(el, this._vars.ease, hasWait, hasHold);
+      if (yoyo) {
+        // groupDur = 2*_dur + maxStagger; last target (S=maxStagger) has no hold phase.
+        const animMidRatio = roundToFloat((staggerOffset + this._dur) / groupDur, 6);
+        const rawEnd = (staggerOffset + this._dur * 2) / groupDur;
+        const hasHold = rawEnd < 1 - 1e-9;
+        const yoyoEndRatio = hasHold ? roundToFloat(rawEnd, 6) : 1;
+
+        const valuesArr: string[] = [fromVal];
+        const keyTimesArr: number[] = [0];
+
+        if (hasWait) { valuesArr.push(fromVal); keyTimesArr.push(animStartRatio); }
+        valuesArr.push(toVal);   keyTimesArr.push(animMidRatio);
+        valuesArr.push(fromVal); keyTimesArr.push(yoyoEndRatio);
+        if (hasHold) { valuesArr.push(fromVal); keyTimesArr.push(1); }
+
+        el.setAttribute("values", valuesArr.join("; "));
+        el.setAttribute("keyTimes", keyTimesArr.join("; "));
+
+        // One SMIL cycle encodes F+B, so halve repeatCount.
+        const rc = el.getAttribute("repeatCount");
+        if (rc !== null && rc !== "indefinite") {
+          el.setAttribute("repeatCount", String(parseInt(rc) / 2));
+        }
+
+        this._applyStaggerEasing(el, this._vars.ease, hasWait, hasHold, true);
+      } else {
+        const hasHold: boolean = staggerOffset + this._dur < groupDur;
+        // Where within the [0–1] cycle the animation ends and the hold phase begins.
+        const animEndRatio: number = hasHold
+          ? roundToFloat((staggerOffset + this._dur) / groupDur, 6)
+          : 1;
+
+        /** Keyframe states; serialized into the SMIL `values` attribute. */
+        const valuesArr: string[] = [fromVal];
+        /** Normalized [0–1] time positions for each keyframe; written to SMIL `keyTimes`. */
+        const keyTimesArr: number[] = [0];
+
+        if (hasWait) { keyTimesArr.push(animStartRatio); valuesArr.push(fromVal); }
+        keyTimesArr.push(animEndRatio); valuesArr.push(toVal);
+        if (hasHold) { keyTimesArr.push(1); valuesArr.push(toVal); }
+
+        el.setAttribute("values", valuesArr.join("; "));
+        el.setAttribute("keyTimes", keyTimesArr.join("; "));
+
+        this._applyStaggerEasing(el, this._vars.ease, hasWait, hasHold);
+      }
     }
   };
 
@@ -629,6 +666,7 @@ export class SMILTween extends Animation {
     ease: TweenVars["ease"],
     hasWait: boolean,
     hasHold: boolean,
+    hasYoyo = false,
   ): void => {
     if (!ease || ease === "none" || ease === "linear") {
       el.setAttribute("calcMode", "linear");
@@ -643,12 +681,17 @@ export class SMILTween extends Animation {
       return;
     }
 
+    const [x1, y1, x2, y2] = bezier;
     const animSpline = bezier.join(" ");
     const holdSpline = "0 0 1 1";
 
     const splines: string[] = [];
     if (hasWait) splines.push(holdSpline);
     splines.push(animSpline);
+    if (hasYoyo) {
+      const revSpline = `${roundToFloat(1 - x2, 6)} ${roundToFloat(1 - y2, 6)} ${roundToFloat(1 - x1, 6)} ${roundToFloat(1 - y1, 6)}`;
+      splines.push(revSpline);
+    }
     if (hasHold) splines.push(holdSpline);
 
     el.setAttribute("calcMode", "spline");

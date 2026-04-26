@@ -342,13 +342,15 @@ describe("SMILTween", () => {
       expect(animT.getAttribute("dur")).toBe("2s");
     });
 
-    it("EDGE CASE: yoyo + stagger + repeat → warns, yoyo skipped", () => {
+    it("EDGE CASE: yoyo + stagger + odd total plays → warns, yoyo skipped", () => {
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
+      // GSAP repeat:N = N extra plays after the first → repeat:2 = 3 total (1+2), which is odd.
+      // Odd total plays can't be encoded as whole F+B cycles in the stagger group.
       new SMILTween([makeEl(), makeEl()], {
         opacity: 0,
         duration: 1,
-        repeat: -1,
+        repeat: 2,
         yoyo: true,
         stagger: 0.2,
       });
