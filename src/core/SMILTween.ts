@@ -111,16 +111,16 @@ export class SMILTween extends Animation {
     const hasStaggerRepeat =
       staggerDelays !== null && this._repeat !== 0 && maxStagger > 0;
 
-    // Yoyo doubles the active animation phase (forward + backward). For odd total plays
-    // (e.g. repeat:2 = 3 plays = F+B+F) the stagger group encoding can't represent the
-    // half-cycle cleanly, so yoyo is skipped for those and a warning is emitted.
     const totalPlays = this._repeat === -1 ? Infinity : this._repeat + 1;
-    const yoyoInStagger =
-      this._yoyo && hasStaggerRepeat && (this._repeat === -1 || totalPlays % 2 === 0);
+    // When yoyo runs inside the stagger group, groupDuration must cover all plays per target:
+    //   infinite or even total plays: one F+B cycle → groupDur = 2D + maxStagger
+    //   odd total plays (F+B+F…):    all N plays in one SMIL cycle → groupDur = N*D + maxStagger
+    const yoyoGroupFactor = this._yoyo && hasStaggerRepeat
+      ? (this._repeat === -1 || totalPlays % 2 === 0 ? 2 : totalPlays)
+      : 1;
 
-    // When yoyo runs inside the stagger group, each cycle encodes F+B so groupDuration doubles.
     const groupDuration = hasStaggerRepeat
-      ? (yoyoInStagger ? 2 * this._dur : this._dur) + maxStagger
+      ? yoyoGroupFactor * this._dur + maxStagger
       : this._dur;
 
     for (let i = 0; i < this._targets.length; i++) {
@@ -148,20 +148,15 @@ export class SMILTween extends Animation {
       ];
 
       if (hasStaggerRepeat) {
-        this._applyStaggerEncoding(elements, staggerOffset, groupDuration, yoyoInStagger);
+        this._applyStaggerEncoding(elements, staggerOffset, groupDuration, this._yoyo);
       }
 
       injectInto(target, ...elements);
       this._elements.push(...elements);
     }
 
-    if (this._yoyo) {
-      if (hasStaggerRepeat && !yoyoInStagger) {
-        console.warn("[gsap-to-smil] yoyo + stagger + odd repeat count is not yet supported — yoyo ignored.");
-      } else if (!hasStaggerRepeat) {
-        this._applyYoyoEncoding(this._elements);
-      }
-      // yoyoInStagger: already woven into _applyStaggerEncoding above.
+    if (this._yoyo && !hasStaggerRepeat) {
+      this._applyYoyoEncoding(this._elements);
     }
 
     this._initialized = true;
@@ -577,16 +572,14 @@ export class SMILTween extends Animation {
    * Rewrites `from`/`to` on each element to `values`/`keyTimes` so all staggered targets
    * share the same `dur = groupDuration` cycle and repeat as a synchronized group.
    *
-   * Without yoyo, for a target with stagger offset S, animation dur D, group dur G = D + maxStagger:
-   *   - [0, S]     → hold at `from`  (wait)
-   *   - [S, S+D]   → animate from → to
-   *   - [S+D, G]   → hold at `to`   (pad)
+   * Without yoyo, G = D + maxStagger:
+   *   [0,S] wait → [S,S+D] forward → [S+D,G] hold at `to`
    *
-   * With yoyo, G = 2D + maxStagger and a backward phase is inserted:
-   *   - [0, S]     → hold at `from`  (wait)
-   *   - [S, S+D]   → animate from → to  (forward)
-   *   - [S+D, S+2D]→ animate to → from  (backward)
-   *   - [S+2D, G]  → hold at `from` (pad)
+   * With yoyo, even total plays (infinite or N%2=0), G = 2D + maxStagger, repeatCount halved:
+   *   [0,S] wait → [S,S+D] forward → [S+D,S+2D] backward → [S+2D,G] hold at `from`
+   *
+   * With yoyo, odd total plays (N%2≠0), G = N*D + maxStagger, repeatCount=1:
+   *   [0,S] wait → N alternating F/B plays → [S+ND,G] hold at last value
    *
    * Elements without both `from` and `to` are skipped — they keep independent timing.
    */
@@ -608,30 +601,60 @@ export class SMILTween extends Animation {
       el.removeAttribute("to");
 
       if (yoyo) {
-        // groupDur = 2*_dur + maxStagger; last target (S=maxStagger) has no hold phase.
-        const animMidRatio = roundToFloat((staggerOffset + this._dur) / groupDur, 6);
-        const rawEnd = (staggerOffset + this._dur * 2) / groupDur;
-        const hasHold = rawEnd < 1 - 1e-9;
-        const yoyoEndRatio = hasHold ? roundToFloat(rawEnd, 6) : 1;
+        const totalPlays = this._repeat === -1 ? Infinity : this._repeat + 1;
+        const isCleanCycle = this._repeat === -1 || totalPlays % 2 === 0;
 
-        const valuesArr: string[] = [fromVal];
-        const keyTimesArr: number[] = [0];
+        if (isCleanCycle) {
+          // G = 2D + maxStagger; last target (S=maxStagger) has no hold phase.
+          const animMidRatio = roundToFloat((staggerOffset + this._dur) / groupDur, 6);
+          const rawEnd = (staggerOffset + this._dur * 2) / groupDur;
+          const hasHold = rawEnd < 1 - 1e-9;
+          const yoyoEndRatio = hasHold ? roundToFloat(rawEnd, 6) : 1;
 
-        if (hasWait) { valuesArr.push(fromVal); keyTimesArr.push(animStartRatio); }
-        valuesArr.push(toVal);   keyTimesArr.push(animMidRatio);
-        valuesArr.push(fromVal); keyTimesArr.push(yoyoEndRatio);
-        if (hasHold) { valuesArr.push(fromVal); keyTimesArr.push(1); }
+          const valuesArr: string[] = [fromVal];
+          const keyTimesArr: number[] = [0];
 
-        el.setAttribute("values", valuesArr.join("; "));
-        el.setAttribute("keyTimes", keyTimesArr.join("; "));
+          if (hasWait) { valuesArr.push(fromVal); keyTimesArr.push(animStartRatio); }
+          valuesArr.push(toVal);   keyTimesArr.push(animMidRatio);
+          valuesArr.push(fromVal); keyTimesArr.push(yoyoEndRatio);
+          if (hasHold) { valuesArr.push(fromVal); keyTimesArr.push(1); }
 
-        // One SMIL cycle encodes F+B, so halve repeatCount.
-        const rc = el.getAttribute("repeatCount");
-        if (rc !== null && rc !== "indefinite") {
-          el.setAttribute("repeatCount", String(parseInt(rc) / 2));
+          el.setAttribute("values", valuesArr.join("; "));
+          el.setAttribute("keyTimes", keyTimesArr.join("; "));
+
+          // One SMIL cycle encodes F+B, so halve repeatCount.
+          const rc = el.getAttribute("repeatCount");
+          if (rc !== null && rc !== "indefinite") {
+            el.setAttribute("repeatCount", String(parseInt(rc) / 2));
+          }
+
+          this._applyStaggerEasing(el, this._vars.ease, hasWait, hasHold, true);
+        } else {
+          // G = N*D + maxStagger; encode all N plays in a single repeatCount=1 SMIL cycle.
+          const valuesArr: string[] = [fromVal];
+          const keyTimesArr: number[] = [0];
+
+          if (hasWait) { valuesArr.push(fromVal); keyTimesArr.push(animStartRatio); }
+
+          for (let p = 1; p <= totalPlays; p++) {
+            const raw = (staggerOffset + p * this._dur) / groupDur;
+            keyTimesArr.push(roundToFloat(Math.min(raw, 1), 6));
+            valuesArr.push(p % 2 === 0 ? fromVal : toVal);
+          }
+
+          const lastKT = keyTimesArr[keyTimesArr.length - 1]!;
+          const hasHold = lastKT < 1;
+          if (hasHold) {
+            keyTimesArr.push(1);
+            valuesArr.push(valuesArr[valuesArr.length - 1]!);
+          }
+
+          el.setAttribute("values", valuesArr.join("; "));
+          el.setAttribute("keyTimes", keyTimesArr.join("; "));
+          el.setAttribute("repeatCount", "1");
+
+          this._applyStaggerEasingFull(el, this._vars.ease, hasWait, hasHold, totalPlays);
         }
-
-        this._applyStaggerEasing(el, this._vars.ease, hasWait, hasHold, true);
       } else {
         const hasHold: boolean = staggerOffset + this._dur < groupDur;
         // Where within the [0–1] cycle the animation ends and the hold phase begins.
@@ -692,6 +715,41 @@ export class SMILTween extends Animation {
       const revSpline = `${roundToFloat(1 - x2, 6)} ${roundToFloat(1 - y2, 6)} ${roundToFloat(1 - x1, 6)} ${roundToFloat(1 - y1, 6)}`;
       splines.push(revSpline);
     }
+    if (hasHold) splines.push(holdSpline);
+
+    el.setAttribute("calcMode", "spline");
+    el.setAttribute("keySplines", splines.join("; "));
+  };
+
+  /** Like `_applyStaggerEasing` but for N alternating F/B play intervals (odd-plays yoyo case). */
+  private _applyStaggerEasingFull = (
+    el: SVGAnimationElement,
+    ease: TweenVars["ease"],
+    hasWait: boolean,
+    hasHold: boolean,
+    totalPlays: number,
+  ): void => {
+    if (!ease || ease === "none" || ease === "linear") {
+      el.setAttribute("calcMode", "linear");
+      el.removeAttribute("keySplines");
+      return;
+    }
+
+    const bezier = resolveEase(ease);
+    if (!bezier) {
+      el.setAttribute("calcMode", "linear");
+      el.removeAttribute("keySplines");
+      return;
+    }
+
+    const [x1, y1, x2, y2] = bezier;
+    const fwdSpline = bezier.join(" ");
+    const revSpline = `${roundToFloat(1 - x2, 6)} ${roundToFloat(1 - y2, 6)} ${roundToFloat(1 - x1, 6)} ${roundToFloat(1 - y1, 6)}`;
+    const holdSpline = "0 0 1 1";
+
+    const splines: string[] = [];
+    if (hasWait) splines.push(holdSpline);
+    for (let i = 0; i < totalPlays; i++) splines.push(i % 2 === 0 ? fwdSpline : revSpline);
     if (hasHold) splines.push(holdSpline);
 
     el.setAttribute("calcMode", "spline");
