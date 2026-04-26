@@ -161,4 +161,174 @@ describe("SMILTween (smoke)", () => {
     expect(tween._elements).toHaveLength(0);
     expect(tween._initialized).toBe(false);
   });
+
+  describe("keyframes — object array form (smoke)", () => {
+    it("SMOKE TEST: three steps on two targets with stagger — all begin offsets are correct", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+
+      new SMILTween([el1, el2], {
+        keyframes: [
+          { opacity: 0, duration: 0.5 },
+          { opacity: 0.5, duration: 0.5 },
+          { opacity: 1, duration: 0.5 },
+        ],
+        stagger: 0.2,
+      });
+
+      const el1Anims = el1.querySelectorAll("animate");
+      const el2Anims = el2.querySelectorAll("animate");
+
+      // el1: stagger offset = 0
+      expect(el1Anims[0]!.getAttribute("begin")).toBeNull();
+      expect(el1Anims[1]!.getAttribute("begin")).toBe("0.5s");
+      expect(el1Anims[2]!.getAttribute("begin")).toBe("1s");
+
+      // el2: stagger offset = 0.2
+      expect(el2Anims[0]!.getAttribute("begin")).toBe("0.2s");
+      expect(el2Anims[1]!.getAttribute("begin")).toBe("0.7s");
+      expect(el2Anims[2]!.getAttribute("begin")).toBe("1.2s");
+    });
+
+    it("SMOKE TEST: kill() removes all step elements across all targets", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+
+      const tween = new SMILTween([el1, el2], {
+        keyframes: [{ opacity: 0, duration: 0.5 }, { opacity: 1, duration: 0.5 }],
+      });
+
+      tween.kill();
+
+      expect(el1.childElementCount).toBe(0);
+      expect(el2.childElementCount).toBe(0);
+      expect(tween._initialized).toBe(false);
+    });
+
+    it("SMOKE TEST: revert() restores all original attributes and removes elements", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+      el1.setAttribute("opacity", "0.8");
+      el2.setAttribute("opacity", "0.4");
+
+      const tween = new SMILTween([el1, el2], {
+        keyframes: [{ opacity: 0, duration: 0.5 }, { opacity: 1, duration: 0.5 }],
+      });
+
+      tween.revert();
+
+      expect(el1.getAttribute("opacity")).toBe("0.8");
+      expect(el2.getAttribute("opacity")).toBe("0.4");
+      expect(el1.childElementCount).toBe(0);
+      expect(el2.childElementCount).toBe(0);
+    });
+  });
+
+  describe("keyframes — property array form (smoke)", () => {
+    it("SMOKE TEST: x+y+opacity arrays all produce correct elements with shared timing", () => {
+      const target = makeEl();
+
+      new SMILTween(target, {
+        keyframes: { x: [0, 120, 120, 0], y: [0, 0, 60, 60], opacity: [1, 1, 0.5, 0] },
+        duration: 2,
+        ease: "power1.inOut",
+      });
+
+      const animTransform = target.querySelector("animateTransform")!;
+      const anim = target.querySelector("animate")!;
+
+      expect(animTransform.getAttribute("type")).toBe("translate");
+      expect(animTransform.getAttribute("values")).toBe("0 0; 120 0; 120 60; 0 60");
+      expect(anim.getAttribute("values")).toBe("1; 1; 0.5; 0");
+      expect(animTransform.getAttribute("dur")).toBe("2s");
+      expect(anim.getAttribute("dur")).toBe("2s");
+      expect(animTransform.getAttribute("calcMode")).toBe("spline");
+    });
+
+    it("SMOKE TEST: two targets with stagger — second target has correct begin offset", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+
+      new SMILTween([el1, el2], {
+        keyframes: { x: [0, 100, 0] },
+        duration: 1,
+        stagger: 0.3,
+      });
+
+      expect(el1.querySelector("animateTransform")!.getAttribute("begin")).toBeNull();
+      expect(el2.querySelector("animateTransform")!.getAttribute("begin")).toBe("0.3s");
+    });
+
+    it("SMOKE TEST: kill() strips all elements from all targets", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+
+      const tween = new SMILTween([el1, el2], {
+        keyframes: { opacity: [0, 1, 0] },
+        duration: 1,
+      });
+
+      tween.kill();
+
+      expect(el1.childElementCount).toBe(0);
+      expect(el2.childElementCount).toBe(0);
+    });
+  });
+
+  describe("keyframes — percentage object form (smoke)", () => {
+    it("SMOKE TEST: keyTimes + values + carry-forward survive a full pipeline pass", () => {
+      const target = makeEl();
+
+      new SMILTween(target, {
+        keyframes: {
+          "0%": { opacity: 0, x: 0 },
+          "40%": { opacity: 0.8 },    // x missing → carry-forward 0
+          "100%": { opacity: 1, x: 200 },
+        },
+        duration: 2,
+      });
+
+      const anim = target.querySelector("animate")!;
+      const animTransform = target.querySelector("animateTransform")!;
+
+      expect(anim.getAttribute("keyTimes")).toBe("0; 0.4; 1");
+      expect(anim.getAttribute("values")).toBe("0; 0.8; 1");
+      expect(animTransform.getAttribute("keyTimes")).toBe("0; 0.4; 1");
+      expect(animTransform.getAttribute("values")).toBe("0 0; 0 0; 200 0"); // x carry-forward at 40%
+    });
+
+    it("SMOKE TEST: two targets with stagger both get keyTimes on their elements", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+
+      new SMILTween([el1, el2], {
+        keyframes: { "0%": { opacity: 0 }, "50%": { opacity: 0.5 }, "100%": { opacity: 1 } },
+        duration: 1,
+        stagger: 0.25,
+      });
+
+      const anim1 = el1.querySelector("animate")!;
+      const anim2 = el2.querySelector("animate")!;
+
+      expect(anim1.getAttribute("keyTimes")).toBe("0; 0.5; 1");
+      expect(anim2.getAttribute("keyTimes")).toBe("0; 0.5; 1");
+      expect(anim1.getAttribute("begin")).toBeNull();
+      expect(anim2.getAttribute("begin")).toBe("0.25s");
+    });
+
+    it("SMOKE TEST: revert() restores original attributes and clears elements", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "0.7");
+
+      const tween = new SMILTween(target, {
+        keyframes: { "0%": { opacity: 0 }, "100%": { opacity: 1 } },
+        duration: 1,
+      });
+
+      tween.revert();
+
+      expect(target.getAttribute("opacity")).toBe("0.7");
+      expect(target.childElementCount).toBe(0);
+    });
+  });
 });
