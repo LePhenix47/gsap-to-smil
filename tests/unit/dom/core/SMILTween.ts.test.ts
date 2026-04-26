@@ -245,17 +245,115 @@ describe("SMILTween", () => {
     });
   });
 
-  describe("yoyo warning", () => {
-    it("EDGE CASE: yoyo:true emits a console warning", () => {
+  describe("yoyo", () => {
+    it("HAPPY PATH: repeat:0 + yoyo → single play, no encoding applied (yoyo invisible)", () => {
       const target = makeEl();
-      const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+      target.setAttribute("opacity", "1");
 
       new SMILTween(target, { opacity: 0, duration: 1, yoyo: true });
 
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining("yoyo"),
-      );
+      const anim = target.querySelector("animate")!;
+      // repeat:0 → totalPlays=1 → _applyYoyoEncoding returns early → still uses from/to
+      expect(anim.getAttribute("to")).toBe("0");
+      expect(anim.getAttribute("values")).toBeNull();
+    });
 
+    it("HAPPY PATH: repeat:1 + yoyo → values encodes one yoyo cycle, dur doubled, repeatCount=1", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "1");
+
+      new SMILTween(target, { opacity: 0, duration: 1, repeat: 1, yoyo: true });
+
+      const anim = target.querySelector("animate")!;
+      expect(anim.getAttribute("values")).toBe("1; 0; 1");
+      expect(anim.getAttribute("dur")).toBe("2s");
+      expect(anim.getAttribute("repeatCount")).toBe("1");
+      expect(anim.getAttribute("from")).toBeNull();
+      expect(anim.getAttribute("to")).toBeNull();
+    });
+
+    it("HAPPY PATH: repeat:-1 + yoyo → values encodes one cycle, repeatCount=indefinite", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "1");
+
+      new SMILTween(target, { opacity: 0, duration: 1, repeat: -1, yoyo: true });
+
+      const anim = target.querySelector("animate")!;
+      expect(anim.getAttribute("values")).toBe("1; 0; 1");
+      expect(anim.getAttribute("dur")).toBe("2s");
+      expect(anim.getAttribute("repeatCount")).toBe("indefinite");
+    });
+
+    it("HAPPY PATH: repeat:3 + yoyo (4 plays, even) → two clean yoyo cycles, repeatCount=2", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "1");
+
+      new SMILTween(target, { opacity: 0, duration: 1, repeat: 3, yoyo: true });
+
+      const anim = target.querySelector("animate")!;
+      expect(anim.getAttribute("values")).toBe("1; 0; 1");
+      expect(anim.getAttribute("dur")).toBe("2s");
+      expect(anim.getAttribute("repeatCount")).toBe("2");
+    });
+
+    it("HAPPY PATH: repeat:2 + yoyo (3 plays, odd) → full sequence encoded, repeatCount=1", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "1");
+
+      new SMILTween(target, { opacity: 0, duration: 1, repeat: 2, yoyo: true });
+
+      const anim = target.querySelector("animate")!;
+      expect(anim.getAttribute("values")).toBe("1; 0; 1; 0");
+      expect(anim.getAttribute("keyTimes")).toBe("0; 0.333333; 0.666667; 1");
+      expect(anim.getAttribute("dur")).toBe("3s");
+      expect(anim.getAttribute("repeatCount")).toBe("1");
+    });
+
+    it("HAPPY PATH: linear ease + yoyo → calcMode=linear, no keySplines", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "1");
+
+      new SMILTween(target, { opacity: 0, duration: 1, repeat: 1, yoyo: true, ease: "linear" });
+
+      const anim = target.querySelector("animate")!;
+      expect(anim.getAttribute("calcMode")).toBe("linear");
+      expect(anim.getAttribute("keySplines")).toBeNull();
+    });
+
+    it("HAPPY PATH: spline ease + yoyo → two keySplines (forward + reversed)", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "1");
+
+      new SMILTween(target, { opacity: 0, duration: 1, repeat: 1, yoyo: true, ease: "power1.out" });
+
+      const anim = target.querySelector("animate")!;
+      const splines = anim.getAttribute("keySplines")!;
+      const parts = splines.split("; ");
+      expect(parts).toHaveLength(2);
+    });
+
+    it("HAPPY PATH: transform + yoyo → animateTransform gets values encoding", () => {
+      const target = makeEl();
+
+      new SMILTween(target, { x: 100, duration: 1, repeat: 1, yoyo: true });
+
+      const animT = target.querySelector("animateTransform")!;
+      expect(animT.getAttribute("values")).toBe("0 0; 100 0; 0 0");
+      expect(animT.getAttribute("dur")).toBe("2s");
+    });
+
+    it("EDGE CASE: yoyo + stagger + repeat → warns, yoyo skipped", () => {
+      const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+
+      new SMILTween([makeEl(), makeEl()], {
+        opacity: 0,
+        duration: 1,
+        repeat: -1,
+        yoyo: true,
+        stagger: 0.2,
+      });
+
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("yoyo"));
       warnSpy.mockRestore();
     });
   });

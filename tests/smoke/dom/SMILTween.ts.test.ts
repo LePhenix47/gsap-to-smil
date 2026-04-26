@@ -275,6 +275,97 @@ describe("SMILTween (smoke)", () => {
     });
   });
 
+  describe("yoyo (smoke)", () => {
+    it("SMOKE TEST: repeat:1 + yoyo — opacity animates forward then backward, dur doubled", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "0.8");
+
+      new SMILTween(target, { opacity: 0, duration: 1.5, repeat: 1, yoyo: true });
+
+      const anim = target.querySelector("animate")!;
+      expect(anim.getAttribute("values")).toBe("0.8; 0; 0.8");
+      expect(anim.getAttribute("dur")).toBe("3s");
+      expect(anim.getAttribute("repeatCount")).toBe("1");
+      expect(anim.getAttribute("from")).toBeNull();
+      expect(anim.getAttribute("to")).toBeNull();
+    });
+
+    it("SMOKE TEST: repeat:-1 + yoyo — infinite cycling, repeatCount=indefinite", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "1");
+
+      new SMILTween(target, { opacity: 0, duration: 0.5, repeat: -1, yoyo: true });
+
+      const anim = target.querySelector("animate")!;
+      expect(anim.getAttribute("values")).toBe("1; 0; 1");
+      expect(anim.getAttribute("dur")).toBe("1s");
+      expect(anim.getAttribute("repeatCount")).toBe("indefinite");
+    });
+
+    it("SMOKE TEST: repeat:2 + yoyo (3 plays, odd) — full F/B/F sequence with keyTimes", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "1");
+
+      new SMILTween(target, { opacity: 0, duration: 1, repeat: 2, yoyo: true });
+
+      const anim = target.querySelector("animate")!;
+      expect(anim.getAttribute("values")).toBe("1; 0; 1; 0");
+      expect(anim.getAttribute("dur")).toBe("3s");
+      expect(anim.getAttribute("repeatCount")).toBe("1");
+      expect(anim.getAttribute("keyTimes")).not.toBeNull();
+    });
+
+    it("SMOKE TEST: transform + yoyo — animateTransform gets values encoding", () => {
+      const target = makeEl();
+
+      new SMILTween(target, { x: 200, duration: 1, repeat: 1, yoyo: true });
+
+      const animT = target.querySelector("animateTransform")!;
+      expect(animT.getAttribute("values")).toBe("0 0; 200 0; 0 0");
+      expect(animT.getAttribute("dur")).toBe("2s");
+      expect(animT.getAttribute("repeatCount")).toBe("1");
+    });
+
+    it("SMOKE TEST: spline ease + yoyo — two keySplines, second is reversed bezier", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "1");
+
+      new SMILTween(target, { opacity: 0, duration: 1, repeat: 1, yoyo: true, ease: "power2.out" });
+
+      const anim = target.querySelector("animate")!;
+      expect(anim.getAttribute("calcMode")).toBe("spline");
+      const splines = anim.getAttribute("keySplines")!.split("; ");
+      expect(splines).toHaveLength(2);
+      // Forward and reversed splines must differ
+      expect(splines[0]).not.toBe(splines[1]);
+    });
+
+    it("SMOKE TEST: mixed props — transform + opacity both encoded for yoyo", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "1");
+
+      new SMILTween(target, { x: 100, opacity: 0, duration: 1, repeat: 1, yoyo: true });
+
+      const animT = target.querySelector("animateTransform")!;
+      const anim = target.querySelector("animate")!;
+      expect(animT.getAttribute("values")).toBe("0 0; 100 0; 0 0");
+      expect(anim.getAttribute("values")).toBe("1; 0; 1");
+      expect(animT.getAttribute("dur")).toBe("2s");
+      expect(anim.getAttribute("dur")).toBe("2s");
+    });
+
+    it("SMOKE TEST: revert() after yoyo tween restores original attributes", () => {
+      const target = makeEl();
+      target.setAttribute("opacity", "0.7");
+
+      const tween = new SMILTween(target, { opacity: 0, duration: 1, repeat: 1, yoyo: true });
+      tween.revert();
+
+      expect(target.getAttribute("opacity")).toBe("0.7");
+      expect(target.childElementCount).toBe(0);
+    });
+  });
+
   describe("keyframes — percentage object form (smoke)", () => {
     it("SMOKE TEST: keyTimes + values + carry-forward survive a full pipeline pass", () => {
       const target = makeEl();

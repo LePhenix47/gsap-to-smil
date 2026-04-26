@@ -92,10 +92,6 @@ export class SMILTween extends Animation {
 
   /** Iterates targets, resolves per-target delays, builds and injects all SMIL elements. */
   private _build = (): void => {
-    if (this._yoyo) {
-      console.warn("[gsap-to-smil] yoyo is not yet supported — ignored.");
-    }
-
     const kf = this._vars.keyframes;
     if (kf !== undefined) {
       this._buildKeyframes(kf);
@@ -136,6 +132,7 @@ export class SMILTween extends Animation {
           fromRouted?.direct,
           beginDelay,
           groupDuration,
+          this._yoyo ? (this._originalValues.get(target) ?? undefined) : undefined,
         ),
       ];
 
@@ -145,6 +142,14 @@ export class SMILTween extends Animation {
 
       injectInto(target, ...elements);
       this._elements.push(...elements);
+    }
+
+    if (this._yoyo) {
+      if (hasStaggerRepeat) {
+        console.warn("[gsap-to-smil] yoyo + stagger + repeat is not yet supported — yoyo ignored.");
+      } else {
+        this._applyYoyoEncoding(this._elements);
+      }
     }
 
     this._initialized = true;
@@ -217,6 +222,7 @@ export class SMILTween extends Animation {
     fromDirect: DirectProps | undefined,
     delay: number,
     dur: number,
+    originals?: Record<string, string | null>,
   ): SVGAnimateElement[] => {
     const elements: SVGAnimateElement[] = [];
 
@@ -239,6 +245,16 @@ export class SMILTween extends Animation {
           buildAnimate({
             ...shared,
             from: fromValue !== undefined ? String(fromValue) : undefined,
+            to: String(value),
+          }),
+        );
+      } else if (originals) {
+        // yoyo: set explicit from so _applyYoyoEncoding can read both from and to
+        const origVal = originals[attr];
+        elements.push(
+          buildAnimate({
+            ...shared,
+            from: origVal != null ? origVal : undefined,
             to: String(value),
           }),
         );
@@ -637,6 +653,83 @@ export class SMILTween extends Animation {
 
     el.setAttribute("calcMode", "spline");
     el.setAttribute("keySplines", splines.join("; "));
+  };
+
+  // ===== Yoyo =====
+
+  /**
+   * Rewrites `from`/`to` on each element to a `values` sequence that encodes the forward
+   * and backward phases, so the browser plays the animation in alternating directions.
+   *
+   * Three sub-cases:
+   *  - infinite repeat or even total plays → one yoyo cycle (from→to→from), dur×2, repeatCount halved
+   *  - odd total plays > 1               → full sequence encoded (from→to→from→…), repeatCount=1
+   *  - 1 total play (repeat:0)           → yoyo has no visible effect, skip
+   *
+   * Elements without both `from` and `to` are skipped (keyframe/stagger-encoded elements).
+   */
+  private _applyYoyoEncoding = (elements: SVGAnimationElement[]): void => {
+    const totalPlays = this._repeat === -1 ? Infinity : this._repeat + 1;
+    if (totalPlays === 1) return;
+
+    const ease = this._vars.ease;
+    const bezier = ease && ease !== "none" && ease !== "linear" ? resolveEase(ease) : null;
+
+    const makeSplines = (intervalCount: number): string | null => {
+      if (!bezier) return null;
+      const [x1, y1, x2, y2] = bezier;
+      const fwd = `${x1} ${y1} ${x2} ${y2}`;
+      // Reversed cubic-bezier: swap and flip both control points
+      const rev = `${roundToFloat(1 - x2, 6)} ${roundToFloat(1 - y2, 6)} ${roundToFloat(1 - x1, 6)} ${roundToFloat(1 - y1, 6)}`;
+      const splines: string[] = [];
+      for (let i = 0; i < intervalCount; i++) splines.push(i % 2 === 0 ? fwd : rev);
+      return splines.join("; ");
+    };
+
+    for (const el of elements) {
+      const fromVal = el.getAttribute("from");
+      const toVal = el.getAttribute("to");
+      if (fromVal === null || toVal === null) continue;
+
+      const durSec = parseFloat(el.getAttribute("dur")!);
+      el.removeAttribute("from");
+      el.removeAttribute("to");
+
+      if (totalPlays === Infinity || totalPlays % 2 === 0) {
+        const repeatCount = totalPlays === Infinity ? "indefinite" : String(totalPlays / 2);
+        el.setAttribute("values", `${fromVal}; ${toVal}; ${fromVal}`);
+        el.setAttribute("dur", `${durSec * 2}s`);
+        el.setAttribute("repeatCount", repeatCount);
+        const splines = makeSplines(2);
+        if (splines) {
+          el.setAttribute("calcMode", "spline");
+          el.setAttribute("keySplines", splines);
+        } else {
+          el.setAttribute("calcMode", "linear");
+          el.removeAttribute("keySplines");
+        }
+      } else {
+        // Odd total plays: F B F … encoded as a single values sequence
+        const valuesArr = Array.from({ length: totalPlays + 1 }, (_, i) =>
+          i % 2 === 0 ? fromVal : toVal,
+        );
+        const keyTimesArr = Array.from({ length: totalPlays + 1 }, (_, i) =>
+          roundToFloat(i / totalPlays, 6),
+        );
+        el.setAttribute("values", valuesArr.join("; "));
+        el.setAttribute("keyTimes", keyTimesArr.join("; "));
+        el.setAttribute("dur", `${durSec * totalPlays}s`);
+        el.setAttribute("repeatCount", "1");
+        const splines = makeSplines(totalPlays);
+        if (splines) {
+          el.setAttribute("calcMode", "spline");
+          el.setAttribute("keySplines", splines);
+        } else {
+          el.setAttribute("calcMode", "linear");
+          el.removeAttribute("keySplines");
+        }
+      }
+    }
   };
 
   // ===== Playback =====
