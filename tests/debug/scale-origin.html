@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Debug — scale origin</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    :root:has(#diff-toggle:checked) .pair>.test-smil {
+      position: absolute;
+      top: 0;
+      left: 0;
+      mix-blend-mode: difference;
+      pointer-events: none;
+    }
+
+    :root:has(#diff-toggle:checked) .pair>.test>figcaption {
+      color: transparent;
+    }
+
+    :root:has(#diff-toggle:checked) .pair>.test>figcaption::before {
+      content: "Diff";
+
+      position: absolute;
+      top: 0;
+      left: 0;
+
+      color: white;
+    }
+
+
+    body {
+      --_p: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+      padding: var(--_p);
+      font-family: monospace;
+      background: #111;
+      color: #eee;
+      margin: 0;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+
+      padding: var(--_p);
+      margin: calc(var(--_p) * -1);
+
+      position: sticky;
+      top: 0;
+      background: #111;
+
+      z-index: 3;
+    }
+
+    h1 {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.45;
+      margin: 0;
+    }
+
+    /* Relative so the SMIL SVG can be positioned absolutely over the GSAP one in diff mode */
+    .pair {
+      position: relative;
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+    }
+
+    figure {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    figcaption {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.4;
+    }
+
+    svg {
+      display: block;
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+    }
+
+
+    .svg-smil.diff {
+      position: absolute;
+      top: 0;
+
+      left: 0;
+      mix-blend-mode: difference;
+      pointer-events: none;
+    }
+  </style>
+  <script type="importmap">
+    { "imports": { "gsap": "https://cdn.jsdelivr.net/npm/gsap@3/+esm" } }
+  </script>
+  <script type="module">
+    import gsap from "gsap";
+    import { smil } from "../../lib/index.js";
+
+    // show bbox
+    const sRect = document.getElementById("s-rect");
+    const bbox = sRect.getBBox();
+
+    // GSAP — reference
+    gsap.to("#g-rect", {
+      scaleX: 3,
+      transformOrigin: "50% 50%",
+      duration: 2,
+      repeat: -1,
+      yoyo: true,
+    });
+
+    // SMIL — our output
+    smil.to("#s-rect", {
+      scaleX: 3,
+      transformOrigin: "50% 50%",
+      duration: 2,
+      repeat: -1,
+      yoyo: true,
+    });
+
+    // dump generated SMIL
+    setTimeout(() => {
+      const animEls = Array.from(sRect.querySelectorAll("animateTransform, animate"));
+      const lines = [
+        `bbox: x=${bbox.x}, y=${bbox.y}, w=${bbox.width}, h=${bbox.height}`,
+        `computed center: cx=${bbox.x + bbox.width / 2}, cy=${bbox.y + bbox.height / 2}`,
+        "",
+        ...animEls.map(el => {
+          const attrs = ["type", "from", "to", "values", "additive", "keyTimes"]
+            .map(a => `  ${a}="${el.getAttribute(a) ?? ""}"`)
+            .filter(s => !s.includes('""'))
+            .join("\n");
+          return `<${el.tagName}\n${attrs}\n/>`;
+        }),
+      ];
+      document.getElementById("smil-dump").textContent = lines.join("\n");
+    }, 100);
+  </script>
+</head>
+
+<body>
+
+  <h1>Scale origin debug</h1>
+  <p>Rect at x=300, y=150, width=200, height=100. Center = (400, 200). scaleX=3 should scale horizontally around x=400 —
+    the rect should grow left+right equally.</p>
+
+  <div class="row">
+    <div>
+      <h2>GSAP</h2>
+      <div class="label">reference</div>
+      <svg id="gsap-svg" viewBox="0 0 800 400" width="400" height="200">
+        <rect id="g-rect" x="300" y="150" width="200" height="100" fill="steelblue" opacity="0.7" />
+        <!-- center marker -->
+        <line x1="400" y1="0" x2="400" y2="400" stroke="red" stroke-width="1" opacity="0.4" />
+      </svg>
+    </div>
+    <div>
+      <h2>SMIL</h2>
+      <div class="label">our output</div>
+      <svg id="smil-svg" viewBox="0 0 800 400" width="400" height="200">
+        <rect id="s-rect" x="300" y="150" width="200" height="100" fill="steelblue" opacity="0.7" />
+        <line x1="400" y1="0" x2="400" y2="400" stroke="red" stroke-width="1" opacity="0.4" />
+      </svg>
+    </div>
+  </div>
+
+  <h2>SMIL output</h2>
+  <pre id="smil-dump">loading…</pre>
+
+  <h2>Expected SMIL (manual)</h2>
+  <pre id="expected">
+For scale(3,1) around center (400,200):
+  translate from="0 0" to="tx ty"   where tx = 400*(1-3) = -800, ty = 200*(1-1) = 0
+  scale    from="1 1" to="3 1"
+
+Combined (translate * scale) applied to center (400,200):
+  scale first:     (3*400, 1*200) = (1200, 200)
+  translate next:  (1200-800, 200+0) = (400, 200) ✓ center stays put
+</pre>
+</body>
+
+</html>

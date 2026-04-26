@@ -206,9 +206,35 @@ export const composeTransforms = (opts: ComposeOptions): SVGAnimateTransformElem
     ease: opts.ease,
   } satisfies Partial<AnimateTransformOptions>;
 
+  const hasScale = "scale" in to || "scaleX" in to || "scaleY" in to;
+  const hasTranslate = "x" in to || "y" in to || "xPercent" in to || "yPercent" in to;
+
+  // Scale has no cx/cy in SMIL — it always scales from (0,0).
+  // Compensate by baking an origin offset into the translate layer:
+  //   tx = cx*(1-sx), ty = cy*(1-sy)   keeps the element anchored at transformOrigin.
+  let translatePair = hasTranslate ? resolveTranslate(from, to, target) : null;
+  if (hasScale) {
+    const { cx: originX, cy: originY } = resolveRotationOrigin(target, transformOrigin);
+    const fromSx = Number(from.scale ?? from.scaleX ?? 1);
+    const fromSy = Number(from.scale ?? from.scaleY ?? 1);
+    const toSx = Number(to.scale ?? to.scaleX ?? 1);
+    const toSy = Number(to.scale ?? to.scaleY ?? 1);
+    const [baseFx, baseFy] = translatePair
+      ? translatePair.from.split(" ").map(Number)
+      : [Number(from.x ?? 0), Number(from.y ?? 0)];
+    const [baseTx, baseTy] = translatePair
+      ? translatePair.to.split(" ").map(Number)
+      : [Number(to.x ?? 0), Number(to.y ?? 0)];
+    translatePair = {
+      type: "translate",
+      from: translateStr(baseFx + originX * (1 - fromSx), baseFy + originY * (1 - fromSy)),
+      to: translateStr(baseTx + originX * (1 - toSx), baseTy + originY * (1 - toSy)),
+    };
+  }
+
   // Array order = canonical transform order
-  const pairs = [
-    resolveTranslate(from, to, target),
+  const pairs: (TransformPair | null)[] = [
+    translatePair,
     resolveRotate(from, to, target, transformOrigin),
     resolveScale(from, to),
     resolveSkewX(from, to),

@@ -62,17 +62,16 @@
     sTl.to("#s-tl-b", { opacity: 1, duration: 0.6, ease: "power2.out" });
     sTl.to("#s-tl-c", { opacity: 1, duration: 0.6, ease: "power2.out" });
 
-    // 8. keyframes — property-array form (dot traces a square path)
-    gsap.to("#g-kf", {
-      keyframes: { x: [0, 120, 120, 0, 0], y: [0, 0, 60, 60, 0] },
-      duration: 2,
-      ease: "power1.inOut",
-    });
-    smil.to("#s-kf", {
-      keyframes: { x: [0, 120, 120, 0, 0], y: [0, 0, 60, 60, 0] },
-      duration: 2,
-      ease: "power1.inOut",
-    });
+    // 8. keyframes (% form) + stagger + yoyo — ripple wave
+    const waveKf = {
+      "10%":  { skewX: 15,  scaleX: 3    },
+      "25%":  { skewX: -20, scaleX: 1.1  },
+      "50%":  { skewX: -25, scaleX: 0.25 },
+      "70%":  { skewX: -15, scaleX: 1.05 },
+      "100%": { skewX: 10,  scaleX: 0.95 },
+    };
+    gsap.to(".g-wave", { keyframes: waveKf, transformOrigin: "50% 50%", duration: 15, repeat: -1, yoyo: true, stagger: { amount: 3, from: "start" } });
+    smil.to(".s-wave", { keyframes: waveKf, transformOrigin: "50% 50%", duration: 15, repeat: -1, yoyo: true, stagger: { amount: 3, from: "start" } });
 
     // 9. timeline() + keyframes — first dot moves right, then second traces a triangle
     const gTl2 = gsap.timeline();
@@ -368,20 +367,50 @@
     </div>
   </section>
 
-  <!-- 8. keyframes — property-array form -->
+  <!-- 8. keyframes (% form) + stagger + yoyo — ripple wave -->
   <section>
-    <h3>keyframes — property-array form (square path)</h3>
+    <h3>keyframes (% form) + stagger + yoyo — ripple wave</h3>
     <div class="pair">
       <figure class="test test-gsap">
         <figcaption>GSAP</figcaption>
-        <svg class="svg-gsap" width="170" height="110" xmlns="http://www.w3.org/2000/svg">
-          <circle id="g-kf" cx="20" cy="20" r="14" fill="#f59e0b" />
+        <svg class="svg-gsap" viewBox="0 0 800 420" width="400" height="210" xmlns="http://www.w3.org/2000/svg">
+          <text class="g-wave" x="400" y="100"   text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="119.2" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="138.4" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="157.6" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="176.8" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="196"   text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="215.2" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="234.4" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="253.6" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="272.8" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="292"   text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="311.2" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="330.4" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="349.6" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="368.8" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="g-wave" x="400" y="388"   text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
         </svg>
       </figure>
       <figure class="test test-smil">
         <figcaption>SMIL lib</figcaption>
-        <svg class="svg-smil" width="170" height="110" xmlns="http://www.w3.org/2000/svg">
-          <circle id="s-kf" cx="20" cy="20" r="14" fill="#f59e0b" />
+        <svg class="svg-smil" viewBox="0 0 800 420" width="400" height="210" xmlns="http://www.w3.org/2000/svg">
+          <text class="s-wave" x="400" y="100"   text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="119.2" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="138.4" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="157.6" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="176.8" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="196"   text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="215.2" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="234.4" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="253.6" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="272.8" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="292"   text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="311.2" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="330.4" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="349.6" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="368.8" text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
+          <text class="s-wave" x="400" y="388"   text-anchor="middle" fill="#fef65b" font-family="system-ui,sans-serif" font-size="16" font-weight="200" dominant-baseline="middle">Ripples in the wind</text>
         </svg>
       </figure>
     </div>

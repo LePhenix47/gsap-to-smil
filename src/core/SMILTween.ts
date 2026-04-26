@@ -441,9 +441,14 @@ export class SMILTween extends Animation {
       .map(([k, v]) => ({ pct: parseFloat(k) / 100, vars: v }))
       .sort((a, b) => a.pct - b.pct);
 
+    // SMIL requires keyTimes to start at 0 and end at 1 — prepend/append identity stops if absent.
+    if (stops.length === 0) return;
+    if (stops[0]!.pct > 0) stops.unshift({ pct: 0, vars: {} });
+    if (stops[stops.length - 1]!.pct < 1) stops.push({ pct: 1, vars: {} });
     if (stops.length < 2) return;
 
-    const keyTimesStr = stops.map(s => roundToFloat(s.pct, 6)).join("; ");
+    const keyTimes = stops.map(s => roundToFloat(s.pct, 6));
+    const keyTimesStr = keyTimes.join("; ");
 
     // Pre-route each stop once.
     const routedStops = stops.map(({ pct, vars }) => ({ pct, ...routeProperties(vars) }));
@@ -561,6 +566,34 @@ export class SMILTween extends Animation {
       this._originalValues.set(target, originals);
       injectInto(target, ...elements);
       this._elements.push(...elements);
+    }
+
+    if (this._yoyo) {
+      const totalPlays = this._repeat === -1 ? Infinity : this._repeat + 1;
+      // Forward keyTimes mapped to [0, 0.5]; backward (reversed, excluding shared midpoint) to [0.5, 1].
+      const yoyoKeyTimes = [
+        ...keyTimes.map(t => roundToFloat(t / 2, 6)),
+        ...keyTimes.slice(0, -1).reverse().map(t => roundToFloat(0.5 + (1 - t) / 2, 6)),
+      ];
+      const yoyoKeyTimesStr = yoyoKeyTimes.join("; ");
+      const repeatCount =
+        totalPlays === Infinity ? "indefinite"
+        : totalPlays % 2 === 0 ? String(totalPlays / 2)
+        : "1";
+
+      for (const el of this._elements) {
+        const valStr = el.getAttribute("values");
+        if (!valStr) continue;
+        const vals = valStr.split("; ");
+        const yoyoVals = [...vals, ...vals.slice(0, -1).reverse()];
+        const durSec = parseFloat(el.getAttribute("dur")!);
+        el.setAttribute("values", yoyoVals.join("; "));
+        el.setAttribute("keyTimes", yoyoKeyTimesStr);
+        el.setAttribute("dur", `${durSec * 2}s`);
+        el.setAttribute("repeatCount", repeatCount);
+        el.setAttribute("calcMode", "linear");
+        el.removeAttribute("keySplines");
+      }
     }
 
     this._initialized = true;
@@ -799,6 +832,7 @@ export class SMILTween extends Animation {
       if (totalPlays === Infinity || totalPlays % 2 === 0) {
         const repeatCount = totalPlays === Infinity ? "indefinite" : String(totalPlays / 2);
         el.setAttribute("values", `${fromVal}; ${toVal}; ${fromVal}`);
+        el.setAttribute("keyTimes", "0; 0.5; 1");
         el.setAttribute("dur", `${durSec * 2}s`);
         el.setAttribute("repeatCount", repeatCount);
         const splines = makeSplines(2);
