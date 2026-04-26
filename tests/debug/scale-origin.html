@@ -131,44 +131,48 @@
     import gsap from "gsap";
     import { smil } from "../../lib/index.js";
 
-    // show bbox
-    const sRect = document.getElementById("s-rect");
-    const bbox = sRect.getBBox();
+    const opts = { transformOrigin: "50% 50%", duration: 2, repeat: -1, yoyo: true, ease: "power1.inOut" };
 
-    // GSAP — reference
-    gsap.to("#g-rect", {
-      scaleX: 3,
-      transformOrigin: "50% 50%",
-      duration: 2,
-      repeat: -1,
-      yoyo: true,
-    });
+    // --- 1. simple smil.to (composeTransforms path) ---
+    gsap.to("#g-rect", { scaleX: 3, ...opts });
+    smil.to("#s-rect", { scaleX: 3, ...opts });
 
-    // SMIL — our output
-    smil.to("#s-rect", {
-      scaleX: 3,
-      transformOrigin: "50% 50%",
-      duration: 2,
-      repeat: -1,
-      yoyo: true,
-    });
+    // --- 2. property-array keyframes ([from, to]) ---
+    gsap.to("#g-rect-arr", { scaleX: [1, 3], ...opts });
+    smil.to("#s-rect-arr", { scaleX: [1, 3], ...opts });
 
-    // dump generated SMIL
-    setTimeout(() => {
-      const animEls = Array.from(sRect.querySelectorAll("animateTransform, animate"));
-      const lines = [
-        `bbox: x=${bbox.x}, y=${bbox.y}, w=${bbox.width}, h=${bbox.height}`,
-        `computed center: cx=${bbox.x + bbox.width / 2}, cy=${bbox.y + bbox.height / 2}`,
-        "",
-        ...animEls.map(el => {
+    // --- 3. percentage keyframes ({ "0%": {}, "100%": {} }) ---
+    gsap.to("#g-rect-pct", { keyframes: { "0%": { scaleX: 1 }, "100%": { scaleX: 3 } }, ...opts });
+    smil.to("#s-rect-pct", { keyframes: { "0%": { scaleX: 1 }, "100%": { scaleX: 3 } }, ...opts });
+
+    // dump SMIL for all three SMIL targets
+    const dumpEl = (id) => {
+      const el = document.getElementById(id);
+      const bbox = el.getBBox();
+      const animEls = Array.from(el.querySelectorAll("animateTransform, animate"));
+      return [
+        `#${id} bbox: x=${bbox.x}, y=${bbox.y}, w=${bbox.width}, h=${bbox.height}`,
+        ...animEls.map(a => {
           const attrs = ["type", "from", "to", "values", "additive", "keyTimes"]
-            .map(a => `  ${a}="${el.getAttribute(a) ?? ""}"`)
+            .map(k => `  ${k}="${a.getAttribute(k) ?? ""}"`)
             .filter(s => !s.includes('""'))
             .join("\n");
-          return `<${el.tagName}\n${attrs}\n/>`;
+          return `<${a.tagName}\n${attrs}\n/>`;
         }),
-      ];
-      document.getElementById("smil-dump").textContent = lines.join("\n");
+      ].join("\n");
+    };
+
+    setTimeout(() => {
+      document.getElementById("smil-dump").textContent = [
+        "=== 1. smil.to (composeTransforms) ===",
+        dumpEl("s-rect"),
+        "",
+        "=== 2. property-array keyframes ===",
+        dumpEl("s-rect-arr"),
+        "",
+        "=== 3. percentage keyframes ===",
+        dumpEl("s-rect-pct"),
+      ].join("\n");
     }, 100);
   </script>
 </head>
@@ -194,6 +198,47 @@
       <div class="label">our output</div>
       <svg id="smil-svg" viewBox="0 0 800 400" width="400" height="200">
         <rect id="s-rect" x="300" y="150" width="200" height="100" fill="steelblue" opacity="0.7" />
+        <line x1="400" y1="0" x2="400" y2="400" stroke="red" stroke-width="1" opacity="0.4" />
+      </svg>
+    </div>
+  </div>
+
+  <hr style="border-color:#2a2a2a;margin:0" />
+
+  <h2 style="font-size:.8rem;margin:0;color:#aaa">2 — property-array keyframes: <code>scaleX: [1, 3]</code></h2>
+  <div class="row">
+    <div>
+      <h2>GSAP</h2>
+      <svg viewBox="0 0 800 400" width="400" height="200">
+        <rect id="g-rect-arr" x="300" y="150" width="200" height="100" fill="coral" opacity="0.7" />
+        <line x1="400" y1="0" x2="400" y2="400" stroke="red" stroke-width="1" opacity="0.4" />
+      </svg>
+    </div>
+    <div>
+      <h2>SMIL</h2>
+      <svg viewBox="0 0 800 400" width="400" height="200">
+        <rect id="s-rect-arr" x="300" y="150" width="200" height="100" fill="coral" opacity="0.7" />
+        <line x1="400" y1="0" x2="400" y2="400" stroke="red" stroke-width="1" opacity="0.4" />
+      </svg>
+    </div>
+  </div>
+
+  <hr style="border-color:#2a2a2a;margin:0" />
+
+  <h2 style="font-size:.8rem;margin:0;color:#aaa">3 — percentage keyframes:
+    <code>keyframes: { "0%": { scaleX: 1 }, "100%": { scaleX: 3 } }</code></h2>
+  <div class="row">
+    <div>
+      <h2>GSAP</h2>
+      <svg viewBox="0 0 800 400" width="400" height="200">
+        <rect id="g-rect-pct" x="300" y="150" width="200" height="100" fill="mediumseagreen" opacity="0.7" />
+        <line x1="400" y1="0" x2="400" y2="400" stroke="red" stroke-width="1" opacity="0.4" />
+      </svg>
+    </div>
+    <div>
+      <h2>SMIL</h2>
+      <svg viewBox="0 0 800 400" width="400" height="200">
+        <rect id="s-rect-pct" x="300" y="150" width="200" height="100" fill="mediumseagreen" opacity="0.7" />
         <line x1="400" y1="0" x2="400" y2="400" stroke="red" stroke-width="1" opacity="0.4" />
       </svg>
     </div>
