@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Debug — DrawSVG</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+  <script src="../../node_modules/gsap/dist/DrawSVGPlugin.min.js"></script>
+  <style>
+    :root { color-scheme: dark; }
+    :root:has(#diff:checked) .smil-fig {
+      position: absolute; top: 0; left: 0;
+      mix-blend-mode: difference; pointer-events: none;
+    }
+    body {
+      --p: 2rem;
+      display: flex; flex-direction: column; gap: 2.5rem;
+      padding: var(--p); font-family: monospace;
+      background: #111; color: #eee; margin: 0;
+    }
+    header {
+      display: flex; align-items: center; gap: 2rem;
+      padding: var(--p); margin: calc(var(--p) * -1);
+      position: sticky; top: 0; background: #111; z-index: 3;
+      border-bottom: 1px solid #222;
+    }
+    h1 { font-size: 1rem; margin: 0; }
+    h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.45; margin: 0; }
+    label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer; }
+    section { display: flex; flex-direction: column; gap: 0.6rem; }
+    .pair { position: relative; display: flex; gap: 2rem; align-items: flex-start; }
+    figure { margin: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+    figcaption { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.4; }
+    svg { display: block; border: 1px solid #2a2a2a; background: #1a1a1a; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>DrawSVG — stroke drawing animations</h1>
+  <label><input type="checkbox" id="diff"> Diff</label>
+</header>
+
+<!-- ── 1. circle: draw in (false → true) ── -->
+<section>
+  <h3>circle — drawSVG: false → true (draw in)</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 200 200" width="200" height="200">
+        <circle id="g-draw-in" cx="100" cy="100" r="70"
+          fill="none" stroke="#4af" stroke-width="8"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 200 200" width="200" height="200">
+        <circle id="s-draw-in" cx="100" cy="100" r="70"
+          fill="none" stroke="#4af" stroke-width="8"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ── 2. circle: erase (true → false) ── -->
+<section>
+  <h3>circle — drawSVG: true → false (erase)</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 200 200" width="200" height="200">
+        <circle id="g-erase" cx="100" cy="100" r="70"
+          fill="none" stroke="#f84" stroke-width="8"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 200 200" width="200" height="200">
+        <circle id="s-erase" cx="100" cy="100" r="70"
+          fill="none" stroke="#f84" stroke-width="8"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ── 3. circle: window (50% window sliding) ── -->
+<section>
+  <h3>circle — drawSVG window "0% 50%" → "50% 100%"</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 200 200" width="200" height="200">
+        <circle id="g-window" cx="100" cy="100" r="70"
+          fill="none" stroke="#8f4" stroke-width="8"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 200 200" width="200" height="200">
+        <circle id="s-window" cx="100" cy="100" r="70"
+          fill="none" stroke="#8f4" stroke-width="8"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ── 4. path: draw in ── -->
+<section>
+  <h3>path — drawSVG: false → true</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 200 100" width="300" height="150">
+        <path id="g-path" d="M10,80 C40,10 160,10 190,80"
+          fill="none" stroke="#c4f" stroke-width="5"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 200 100" width="300" height="150">
+        <path id="s-path" d="M10,80 C40,10 160,10 190,80"
+          fill="none" stroke="#c4f" stroke-width="5"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ── 5. polyline: draw in ── -->
+<section>
+  <h3>polyline — drawSVG: false → true</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 200 120" width="300" height="180">
+        <polyline id="g-poly" points="20,100 60,20 100,80 140,20 180,100"
+          fill="none" stroke="#fa4" stroke-width="5"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 200 120" width="300" height="180">
+        <polyline id="s-poly" points="20,100 60,20 100,80 140,20 180,100"
+          fill="none" stroke="#fa4" stroke-width="5"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ── 6. line: draw in ── -->
+<section>
+  <h3>line — drawSVG: false → true</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 200 60" width="300" height="90">
+        <line id="g-line" x1="20" y1="30" x2="180" y2="30"
+          stroke="#4ff" stroke-width="6"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 200 60" width="300" height="90">
+        <line id="s-line" x1="20" y1="30" x2="180" y2="30"
+          stroke="#4ff" stroke-width="6"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ── 7. User example: circle draw sequence + rotation ── -->
+<section>
+  <h3>circle — drawSVG sequence: 0.05%→true→99.85% + rotation:720 (GSAP example)</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 200 200" width="200" height="200">
+        <circle id="g-seq" cx="100" cy="100" r="70"
+          fill="none" stroke="#ff6" stroke-width="8"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 200 200" width="200" height="200">
+        <circle id="s-seq" cx="100" cy="100" r="70"
+          fill="none" stroke="#ff6" stroke-width="8"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ── 8. ellipse: draw in ── -->
+<section>
+  <h3>ellipse — drawSVG: false → true</h3>
+  <div class="pair">
+    <figure><figcaption>GSAP</figcaption>
+      <svg viewBox="0 0 200 120" width="300" height="180">
+        <ellipse id="g-ellipse" cx="100" cy="60" rx="85" ry="45"
+          fill="none" stroke="#f4c" stroke-width="6"/>
+      </svg>
+    </figure>
+    <figure class="smil-fig"><figcaption>SMIL</figcaption>
+      <svg viewBox="0 0 200 120" width="300" height="180">
+        <ellipse id="s-ellipse" cx="100" cy="60" rx="85" ry="45"
+          fill="none" stroke="#f4c" stroke-width="6"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<script type="module">
+  import { smil } from "../../lib/index.js";
+
+  const { gsap, DrawSVGPlugin } = window;
+  gsap.registerPlugin(DrawSVGPlugin);
+
+  const dur = 2;
+  const ease = "power1.inOut";
+  const repeat = -1;
+
+  // 1. Draw in
+  gsap.set("#g-draw-in", { drawSVG: false });
+  gsap.to("#g-draw-in", { drawSVG: true, duration: dur, ease, repeat });
+
+  smil.set("#s-draw-in", { drawSVG: false });
+  smil.to("#s-draw-in", { drawSVG: true, duration: dur, ease, repeat });
+
+  // 2. Erase
+  gsap.to("#g-erase", { drawSVG: false, duration: dur, ease, repeat });
+  smil.to("#s-erase", { drawSVG: false, duration: dur, ease, repeat });
+
+  // 3. Window slide
+  gsap.fromTo("#g-window",
+    { drawSVG: "0% 50%" },
+    { drawSVG: "50% 100%", duration: dur, ease, repeat });
+  smil.fromTo("#s-window",
+    { drawSVG: "0% 50%" },
+    { drawSVG: "50% 100%", duration: dur, ease, repeat });
+
+  // 4. Path draw in
+  gsap.set("#g-path", { drawSVG: false });
+  gsap.to("#g-path", { drawSVG: true, duration: dur, ease, repeat });
+
+  smil.set("#s-path", { drawSVG: false });
+  smil.to("#s-path", { drawSVG: true, duration: dur, ease, repeat });
+
+  // 5. Polyline draw in
+  gsap.set("#g-poly", { drawSVG: false });
+  gsap.to("#g-poly", { drawSVG: true, duration: dur, ease, repeat });
+
+  smil.set("#s-poly", { drawSVG: false });
+  smil.to("#s-poly", { drawSVG: true, duration: dur, ease, repeat });
+
+  // 6. Line draw in
+  gsap.set("#g-line", { drawSVG: false });
+  gsap.to("#g-line", { drawSVG: true, duration: dur, ease, repeat });
+
+  smil.set("#s-line", { drawSVG: false });
+  smil.to("#s-line", { drawSVG: true, duration: dur, ease, repeat });
+
+  // 7. User example — timeline: draw sequence + simultaneous rotation
+  const gTl = gsap.timeline({ repeat });
+  gsap.set("#g-seq", { drawSVG: "0.05% 0%", transformOrigin: "50% 50%" });
+  gTl
+    .to("#g-seq", { drawSVG: true, duration: 1 })
+    .to("#g-seq", { drawSVG: "99.85% 99.85%", duration: 1 })
+    .to("#g-seq", { rotation: "720deg", duration: gTl.duration(), ease: "linear" }, 0);
+
+  const sTl = smil.timeline({ repeat });
+  smil.set("#s-seq", { drawSVG: "0.05% 0%", transformOrigin: "50% 50%" });
+  sTl
+    .to("#s-seq", { drawSVG: true, duration: 1 })
+    .to("#s-seq", { drawSVG: "99.85% 99.85%", duration: 1 })
+    .to("#s-seq", { rotation: "720deg", duration: sTl.duration(), ease: "linear" }, 0);
+
+  // 8. Ellipse draw in
+  gsap.set("#g-ellipse", { drawSVG: false });
+  gsap.to("#g-ellipse", { drawSVG: true, duration: dur, ease, repeat });
+
+  smil.set("#s-ellipse", { drawSVG: false });
+  smil.to("#s-ellipse", { drawSVG: true, duration: dur, ease, repeat });
+</script>
+
+</body>
+</html>

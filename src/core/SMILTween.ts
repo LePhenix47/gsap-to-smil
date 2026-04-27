@@ -4,11 +4,13 @@ import type {
   TweenTarget,
   TransformProps,
   DirectProps,
+  PropertyBuckets,
 } from "@/types/index.ts";
 import { routeProperties } from "@/utils/property-router.ts";
 import { composeTransforms } from "@/utils/transform-composer.ts";
 import { resolveStaggerDelays } from "@/utils/stagger-resolver.ts";
 import { buildAnimate, injectInto } from "@/utils/builders.ts";
+import { buildDrawSVGAnimation, applyDrawSVGState } from "@/plugins/DrawSMILPlugin.ts";
 import { resolveEase } from "@/utils/easing.ts";
 import { roundToFloat } from "@/utils/helpers/math.functions.ts";
 
@@ -97,7 +99,7 @@ export class SMILTween extends Animation {
       return;
     }
 
-    const { transforms, direct } = routeProperties(this._vars);
+    const { transforms, direct, plugins } = routeProperties(this._vars);
     const fromRouted = this._fromVars ? routeProperties(this._fromVars) : null;
 
     const staggerDelays = this._vars.stagger
@@ -127,7 +129,14 @@ export class SMILTween extends Animation {
       const staggerOffset = staggerDelays?.[i] ?? 0;
       const beginDelay = this._delay + (hasStaggerRepeat ? 0 : staggerOffset);
 
-      this._saveOriginals(target, transforms, direct);
+      this._saveOriginals(target, transforms, direct, plugins);
+
+      const timingOpts = {
+        dur: groupDuration,
+        delay: beginDelay || undefined,
+        repeat: this._repeat,
+        ease: this._vars.ease,
+      };
 
       const elements: SVGAnimationElement[] = [
         ...this._buildTransforms(
@@ -144,6 +153,19 @@ export class SMILTween extends Animation {
           groupDuration,
           this._yoyo ? (this._originalValues.get(target) ?? undefined) : undefined,
         ),
+        ...(() => {
+          if (plugins.drawSVG === undefined) return [];
+          if (this._dur === 0) {
+            applyDrawSVGState(target, this._isFrom ? true : plugins.drawSVG);
+            return [];
+          }
+          return buildDrawSVGAnimation(
+            target,
+            this._isFrom ? true : plugins.drawSVG,
+            this._isFrom ? plugins.drawSVG : fromRouted?.plugins.drawSVG,
+            timingOpts,
+          );
+        })(),
       ];
 
       if (hasStaggerRepeat) {
@@ -166,6 +188,7 @@ export class SMILTween extends Animation {
     target: Element,
     transforms: TransformProps,
     direct: DirectProps,
+    plugins: PropertyBuckets["plugins"],
   ): void => {
     const originals: Record<string, string | null> = {};
 
@@ -174,6 +197,11 @@ export class SMILTween extends Animation {
     }
     for (const attr of Object.keys(direct)) {
       originals[attr] = target.getAttribute(attr);
+    }
+    if (plugins.drawSVG !== undefined) {
+      originals["stroke-dasharray"] = target.getAttribute("stroke-dasharray");
+      originals["stroke-dashoffset"] = target.getAttribute("stroke-dashoffset");
+      originals["pathLength"] = target.getAttribute("pathLength");
     }
 
     this._originalValues.set(target, originals);
