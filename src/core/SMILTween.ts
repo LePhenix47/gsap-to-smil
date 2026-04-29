@@ -7,9 +7,13 @@ import type {
   PropertyBuckets,
 } from "@/types/index.ts";
 import { routeProperties } from "@/utils/property-router.ts";
-import { composeTransforms } from "@/utils/transform-composer.ts";
+import {
+  composeTransforms,
+  buildPivotScaffold,
+  type PivotScaffold,
+} from "@/utils/transform-composer.ts";
 import { resolveStaggerDelays } from "@/utils/stagger-resolver.ts";
-import { buildAnimate, injectInto } from "@/utils/builders.ts";
+import { buildAnimate } from "@/utils/builders.ts";
 import { buildDrawSVGAnimation, applyDrawSVGState } from "@/plugins/DrawSMILPlugin.ts";
 import { resolveEase } from "@/utils/easing.ts";
 import { roundToFloat } from "@/utils/helpers/math.functions.ts";
@@ -28,6 +32,7 @@ export class SMILTween extends Animation {
   _elements: SVGAnimationElement[] = [];
 
   private _originalValues = new Map<Element, Record<string, string | null>>();
+  private _wrapperOuters = new Map<Element, SVGGElement>();
 
   constructor(
     targets: TweenTarget,
@@ -138,41 +143,58 @@ export class SMILTween extends Animation {
         ease: this._vars.ease,
       };
 
-      const elements: SVGAnimationElement[] = [
-        ...this._buildTransforms(
+      const { outerAnims, innerAnims, scaffold } = this._buildTransforms(
+        target,
+        transforms,
+        fromRouted?.transforms,
+        beginDelay,
+        groupDuration,
+      );
+
+      const directAnims = this._buildDirect(
+        direct,
+        fromRouted?.direct,
+        beginDelay,
+        groupDuration,
+        this._yoyo ? (this._originalValues.get(target) ?? undefined) : undefined,
+      );
+
+      const drawAnims: SVGAnimationElement[] = (() => {
+        if (plugins.drawSVG === undefined) return [];
+        if (this._dur === 0) {
+          applyDrawSVGState(target, this._isFrom ? true : plugins.drawSVG);
+          return [];
+        }
+        return buildDrawSVGAnimation(
           target,
-          transforms,
-          fromRouted?.transforms,
-          beginDelay,
-          groupDuration,
-        ),
-        ...this._buildDirect(
-          direct,
-          fromRouted?.direct,
-          beginDelay,
-          groupDuration,
-          this._yoyo ? (this._originalValues.get(target) ?? undefined) : undefined,
-        ),
-        ...(() => {
-          if (plugins.drawSVG === undefined) return [];
-          if (this._dur === 0) {
-            applyDrawSVGState(target, this._isFrom ? true : plugins.drawSVG);
-            return [];
-          }
-          return buildDrawSVGAnimation(
-            target,
-            this._isFrom ? true : plugins.drawSVG,
-            this._isFrom ? plugins.drawSVG : fromRouted?.plugins.drawSVG,
-            timingOpts,
-          );
-        })(),
+          this._isFrom ? true : plugins.drawSVG,
+          this._isFrom ? plugins.drawSVG : fromRouted?.plugins.drawSVG,
+          timingOpts,
+        );
+      })();
+
+      const elements: SVGAnimationElement[] = [
+        ...outerAnims,
+        ...innerAnims,
+        ...directAnims,
+        ...drawAnims,
       ];
 
       if (hasStaggerRepeat) {
         this._applyStaggerEncoding(elements, staggerOffset, groupDuration, this._yoyo);
       }
 
-      injectInto(target, ...elements);
+      // Inject transform animations into their scaffold targets or directly into the element.
+      if (scaffold) {
+        for (const anim of outerAnims) scaffold.outer.appendChild(anim);
+        for (const anim of innerAnims) scaffold.inner.appendChild(anim);
+      } else {
+        for (const anim of outerAnims) target.appendChild(anim);
+      }
+      // Direct attribute and plugin animations always target the element itself.
+      for (const anim of directAnims) target.appendChild(anim);
+      for (const anim of drawAnims) target.appendChild(anim);
+
       this._elements.push(...elements);
     }
 
@@ -207,14 +229,22 @@ export class SMILTween extends Animation {
     this._originalValues.set(target, originals);
   };
 
-  /** Creates `<animateTransform>` elements for all active transform keys. */
+  /**
+   * Creates `<animateTransform>` elements for all active transform keys.
+   *
+   * When scale or skew is present, also builds a pivot scaffold around the target
+   * and stores it in `_wrapperOuters`. The caller is responsible for injecting
+   * `outerAnims` into `scaffold.outer` and `innerAnims` into `scaffold.inner`.
+   * In flat mode (translate/rotate only), all animations are in `outerAnims`
+   * and should be injected directly into the target.
+   */
   private _buildTransforms = (
     target: Element,
     transforms: TransformProps,
     fromTransforms: TransformProps | undefined,
     delay: number,
     dur: number,
-  ): SVGAnimateTransformElement[] => {
+  ): { outerAnims: SVGAnimateTransformElement[]; innerAnims: SVGAnimateTransformElement[]; scaffold: PivotScaffold | null } => {
     const timing = {
       dur,
       delay: delay || undefined,
@@ -222,32 +252,29 @@ export class SMILTween extends Animation {
       ease: this._vars.ease,
     };
 
-    if (this._isFrom) {
-      return composeTransforms({
-        target,
-        fromTransforms: transforms,
-        toTransforms: this._identityFor(transforms),
-        transformOrigin: this._vars.transformOrigin,
-        ...timing,
-      });
+    const composeArgs = this._isFrom
+      ? { target, fromTransforms: transforms, toTransforms: this._identityFor(transforms), transformOrigin: this._vars.transformOrigin, ...timing }
+      : fromTransforms
+        ? { target, fromTransforms, toTransforms: transforms, transformOrigin: this._vars.transformOrigin, ...timing }
+        : { target, toTransforms: transforms, transformOrigin: this._vars.transformOrigin, ...timing };
+
+    const result = composeTransforms(composeArgs);
+
+    if (result.needsWrapper) {
+      const scaffold = buildPivotScaffold(target, result.origin.cx, result.origin.cy);
+      if (scaffold) {
+        this._wrapperOuters.set(target, scaffold.outer);
+        return { outerAnims: result.outerAnims, innerAnims: result.innerAnims, scaffold };
+      }
+      // Element not in DOM — degrade gracefully: inject all anims directly onto target.
+      return {
+        outerAnims: [...result.outerAnims, ...result.innerAnims],
+        innerAnims: [],
+        scaffold: null,
+      };
     }
 
-    if (fromTransforms) {
-      return composeTransforms({
-        target,
-        fromTransforms,
-        toTransforms: transforms,
-        transformOrigin: this._vars.transformOrigin,
-        ...timing,
-      });
-    }
-
-    return composeTransforms({
-      target,
-      toTransforms: transforms,
-      transformOrigin: this._vars.transformOrigin,
-      ...timing,
-    });
+    return { outerAnims: result.outerAnims, innerAnims: [], scaffold: null };
   };
 
   /** Creates `<animate>` elements for opacity, fill, stroke, and other direct SVG attributes. */
@@ -612,6 +639,17 @@ export class SMILTween extends Animation {
 
   revert = (): this => {
     this.kill();
+
+    // Unwrap each element from its pivot scaffold, restoring original DOM position.
+    for (const [el, outerGroup] of this._wrapperOuters) {
+      const scaffoldParent = outerGroup.parentNode;
+      if (scaffoldParent) {
+        scaffoldParent.insertBefore(el, outerGroup);
+        outerGroup.remove();
+      }
+    }
+    this._wrapperOuters.clear();
+
     for (const [target, originals] of this._originalValues) {
       for (const [attr, value] of Object.entries(originals)) {
         if (value === null) {

@@ -2,21 +2,15 @@ import type { TransformProps, AnimateTransformOptions } from "@/types/index.ts";
 import { buildAnimateTransform } from "./builders.ts";
 
 type TransformType = "translate" | "rotate" | "scale" | "skewX" | "skewY";
+type TransformPair = { type: TransformType; from: string; to: string };
 
-// ===== Rotation origin =====
+// ===== Origin resolution =====
 
-/**
- * Resolves the rotation center `(cx, cy)` in the parent's coordinate space.
- * Priority: parsed `transformOrigin` string → `getBBox()` center → `(0, 0)` fallback.
- */
-export const resolveRotationOrigin = (
+export const resolveOrigin = (
   el: Element,
   transformOrigin?: string,
 ): { cx: number; cy: number } => {
-  if (transformOrigin) {
-    return parseTransformOrigin(el, transformOrigin);
-  }
-
+  if (transformOrigin) return parseTransformOrigin(el, transformOrigin);
   return getBBoxCenter(el);
 };
 
@@ -28,25 +22,17 @@ const parseTransformOrigin = (
 
   const resolve = (raw: string, dim: "width" | "height"): number => {
     if (!(el instanceof SVGGraphicsElement)) return 0;
-
     let bbox: DOMRect;
     try {
       bbox = el.getBBox();
     } catch {
       console.warn(
-        "[gsap-to-smil] Cannot determine rotation center — element not in rendered DOM. Falling back to 0.",
+        "[gsap-to-smil] Cannot determine origin — element not in rendered DOM. Falling back to 0.",
       );
       return 0;
     }
-
     const offset = dim === "width" ? bbox.x : bbox.y;
-
-    if (raw.endsWith("%")) {
-      return offset + (parseFloat(raw) / 100) * bbox[dim];
-    }
-
-    // Absolute px are relative to the element's own origin (CSS/GSAP convention),
-    // so we add the element's position in parent coordinate space.
+    if (raw.endsWith("%")) return offset + (parseFloat(raw) / 100) * bbox[dim];
     return offset + parseFloat(raw);
   };
 
@@ -56,18 +42,16 @@ const parseTransformOrigin = (
 const getBBoxCenter = (el: Element): { cx: number; cy: number } => {
   if (!(el instanceof SVGGraphicsElement)) {
     console.warn(
-      "[gsap-to-smil] Cannot determine rotation center — element not in rendered DOM. Falling back to (0, 0).",
+      "[gsap-to-smil] Cannot determine center — element not in rendered DOM. Falling back to (0, 0).",
     );
     return { cx: 0, cy: 0 };
   }
-
   try {
     const bbox = el.getBBox();
     return { cx: bbox.x + bbox.width / 2, cy: bbox.y + bbox.height / 2 };
   } catch {
-    // not in rendered DOM
     console.warn(
-      "[gsap-to-smil] Cannot determine rotation center — element not in rendered DOM. Falling back to (0, 0).",
+      "[gsap-to-smil] Cannot determine center — element not in rendered DOM. Falling back to (0, 0).",
     );
     return { cx: 0, cy: 0 };
   }
@@ -75,10 +59,6 @@ const getBBoxCenter = (el: Element): { cx: number; cy: number } => {
 
 // ===== xPercent / yPercent resolution =====
 
-/**
- * Converts `xPercent` / `yPercent` to pixel values via `getBBox()`.
- * Falls back to 0 if the element is not in the rendered DOM.
- */
 const resolvePercent = (
   value: number | string,
   dim: "width" | "height",
@@ -87,15 +67,11 @@ const resolvePercent = (
   if (typeof value !== "string" || !value.endsWith("%")) {
     return typeof value === "string" ? parseFloat(value) : value;
   }
-
-  if (!(el instanceof SVGGraphicsElement)) {
-    return 0;
-  }
+  if (!(el instanceof SVGGraphicsElement)) return 0;
   try {
     const bbox = el.getBBox();
     return (parseFloat(value) / 100) * bbox[dim];
   } catch {
-    // not in rendered DOM
     console.warn(
       "[gsap-to-smil] Cannot determine percent value — element not in rendered DOM. Falling back to 0.",
     );
@@ -115,36 +91,44 @@ const scaleStr = (sx: number | string, sy: number | string): string =>
   `${sx} ${sy}`;
 
 // ===== Per-type resolvers =====
-// Each returns { type, from, to } if the transform is active in `to`, or null if not.
-// Canonical order is enforced by the array in composeTransforms — not here.
-
-type TransformPair = { type: TransformType; from: string; to: string };
 
 const resolveTranslate = (
   from: TransformProps,
   to: TransformProps,
   target: Element,
 ): TransformPair | null => {
-  if (!("x" in to || "y" in to || "xPercent" in to || "yPercent" in to)) return null;
-
-  const toX = to.xPercent !== undefined ? resolvePercent(to.xPercent, "width", target) : (to.x ?? 0);
-  const toY = to.yPercent !== undefined ? resolvePercent(to.yPercent, "height", target) : (to.y ?? 0);
-  const fromX = from.xPercent !== undefined ? resolvePercent(from.xPercent, "width", target) : (from.x ?? 0);
-  const fromY = from.yPercent !== undefined ? resolvePercent(from.yPercent, "height", target) : (from.y ?? 0);
-
-  return { type: "translate", from: translateStr(fromX, fromY), to: translateStr(toX, toY) };
+  if (!("x" in to || "y" in to || "xPercent" in to || "yPercent" in to))
+    return null;
+  const toX =
+    to.xPercent !== undefined
+      ? resolvePercent(to.xPercent, "width", target)
+      : (to.x ?? 0);
+  const toY =
+    to.yPercent !== undefined
+      ? resolvePercent(to.yPercent, "height", target)
+      : (to.y ?? 0);
+  const fromX =
+    from.xPercent !== undefined
+      ? resolvePercent(from.xPercent, "width", target)
+      : (from.x ?? 0);
+  const fromY =
+    from.yPercent !== undefined
+      ? resolvePercent(from.yPercent, "height", target)
+      : (from.y ?? 0);
+  return {
+    type: "translate",
+    from: translateStr(fromX, fromY),
+    to: translateStr(toX, toY),
+  };
 };
 
 const resolveRotate = (
   from: TransformProps,
   to: TransformProps,
-  target: Element,
-  transformOrigin?: string,
+  cx: number,
+  cy: number,
 ): TransformPair | null => {
   if (!("rotation" in to)) return null;
-
-  const { cx, cy } = resolveRotationOrigin(target, transformOrigin);
-
   return {
     type: "rotate",
     from: rotateStr(from.rotation ?? 0, cx, cy),
@@ -152,24 +136,95 @@ const resolveRotate = (
   };
 };
 
-const resolveScale = (from: TransformProps, to: TransformProps): TransformPair | null => {
+const resolveScale = (
+  from: TransformProps,
+  to: TransformProps,
+): TransformPair | null => {
   if (!("scale" in to || "scaleX" in to || "scaleY" in to)) return null;
-
   return {
     type: "scale",
-    from: scaleStr(from.scale ?? from.scaleX ?? 1, from.scale ?? from.scaleY ?? 1),
+    from: scaleStr(
+      from.scale ?? from.scaleX ?? 1,
+      from.scale ?? from.scaleY ?? 1,
+    ),
     to: scaleStr(to.scale ?? to.scaleX ?? 1, to.scale ?? to.scaleY ?? 1),
   };
 };
 
-const resolveSkewX = (from: TransformProps, to: TransformProps): TransformPair | null => {
+const resolveSkewX = (
+  from: TransformProps,
+  to: TransformProps,
+): TransformPair | null => {
   if (!("skewX" in to)) return null;
-  return { type: "skewX", from: String(from.skewX ?? 0), to: String(to.skewX ?? 0) };
+  return {
+    type: "skewX",
+    from: String(from.skewX ?? 0),
+    to: String(to.skewX ?? 0),
+  };
 };
 
-const resolveSkewY = (from: TransformProps, to: TransformProps): TransformPair | null => {
+const resolveSkewY = (
+  from: TransformProps,
+  to: TransformProps,
+): TransformPair | null => {
   if (!("skewY" in to)) return null;
-  return { type: "skewY", from: String(from.skewY ?? 0), to: String(to.skewY ?? 0) };
+  return {
+    type: "skewY",
+    from: String(from.skewY ?? 0),
+    to: String(to.skewY ?? 0),
+  };
+};
+
+// ===== Pivot scaffold =====
+
+export type PivotScaffold = { outer: SVGGElement; inner: SVGGElement };
+
+/**
+ * Wraps `el` in a pivot scaffold that creates a real coordinate space for
+ * scale/skew animations around `(cx, cy)` in the parent's space.
+ *
+ * Structure inserted into the DOM in place of `el`:
+ *   outer [translate anims go here]
+ *     > pivotIn [translate(cx,cy)]
+ *       > inner [scale/skew/rotate anims go here]
+ *         > pivotOut [translate(-cx,-cy)]
+ *           > el
+ *
+ * Returns null when `el` has no parent (not in the DOM).
+ */
+export const buildPivotScaffold = (
+  el: Element,
+  cx: number,
+  cy: number,
+): PivotScaffold | null => {
+  const parent = el.parentNode;
+  if (!parent) {
+    console.warn(
+      "[gsap-to-smil] Cannot build pivot scaffold — element not in DOM. Scale/skew origin ignored.",
+    );
+    return null;
+  }
+
+  const ns = "http://www.w3.org/2000/svg";
+  const nextSibling = el.nextSibling;
+
+  const outer = document.createElementNS(ns, "g") as SVGGElement;
+  const pivotIn = document.createElementNS(ns, "g") as SVGGElement;
+  const inner = document.createElementNS(ns, "g") as SVGGElement;
+  const pivotOut = document.createElementNS(ns, "g") as SVGGElement;
+
+  pivotIn.setAttribute("transform", `translate(${cx},${cy})`);
+  pivotOut.setAttribute("transform", `translate(${-cx},${-cy})`);
+
+  // Structure: outer > pivotIn > inner > pivotOut > el
+  pivotOut.appendChild(el);
+  inner.appendChild(pivotOut);
+  pivotIn.appendChild(inner);
+  outer.appendChild(pivotIn);
+
+  parent.insertBefore(outer, nextSibling);
+
+  return { outer, inner };
 };
 
 // ===== composeTransforms =====
@@ -185,18 +240,37 @@ type ComposeOptions = {
   ease?: AnimateTransformOptions["ease"];
 };
 
+export type ComposeResult = {
+  /** Animations destined for the outer lane group (translate). */
+  outerAnims: SVGAnimateTransformElement[];
+  /** Animations destined for the inner pivot group (scale, skew, rotate). */
+  innerAnims: SVGAnimateTransformElement[];
+  /** True when scale or skew is present — caller must build a pivot scaffold. */
+  needsWrapper: boolean;
+  /** Pivot center in the element's parent coordinate space (for scaffold construction). */
+  origin: { cx: number; cy: number };
+};
+
 /**
- * Converts a `TransformProps` bucket into stacked `<animateTransform>` elements.
+ * Converts a `TransformProps` bucket into stacked `<animateTransform>` elements,
+ * split by destination: outer (translate) and inner (scale/skew/rotate inside pivot space).
  *
- * One element per active transform type, in canonical order
- * (translate → rotate → scale → skewX → skewY), all with `additive="sum"`.
+ * When `needsWrapper` is true, the caller is responsible for:
+ *   1. Calling `buildPivotScaffold(target, origin.cx, origin.cy)` to create the groups.
+ *   2. Appending `outerAnims` to `scaffold.outer`.
+ *   3. Appending `innerAnims` to `scaffold.inner`.
+ *
+ * When `needsWrapper` is false (translate/rotate only), all animations are in `outerAnims`
+ * and should be appended directly to the target element.
  */
-export const composeTransforms = (opts: ComposeOptions): SVGAnimateTransformElement[] => {
+export const composeTransforms = (opts: ComposeOptions): ComposeResult => {
   const { toTransforms: to, fromTransforms, target, transformOrigin } = opts;
   const from = fromTransforms ?? {};
 
   if ("rotationX" in to || "rotationY" in to) {
-    console.warn("[gsap-to-smil] rotationX / rotationY have no SMIL equivalent — skipped.");
+    console.warn(
+      "[gsap-to-smil] rotationX / rotationY have no SMIL equivalent — skipped.",
+    );
   }
 
   const sharedTiming = {
@@ -207,53 +281,57 @@ export const composeTransforms = (opts: ComposeOptions): SVGAnimateTransformElem
   } satisfies Partial<AnimateTransformOptions>;
 
   const hasScale = "scale" in to || "scaleX" in to || "scaleY" in to;
-  const hasTranslate = "x" in to || "y" in to || "xPercent" in to || "yPercent" in to;
+  const hasSkew = "skewX" in to || "skewY" in to;
+  const hasRotation = "rotation" in to;
+  const needsWrapper = hasScale || hasSkew;
 
-  // Scale has no cx/cy in SMIL — it always scales from (0,0).
-  // Compensate by baking an origin offset into the translate layer:
-  //   tx = cx*(1-sx), ty = cy*(1-sy)   keeps the element anchored at transformOrigin.
-  let translatePair = hasTranslate ? resolveTranslate(from, to, target) : null;
-  if (hasScale) {
-    const { cx: originX, cy: originY } = resolveRotationOrigin(target, transformOrigin);
-    const fromSx = Number(from.scale ?? from.scaleX ?? 1);
-    const fromSy = Number(from.scale ?? from.scaleY ?? 1);
-    const toSx = Number(to.scale ?? to.scaleX ?? 1);
-    const toSy = Number(to.scale ?? to.scaleY ?? 1);
-    const fromTanSkewX = Math.tan(Number(from.skewX ?? 0) * Math.PI / 180);
-    const fromTanSkewY = Math.tan(Number(from.skewY ?? 0) * Math.PI / 180);
-    const toTanSkewX = Math.tan(Number(to.skewX ?? 0) * Math.PI / 180);
-    const toTanSkewY = Math.tan(Number(to.skewY ?? 0) * Math.PI / 180);
-    const [baseFx, baseFy] = translatePair
-      ? translatePair.from.split(" ").map(Number)
-      : [Number(from.x ?? 0), Number(from.y ?? 0)];
-    const [baseTx, baseTy] = translatePair
-      ? translatePair.to.split(" ").map(Number)
-      : [Number(to.x ?? 0), Number(to.y ?? 0)];
-    translatePair = {
-      type: "translate",
-      from: translateStr(
-        baseFx + originX * (1 - fromSx) - fromSx * originY * fromTanSkewX,
-        baseFy + originY * (1 - fromSy) - fromSy * originX * fromTanSkewY,
-      ),
-      to: translateStr(
-        baseTx + originX * (1 - toSx) - toSx * originY * toTanSkewX,
-        baseTy + originY * (1 - toSy) - toSy * originX * toTanSkewY,
-      ),
+  const origin =
+    needsWrapper || hasRotation
+      ? resolveOrigin(target, transformOrigin)
+      : { cx: 0, cy: 0 };
+
+  const make = (pair: TransformPair) =>
+    buildAnimateTransform({
+      type: pair.type,
+      from: pair.from,
+      to: pair.to,
+      additive: "sum",
+      ...sharedTiming,
+    });
+
+  const translatePair = resolveTranslate(from, to, target);
+
+  if (needsWrapper) {
+    // Inside the pivot scaffold the element's bbox center maps to (0,0), so rotation
+    // around the pivot is expressed as rotate(angle 0 0) = rotate(angle).
+    const rotatePair = hasRotation ? resolveRotate(from, to, 0, 0) : null;
+
+    const innerPairs = [
+      rotatePair,
+      resolveScale(from, to),
+      resolveSkewX(from, to),
+      resolveSkewY(from, to),
+    ].filter((p): p is TransformPair => p !== null);
+
+    return {
+      outerAnims: translatePair ? [make(translatePair)] : [],
+      innerAnims: innerPairs.map(make),
+      needsWrapper: true,
+      origin,
     };
   }
 
-  // Array order = canonical transform order
-  const pairs: (TransformPair | null)[] = [
-    translatePair,
-    resolveRotate(from, to, target, transformOrigin),
-    resolveScale(from, to),
-    resolveSkewX(from, to),
-    resolveSkewY(from, to),
-  ];
+  // Flat mode: translate and/or rotate-only. Rotation uses native cx cy.
+  const rotatePair = hasRotation
+    ? resolveRotate(from, to, origin.cx, origin.cy)
+    : null;
 
-  return pairs
-    .filter((pair): pair is TransformPair => pair !== null)
-    .map(({ type, from, to }) =>
-      buildAnimateTransform({ type, from, to, additive: "sum", ...sharedTiming }),
-    );
+  return {
+    outerAnims: [translatePair, rotatePair]
+      .filter((p): p is TransformPair => p !== null)
+      .map(make),
+    innerAnims: [],
+    needsWrapper: false,
+    origin,
+  };
 };
