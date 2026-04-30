@@ -103,6 +103,75 @@
       ease: "power1.inOut",
     }, ">");
 
+    // 7c. timeline() + alternating stagger / non-stagger steps
+    const gTlAlt = gsap.timeline({ repeat: -1, repeatDelay: 0.35 });
+    gTlAlt.to(".g-tl-alt", {
+      x: 42,
+      duration: 0.35,
+      ease: "power1.inOut",
+    });
+    gTlAlt.to(".g-tl-alt", {
+      y: -24,
+      opacity: 0.45,
+      stagger: 0.1,
+      duration: 0.32,
+      ease: "power1.out",
+    }, ">");
+    gTlAlt.to(".g-tl-alt", {
+      x: 0,
+      y: 0,
+      opacity: 1,
+      stagger: 0.1,
+      duration: 0.36,
+      ease: "sine.inOut",
+    }, ">");
+    gTlAlt.to(".g-tl-alt", {
+      x: -22,
+      duration: 0.3,
+      ease: "power1.inOut",
+    }, ">");
+    gTlAlt.to(".g-tl-alt", {
+      x: 0,
+      fill: "#f59e0b",
+      stagger: 0.1,
+      duration: 0.34,
+      ease: "power1.inOut",
+    }, ">");
+
+    const sTlAlt = smil.timeline({ repeat: -1, repeatDelay: 0.35 });
+    sTlAlt.to(".s-tl-alt", {
+      x: 42,
+      duration: 0.35,
+      ease: "power1.inOut",
+    });
+    sTlAlt.to(".s-tl-alt", {
+      y: -24,
+      opacity: 0.45,
+      stagger: 0.1,
+      duration: 0.32,
+      ease: "power1.out",
+    }, ">");
+    sTlAlt.to(".s-tl-alt", {
+      x: 0,
+      y: 0,
+      opacity: 1,
+      stagger: 0.1,
+      duration: 0.36,
+      ease: "sine.inOut",
+    }, ">");
+    sTlAlt.to(".s-tl-alt", {
+      x: -22,
+      duration: 0.3,
+      ease: "power1.inOut",
+    }, ">");
+    sTlAlt.to(".s-tl-alt", {
+      x: 0,
+      fill: "#f59e0b",
+      stagger: 0.1,
+      duration: 0.34,
+      ease: "power1.inOut",
+    }, ">");
+
     // 8. keyframes (% form) + stagger + yoyo — ripple wave
     const waveKf = {
       "10%": { skewX: 15, scaleX: 3 },
@@ -454,6 +523,31 @@
           <circle class="s-tl-stagger" cx="85" cy="70" r="12" fill="#22d3ee" />
           <circle class="s-tl-stagger" cx="135" cy="70" r="12" fill="#22d3ee" />
           <circle class="s-tl-stagger" cx="185" cy="70" r="12" fill="#22d3ee" />
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 7c. timeline() + alternating stagger / non-stagger -->
+  <section>
+    <h3>timeline() — alternating stagger and non-stagger steps</h3>
+    <div class="pair">
+      <figure class="test test-gsap">
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap" width="280" height="120" xmlns="http://www.w3.org/2000/svg">
+          <rect class="g-tl-alt" x="28" y="32" width="24" height="24" fill="#f97316" />
+          <rect class="g-tl-alt" x="78" y="32" width="24" height="24" fill="#f97316" />
+          <rect class="g-tl-alt" x="128" y="32" width="24" height="24" fill="#f97316" />
+          <rect class="g-tl-alt" x="178" y="32" width="24" height="24" fill="#f97316" />
+        </svg>
+      </figure>
+      <figure class="test test-smil">
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil" width="280" height="120" xmlns="http://www.w3.org/2000/svg">
+          <rect class="s-tl-alt" x="28" y="32" width="24" height="24" fill="#f97316" />
+          <rect class="s-tl-alt" x="78" y="32" width="24" height="24" fill="#f97316" />
+          <rect class="s-tl-alt" x="128" y="32" width="24" height="24" fill="#f97316" />
+          <rect class="s-tl-alt" x="178" y="32" width="24" height="24" fill="#f97316" />
         </svg>
       </figure>
     </div>
