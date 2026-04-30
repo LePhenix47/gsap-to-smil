@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 import { describe, expect, it, spyOn } from "bun:test";
-import { composeTransforms, resolveRotationOrigin } from "@/utils/transform-composer";
+import { composeTransforms, resolveOrigin } from "@/utils/transform-composer";
 import { SVG_NS } from "@/utils/builders";
 
 const makeSvgEl = () => document.createElementNS(SVG_NS, "rect");
@@ -9,7 +9,7 @@ describe("transform-composer", () => {
   describe("composeTransforms", () => {
     // ===== HAPPY PATHS =====
 
-    it("HAPPY PATH: x+y → one translate element with correct from/to", () => {
+    it("HAPPY PATH: x+y → outerAnims has one translate, no wrapper needed", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -18,13 +18,15 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].getAttribute("type")).toBe("translate");
-      expect(result[0].getAttribute("from")).toBe("0 0");
-      expect(result[0].getAttribute("to")).toBe("100 50");
+      expect(result.needsWrapper).toBe(false);
+      expect(result.outerAnims).toHaveLength(1);
+      expect(result.innerAnims).toHaveLength(0);
+      expect(result.outerAnims[0].getAttribute("type")).toBe("translate");
+      expect(result.outerAnims[0].getAttribute("from")).toBe("0 0");
+      expect(result.outerAnims[0].getAttribute("to")).toBe("100 50");
     });
 
-    it("HAPPY PATH: rotation → one rotate element; center falls back to 0 0 when not in DOM", () => {
+    it("HAPPY PATH: rotation → outerAnims has one rotate, center falls back to 0 0 when not in DOM", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -33,13 +35,14 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].getAttribute("type")).toBe("rotate");
-      expect(result[0].getAttribute("from")).toBe("0 0 0");
-      expect(result[0].getAttribute("to")).toBe("90 0 0");
+      expect(result.needsWrapper).toBe(false);
+      expect(result.outerAnims).toHaveLength(1);
+      expect(result.outerAnims[0].getAttribute("type")).toBe("rotate");
+      expect(result.outerAnims[0].getAttribute("from")).toBe("0 0 0");
+      expect(result.outerAnims[0].getAttribute("to")).toBe("90 0 0");
     });
 
-    it("HAPPY PATH: transformOrigin as pixel string offsets by bbox position — passes through as-is when element is unrendered (bbox zero in happy-dom)", () => {
+    it("HAPPY PATH: transformOrigin as pixel string with rotation — passes through as-is when element is unrendered (bbox zero in happy-dom)", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -52,12 +55,13 @@ describe("transform-composer", () => {
 
       // happy-dom getBBox() → {x:0,y:0,...} so offset+px = 0+px = px.
       // In a real browser with the element at (bx,by), cx would be bx+40, cy would be by+60.
-      expect(result).toHaveLength(1);
-      expect(result[0].getAttribute("from")).toBe("0 40 60");
-      expect(result[0].getAttribute("to")).toBe("180 40 60");
+      expect(result.needsWrapper).toBe(false);
+      expect(result.outerAnims).toHaveLength(1);
+      expect(result.outerAnims[0].getAttribute("from")).toBe("0 40 60");
+      expect(result.outerAnims[0].getAttribute("to")).toBe("180 40 60");
     });
 
-    it("HAPPY PATH: scale → compensating translate (no-op for unrendered bbox=0) + scale element", () => {
+    it("HAPPY PATH: scale → wrapper mode; scale goes to innerAnims, no compensating translate", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -66,18 +70,16 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      // Scale always emits a translate for origin compensation. With bbox=(0,0) origin=(0,0)
-      // the compensation is 0*(1-sx)=0, so translate is a no-op "0 0"→"0 0".
-      expect(result).toHaveLength(2);
-      expect(result[0].getAttribute("type")).toBe("translate");
-      expect(result[0].getAttribute("from")).toBe("0 0");
-      expect(result[0].getAttribute("to")).toBe("0 0");
-      expect(result[1].getAttribute("type")).toBe("scale");
-      expect(result[1].getAttribute("from")).toBe("1 1");
-      expect(result[1].getAttribute("to")).toBe("2 2");
+      // Scale triggers wrapper mode — the pivot scaffold handles origin, no translate compensation.
+      expect(result.needsWrapper).toBe(true);
+      expect(result.outerAnims).toHaveLength(0);
+      expect(result.innerAnims).toHaveLength(1);
+      expect(result.innerAnims[0].getAttribute("type")).toBe("scale");
+      expect(result.innerAnims[0].getAttribute("from")).toBe("1 1");
+      expect(result.innerAnims[0].getAttribute("to")).toBe("2 2");
     });
 
-    it("HAPPY PATH: scaleX + scaleY → compensating translate (no-op for unrendered bbox=0) + scale element", () => {
+    it("HAPPY PATH: scaleX + scaleY → wrapper mode; scale in innerAnims", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -87,16 +89,15 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      expect(result).toHaveLength(2);
-      expect(result[0].getAttribute("type")).toBe("translate");
-      expect(result[0].getAttribute("from")).toBe("0 0");
-      expect(result[0].getAttribute("to")).toBe("0 0");
-      expect(result[1].getAttribute("type")).toBe("scale");
-      expect(result[1].getAttribute("from")).toBe("1 1");
-      expect(result[1].getAttribute("to")).toBe("3 0.5");
+      expect(result.needsWrapper).toBe(true);
+      expect(result.outerAnims).toHaveLength(0);
+      expect(result.innerAnims).toHaveLength(1);
+      expect(result.innerAnims[0].getAttribute("type")).toBe("scale");
+      expect(result.innerAnims[0].getAttribute("from")).toBe("1 1");
+      expect(result.innerAnims[0].getAttribute("to")).toBe("3 0.5");
     });
 
-    it("HAPPY PATH: skewX → one skewX element", () => {
+    it("HAPPY PATH: skewX → wrapper mode; skewX in innerAnims", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -105,13 +106,15 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].getAttribute("type")).toBe("skewX");
-      expect(result[0].getAttribute("from")).toBe("0");
-      expect(result[0].getAttribute("to")).toBe("30");
+      expect(result.needsWrapper).toBe(true);
+      expect(result.outerAnims).toHaveLength(0);
+      expect(result.innerAnims).toHaveLength(1);
+      expect(result.innerAnims[0].getAttribute("type")).toBe("skewX");
+      expect(result.innerAnims[0].getAttribute("from")).toBe("0");
+      expect(result.innerAnims[0].getAttribute("to")).toBe("30");
     });
 
-    it("HAPPY PATH: skewY → one skewY element", () => {
+    it("HAPPY PATH: skewY → wrapper mode; skewY in innerAnims", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -120,13 +123,15 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].getAttribute("type")).toBe("skewY");
-      expect(result[0].getAttribute("from")).toBe("0");
-      expect(result[0].getAttribute("to")).toBe("15");
+      expect(result.needsWrapper).toBe(true);
+      expect(result.outerAnims).toHaveLength(0);
+      expect(result.innerAnims).toHaveLength(1);
+      expect(result.innerAnims[0].getAttribute("type")).toBe("skewY");
+      expect(result.innerAnims[0].getAttribute("from")).toBe("0");
+      expect(result.innerAnims[0].getAttribute("to")).toBe("15");
     });
 
-    it("HAPPY PATH: compound transforms are returned in canonical order (translate → rotate → scale)", () => {
+    it("HAPPY PATH: compound transforms are split in canonical order (translate → rotate → scale)", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -135,13 +140,16 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      expect(result).toHaveLength(3);
-      expect(result[0].getAttribute("type")).toBe("translate");
-      expect(result[1].getAttribute("type")).toBe("rotate");
-      expect(result[2].getAttribute("type")).toBe("scale");
+      // translate → outer lane; rotate + scale → inner pivot group
+      const allAnims = [...result.outerAnims, ...result.innerAnims];
+      expect(result.needsWrapper).toBe(true);
+      expect(allAnims).toHaveLength(3);
+      expect(allAnims[0].getAttribute("type")).toBe("translate");
+      expect(allAnims[1].getAttribute("type")).toBe("rotate");
+      expect(allAnims[2].getAttribute("type")).toBe("scale");
     });
 
-    it("HAPPY PATH: all five types are returned in canonical order", () => {
+    it("HAPPY PATH: all five types are split in canonical order", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -150,12 +158,14 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      expect(result).toHaveLength(5);
-      expect(result[0].getAttribute("type")).toBe("translate");
-      expect(result[1].getAttribute("type")).toBe("rotate");
-      expect(result[2].getAttribute("type")).toBe("scale");
-      expect(result[3].getAttribute("type")).toBe("skewX");
-      expect(result[4].getAttribute("type")).toBe("skewY");
+      const allAnims = [...result.outerAnims, ...result.innerAnims];
+      expect(result.needsWrapper).toBe(true);
+      expect(allAnims).toHaveLength(5);
+      expect(allAnims[0].getAttribute("type")).toBe("translate");
+      expect(allAnims[1].getAttribute("type")).toBe("rotate");
+      expect(allAnims[2].getAttribute("type")).toBe("scale");
+      expect(allAnims[3].getAttribute("type")).toBe("skewX");
+      expect(allAnims[4].getAttribute("type")).toBe("skewY");
     });
 
     it("HAPPY PATH: fromTransforms omitted → from values default to zero / one", () => {
@@ -167,11 +177,9 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      const translateEl = result[0];
-      const scaleEl = result[1];
-
-      expect(translateEl.getAttribute("from")).toBe("0 0");
-      expect(scaleEl.getAttribute("from")).toBe("1 1");
+      // translate in outerAnims, scale in innerAnims
+      expect(result.outerAnims[0].getAttribute("from")).toBe("0 0");
+      expect(result.innerAnims[0].getAttribute("from")).toBe("1 1");
     });
 
     it("HAPPY PATH: timing options are forwarded to every element", () => {
@@ -186,7 +194,8 @@ describe("transform-composer", () => {
         ease: "power1.out",
       });
 
-      for (const el of result) {
+      const allAnims = [...result.outerAnims, ...result.innerAnims];
+      for (const el of allAnims) {
         expect(el.getAttribute("dur")).toBe("2s");
         expect(el.getAttribute("begin")).toBe("0.5s");
         expect(el.getAttribute("repeatCount")).toBe("2");
@@ -203,14 +212,15 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      for (const el of result) {
+      const allAnims = [...result.outerAnims, ...result.innerAnims];
+      for (const el of allAnims) {
         expect(el.getAttribute("additive")).toBe("sum");
       }
     });
 
     // ===== EDGE CASES =====
 
-    it("EDGE CASE: empty toTransforms → returns empty array", () => {
+    it("EDGE CASE: empty toTransforms → outerAnims and innerAnims are both empty", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -219,10 +229,11 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      expect(result).toHaveLength(0);
+      expect(result.outerAnims).toHaveLength(0);
+      expect(result.innerAnims).toHaveLength(0);
     });
 
-    it("EDGE CASE: only y in toTransforms → still produces a translate element", () => {
+    it("EDGE CASE: only y in toTransforms → still produces a translate element in outerAnims", () => {
       const target = makeSvgEl();
 
       const result = composeTransforms({
@@ -231,9 +242,10 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].getAttribute("type")).toBe("translate");
-      expect(result[0].getAttribute("to")).toBe("0 30");
+      expect(result.needsWrapper).toBe(false);
+      expect(result.outerAnims).toHaveLength(1);
+      expect(result.outerAnims[0].getAttribute("type")).toBe("translate");
+      expect(result.outerAnims[0].getAttribute("to")).toBe("0 30");
     });
 
     it("EDGE CASE: transformOrigin with % resolves to 0 when element is unrendered — happy-dom getBBox returns zeros so offset+pct*dim = 0", () => {
@@ -248,8 +260,8 @@ describe("transform-composer", () => {
 
       // happy-dom getBBox() → {x:0,y:0,width:0,height:0} → cx = 0+0.5*0 = 0, cy = 0+0.5*0 = 0.
       // In a real browser the element center would be used. Visual coverage: no-plugins.html.
-      expect(result[0].getAttribute("from")).toBe("0 0 0");
-      expect(result[0].getAttribute("to")).toBe("90 0 0");
+      expect(result.outerAnims[0].getAttribute("from")).toBe("0 0 0");
+      expect(result.outerAnims[0].getAttribute("to")).toBe("90 0 0");
     });
 
     it("EDGE CASE: rotationX/rotationY warns and produces no elements", () => {
@@ -262,7 +274,8 @@ describe("transform-composer", () => {
         dur: 1,
       });
 
-      expect(result).toHaveLength(0);
+      const allAnims = [...result.outerAnims, ...result.innerAnims];
+      expect(allAnims).toHaveLength(0);
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining("rotationX"),
       );
@@ -271,7 +284,7 @@ describe("transform-composer", () => {
     });
   });
 
-  describe("resolveRotationOrigin", () => {
+  describe("resolveOrigin", () => {
     // ===== HAPPY PATHS =====
 
     // NOTE: happy-dom's getBBox() always returns {x:0,y:0,width:0,height:0} regardless of
@@ -280,25 +293,25 @@ describe("transform-composer", () => {
     // visually in tests/integration/no-plugins.html.
 
     it("HAPPY PATH: two pixel values — passes through as-is when bbox is zero (unrendered element)", () => {
-      const result = resolveRotationOrigin(makeSvgEl(), "40 60");
+      const result = resolveOrigin(makeSvgEl(), "40 60");
 
       expect(result).toEqual({ cx: 40, cy: 60 });
     });
 
     it("HAPPY PATH: single pixel value → both axes use that value", () => {
-      const result = resolveRotationOrigin(makeSvgEl(), "50");
+      const result = resolveOrigin(makeSvgEl(), "50");
 
       expect(result).toEqual({ cx: 50, cy: 50 });
     });
 
     it("HAPPY PATH: negative pixel values are accepted", () => {
-      const result = resolveRotationOrigin(makeSvgEl(), "-10 -20");
+      const result = resolveOrigin(makeSvgEl(), "-10 -20");
 
       expect(result).toEqual({ cx: -10, cy: -20 });
     });
 
     it("HAPPY PATH: no transformOrigin → getBBoxCenter; returns {0,0} for unrendered element", () => {
-      const result = resolveRotationOrigin(makeSvgEl());
+      const result = resolveOrigin(makeSvgEl());
 
       expect(result).toEqual({ cx: 0, cy: 0 });
     });
@@ -306,7 +319,7 @@ describe("transform-composer", () => {
     // ===== EDGE CASES =====
 
     it("EDGE CASE: % transformOrigin resolves to 0 for unrendered element (bbox dimensions are zero)", () => {
-      const result = resolveRotationOrigin(makeSvgEl(), "50% 50%");
+      const result = resolveOrigin(makeSvgEl(), "50% 50%");
 
       // cx = 0 + 0.5*0 = 0, cy = 0 + 0.5*0 = 0
       expect(result).toEqual({ cx: 0, cy: 0 });
@@ -316,7 +329,7 @@ describe("transform-composer", () => {
       const el = document.createElement("div"); // definitely not SVGGraphicsElement
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
-      const result = resolveRotationOrigin(el);
+      const result = resolveOrigin(el);
 
       expect(result).toEqual({ cx: 0, cy: 0 });
       expect(warnSpy).toHaveBeenCalled();

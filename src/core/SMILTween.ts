@@ -263,6 +263,18 @@ export class SMILTween extends Animation {
     if (result.needsWrapper) {
       const scaffold = buildPivotScaffold(target, result.origin.cx, result.origin.cy);
       if (scaffold) {
+        // Earlier flat-mode tweens injected translate <animateTransform> directly onto
+        // the element. The element is now inside the scaffold, putting those animations
+        // in the wrong coordinate space. Move them to the outer lane so they continue
+        // to compose correctly with both the new tween and the static pivot transforms.
+        const existingTranslates = Array.from(target.children).filter(
+          (c): c is Element =>
+            c instanceof Element &&
+            c.tagName === "animateTransform" &&
+            c.getAttribute("type") === "translate",
+        );
+        for (const anim of existingTranslates) scaffold.outer.prepend(anim);
+
         this._wrapperOuters.set(target, scaffold.outer);
         return { outerAnims: result.outerAnims, innerAnims: result.innerAnims, scaffold };
       }
@@ -633,14 +645,11 @@ export class SMILTween extends Animation {
   kill = (): this => {
     for (const el of this._elements) el.remove();
     this._elements = [];
-    this._initialized = false;
-    return this;
-  };
 
-  revert = (): this => {
-    this.kill();
-
-    // Unwrap each element from its pivot scaffold, restoring original DOM position.
+    // Removing <animateTransform> elements already un-freezes the element in SMIL
+    // (fill="freeze" only holds while the element is in the DOM), so the element
+    // returns to its base position regardless. Clean up the scaffold here so
+    // timeline clear/kill doesn't leave empty <g> wrappers behind.
     for (const [el, outerGroup] of this._wrapperOuters) {
       const scaffoldParent = outerGroup.parentNode;
       if (scaffoldParent) {
@@ -649,6 +658,13 @@ export class SMILTween extends Animation {
       }
     }
     this._wrapperOuters.clear();
+
+    this._initialized = false;
+    return this;
+  };
+
+  revert = (): this => {
+    this.kill();
 
     for (const [target, originals] of this._originalValues) {
       for (const [attr, value] of Object.entries(originals)) {

@@ -93,6 +93,28 @@
     sTl2.to("#s-tlkf-b", { x: 105, scale: 0.75, opacity: 0.35, fill: "#fb7185", duration: 0.55, ease: "power1.inOut" }, "cross+=0.15");
     sTl2.to("#s-tlkf-a", { opacity: 1, fill: "#a3e635", duration: 0.35, ease: "sine.inOut" }, ">-0.2");
     sTl2.to("#s-tlkf-b", { opacity: 1, fill: "#f97316", duration: 0.35, ease: "sine.inOut" }, "<");
+
+    // 10. to() — scale + skewX with transformOrigin
+    gsap.to("#g-scale-skew", {
+      scaleX: 1.9,
+      scaleY: 0.8,
+      skewX: 18,
+      duration: 1.4,
+      repeat: -1,
+      yoyo: true,
+      ease: "power1.inOut",
+      transformOrigin: "50% 50%",
+    });
+    smil.to("#s-scale-skew", {
+      scaleX: 1.9,
+      scaleY: 0.8,
+      skewX: 18,
+      duration: 1.4,
+      repeat: -1,
+      yoyo: true,
+      ease: "power1.inOut",
+      transformOrigin: "50% 50%",
+    });
   </script>
 
   <style>
@@ -468,6 +490,27 @@
         <svg class="svg-smil" width="160" height="160" xmlns="http://www.w3.org/2000/svg">
           <circle id="s-tlkf-a" cx="20" cy="30" r="14" fill="#a3e635" />
           <circle id="s-tlkf-b" cx="20" cy="100" r="14" fill="#fb7185" />
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 10. scale + skewX -->
+  <section>
+    <h3>to() — scale + skewX with transformOrigin</h3>
+    <div class="pair">
+      <figure class="test test-gsap">
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap" width="220" height="160" xmlns="http://www.w3.org/2000/svg">
+          <rect id="g-scale-skew" x="70" y="50" width="80" height="60" fill="#60a5fa" />
+          <circle cx="110" cy="80" r="3" fill="#ffffff" opacity="0.9" />
+        </svg>
+      </figure>
+      <figure class="test test-smil">
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil" width="220" height="160" xmlns="http://www.w3.org/2000/svg">
+          <rect id="s-scale-skew" x="70" y="50" width="80" height="60" fill="#60a5fa" />
+          <circle cx="110" cy="80" r="3" fill="#ffffff" opacity="0.9" />
         </svg>
       </figure>
     </div>
