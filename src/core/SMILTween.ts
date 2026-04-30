@@ -117,6 +117,13 @@ export class SMILTween extends Animation {
     const hasStaggerRepeat =
       staggerDelays !== null && this._repeat !== 0 && maxStagger > 0;
 
+    // For non-repeat stagger, each element's begin= is offset individually. The tween's
+    // effective span in a timeline is therefore _dur + maxStagger, not just _dur.
+    // Extend _tDur now so SMILTimeline._addChild computes _prevEnd correctly.
+    if (!hasStaggerRepeat && maxStagger > 0) {
+      this._tDur = this._tDur === Infinity ? Infinity : this._tDur + maxStagger;
+    }
+
     const totalPlays = this._repeat === -1 ? Infinity : this._repeat + 1;
     // When yoyo runs inside the stagger group, groupDuration must cover all plays per target:
     //   infinite or even total plays: one F+B cycle → groupDur = 2D + maxStagger
