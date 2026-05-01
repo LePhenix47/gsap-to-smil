@@ -16,7 +16,8 @@
 <p>
   Loop: s1_tN.begin="0s; s5_t3.end+0.35s" — SMIL begin list fires on load, then again after last target's last step.<br>
   Instance events cascade: each s1 firing triggers s2 via s1.end, s2 triggers s3 via s2_t3.end, etc.<br>
-  Scale/skewX/fill: fill="remove" — contribution disappears when inactive, no cross-cycle accumulation.<br>
+  Scale/skewX: fill="remove" + extended dur — holds at peak until cycle restart (2.92s), removes cleanly so no cross-cycle accumulation.<br>
+  Fill color: fill="remove" — reverts to base #f97316 per target as each s5 ends.<br>
   Opacity step3: explicit from="0.45" — each cycle starts from where step2 left off.
 </p>
 
@@ -78,19 +79,19 @@
 
     <g transform="translate(40,44)">
       <g>
-        <!-- fill="remove": contribution disappears after active phase — no cross-cycle accumulation -->
+        <!-- fill="remove" + extended dur: grows in 0.34s then holds at peak until cycle restart at 2.92s -->
         <animateTransform
           attributeName="transform" attributeType="XML" type="scale"
           additive="sum" fill="remove"
-          from="1 1" to="2 2" dur="0.34s"
+          values="1 1; 2 2; 2 2" dur="0.99s"
           begin="s4_t0.end"
-          calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+          calcMode="spline" keyTimes="0; 0.344; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
         <animateTransform
           attributeName="transform" attributeType="XML" type="skewX"
           additive="sum" fill="remove"
-          from="0" to="10" dur="0.34s"
+          values="0; 10; 10" dur="0.99s"
           begin="s4_t0.end"
-          calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+          calcMode="spline" keyTimes="0; 0.344; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
         <g transform="translate(-40,-44)">
           <rect x="28" y="32" width="24" height="24" fill="#f97316">
             <animate attributeName="opacity" fill="freeze"
@@ -100,10 +101,10 @@
             <animate attributeName="opacity" fill="freeze"
               from="0.45" to="1" dur="0.36s" begin="s2_t3.end"
               calcMode="spline" keyTimes="0; 1" keySplines="0.445 0.05 0.55 0.95" />
-            <!-- fill="remove": reverts to base #f97316 after active phase -->
+            <!-- fill="remove" + extended dur: holds amber until cycle restart at 2.92s -->
             <animate attributeName="fill" fill="remove"
-              to="#f59e0b" dur="0.34s" begin="s4_t0.end"
-              calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+              values="#f97316; #f59e0b; #f59e0b" dur="0.99s" begin="s4_t0.end"
+              calcMode="spline" keyTimes="0; 0.344; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
           </rect>
         </g>
       </g>
@@ -152,15 +153,15 @@
         <animateTransform
           attributeName="transform" attributeType="XML" type="scale"
           additive="sum" fill="remove"
-          from="1 1" to="2 2" dur="0.34s"
+          values="1 1; 2 2; 2 2" dur="0.89s"
           begin="s4_t1.end+0.1s"
-          calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+          calcMode="spline" keyTimes="0; 0.382; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
         <animateTransform
           attributeName="transform" attributeType="XML" type="skewX"
           additive="sum" fill="remove"
-          from="0" to="10" dur="0.34s"
+          values="0; 10; 10" dur="0.89s"
           begin="s4_t1.end+0.1s"
-          calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+          calcMode="spline" keyTimes="0; 0.382; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
         <g transform="translate(-90,-44)">
           <rect x="78" y="32" width="24" height="24" fill="#f97316">
             <animate attributeName="opacity" fill="freeze"
@@ -170,8 +171,8 @@
               from="0.45" to="1" dur="0.36s" begin="s2_t3.end+0.1s"
               calcMode="spline" keyTimes="0; 1" keySplines="0.445 0.05 0.55 0.95" />
             <animate attributeName="fill" fill="remove"
-              to="#f59e0b" dur="0.34s" begin="s4_t1.end+0.1s"
-              calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+              values="#f97316; #f59e0b; #f59e0b" dur="0.89s" begin="s4_t1.end+0.1s"
+              calcMode="spline" keyTimes="0; 0.382; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
           </rect>
         </g>
       </g>
@@ -220,15 +221,15 @@
         <animateTransform
           attributeName="transform" attributeType="XML" type="scale"
           additive="sum" fill="remove"
-          from="1 1" to="2 2" dur="0.34s"
+          values="1 1; 2 2; 2 2" dur="0.79s"
           begin="s4_t2.end+0.2s"
-          calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+          calcMode="spline" keyTimes="0; 0.430; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
         <animateTransform
           attributeName="transform" attributeType="XML" type="skewX"
           additive="sum" fill="remove"
-          from="0" to="10" dur="0.34s"
+          values="0; 10; 10" dur="0.79s"
           begin="s4_t2.end+0.2s"
-          calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+          calcMode="spline" keyTimes="0; 0.430; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
         <g transform="translate(-140,-44)">
           <rect x="128" y="32" width="24" height="24" fill="#f97316">
             <animate attributeName="opacity" fill="freeze"
@@ -238,8 +239,8 @@
               from="0.45" to="1" dur="0.36s" begin="s2_t3.end+0.2s"
               calcMode="spline" keyTimes="0; 1" keySplines="0.445 0.05 0.55 0.95" />
             <animate attributeName="fill" fill="remove"
-              to="#f59e0b" dur="0.34s" begin="s4_t2.end+0.2s"
-              calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+              values="#f97316; #f59e0b; #f59e0b" dur="0.79s" begin="s4_t2.end+0.2s"
+              calcMode="spline" keyTimes="0; 0.430; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
           </rect>
         </g>
       </g>
@@ -294,15 +295,15 @@
         <animateTransform
           attributeName="transform" attributeType="XML" type="scale"
           additive="sum" fill="remove"
-          from="1 1" to="2 2" dur="0.34s"
+          values="1 1; 2 2; 2 2" dur="0.69s"
           begin="s4_t3.end+0.3s"
-          calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+          calcMode="spline" keyTimes="0; 0.493; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
         <animateTransform
           attributeName="transform" attributeType="XML" type="skewX"
           additive="sum" fill="remove"
-          from="0" to="10" dur="0.34s"
+          values="0; 10; 10" dur="0.69s"
           begin="s4_t3.end+0.3s"
-          calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+          calcMode="spline" keyTimes="0; 0.493; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
         <g transform="translate(-190,-44)">
           <rect x="178" y="32" width="24" height="24" fill="#f97316">
             <animate attributeName="opacity" fill="freeze"
@@ -312,8 +313,8 @@
               from="0.45" to="1" dur="0.36s" begin="s2_t3.end+0.3s"
               calcMode="spline" keyTimes="0; 1" keySplines="0.445 0.05 0.55 0.95" />
             <animate attributeName="fill" fill="remove"
-              to="#f59e0b" dur="0.34s" begin="s4_t3.end+0.3s"
-              calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+              values="#f97316; #f59e0b; #f59e0b" dur="0.69s" begin="s4_t3.end+0.3s"
+              calcMode="spline" keyTimes="0; 0.493; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
           </rect>
         </g>
       </g>

@@ -47,33 +47,82 @@ space change via a wrapper element, not more math.
 doesn't allow circular begin dependencies. To repeat, you'd need pre-computed absolute
 cycle times or JavaScript. Dismiss the approach for anything with `repeat: -1`.
 
-**What experimenting showed (credit: Codex + CodePen):**
+**What experimenting showed (confirmed in `tests/integration/begin-chaining-poc.html`):**
 
 SMIL's begin attribute accepts a **semicolon-separated list of begin times**:
 
-```
-begin="0s; s5.end+0.35s"
+```xml
+begin="0s; s5_t3.end+0.35s"
 ```
 
 This is not a circular dependency. It is two independent begin events on the same
-element. When `s5` fires its end event, `s1` gets a **new instance**. That instance
+element. When `s5_t3` fires its end event, `s1` gets a **new instance**. That instance
 cascades through `s2 → s3 → s4 → s5` via their own `begin="sN.end"` references.
 `s5` ends again, fires `s1` again. The loop runs indefinitely, fully declarative,
 zero JavaScript.
 
-`fill="remove"` on a `<set>` between cycles cleans the frozen state so each new
-instance starts from a neutral base.
+For staggered targets: each target's first step gets
+`begin="staggerOffset; s_last_tN.end+repeatDelay+staggerOffset"` where `s_last_tN`
+is the **last target's last step** (the single sync anchor for the whole loop).
+All targets restart in coordinated stagger, still no JS.
 
-For staggered targets the pattern extends: each target's first step gets
-`begin="staggerOffset; s_last_tN.end+repeatDelay+staggerOffset"`. All targets restart
-in coordinated stagger, still no JS.
+**Three patterns discovered in the POC:**
 
-A 10-line CodePen found this in one session. Weeks of reasoning did not.
+### 1. `additive="replace"` + `fill="freeze"` for sequential absolute-value properties
+
+Translate animations carry their absolute `from`/`to` values step to step
+(`from="42 0" to="42 -24"`). No delta encoding. The browser gives newer instances
+priority over older frozen ones at the same element — cycle 2's new instance
+correctly overrides cycle 1's frozen value. This makes `_transformAccum` and all
+delta bookkeeping unnecessary for this architecture.
+
+### 2. `fill="remove"` + extended `dur` for "hold until cycle boundary then reset"
+
+Properties that use `additive="sum"` (scale, skewX) cannot use `fill="freeze"` for
+looping — cycle 2 would accumulate on top of cycle 1's frozen value. But
+`fill="remove"` with the original short `dur` removes the contribution too early
+(when *that target's* step ends, not when the *last target's* step ends).
+
+The fix: extend `dur` so the animation covers from its natural start all the way to
+the cycle restart time, with a hold keyframe at the boundary:
+
+```xml
+<!-- scale for target 0: starts at 1.93s, cycle restarts at 2.92s → dur=0.99s -->
+<!-- grows 1→2 in first 0.34s (keyTime 0.344), holds 2 for the rest -->
+<animateTransform type="scale" additive="sum" fill="remove"
+  values="1 1; 2 2; 2 2" dur="0.99s"
+  keyTimes="0; 0.344; 1"
+  keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+```
+
+`fill="remove"` then cleans up at exactly the cycle boundary. No accumulation.
+Same pattern applies to fill color and any other `additive="sum"` property.
+
+### 3. Cross-target sync via a single anchor
+
+All step N+1 animations reference the **last target's step N end**:
+
+```
+s3_t0.begin = "s2_t3.end"        (not s2_t0.end)
+s3_t1.begin = "s2_t3.end+0.1s"
+```
+
+Step N+1 waits for the slowest target of step N, then staggers forward. One sync
+point per step transition, not one per target.
 
 **Rule extracted:**
 
 "The spec says X is not possible" is a hypothesis, not a conclusion. Test it with the
 smallest possible SVG before accepting the constraint.
+
+**Architectural implication:**
+
+The current timeline implementation (`_rewriteBegin`, `_transformAccum`, pre-computed
+absolute `begin=` times, delta encoding) is solving a problem that `begin="anim.end"`
+chaining makes irrelevant. The declarative approach is simpler, more correct under
+looping, and produces smaller DOM output. The tradeoff: overlapping tweens and GSAP
+position params like `"<"` are harder to express. For strictly sequential animations,
+the chaining approach is strictly better.
 
 ---
 
