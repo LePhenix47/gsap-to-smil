@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>begin=anim.end — finite repeat via end= attribute</title>
+<style>
+  body { background: #111; color: #eee; font-family: monospace; padding: 2rem; display: flex; flex-direction: column; gap: 2rem; margin: 0; }
+  svg  { display: block; border: 1px solid #2a2a2a; background: #1a1a1a; }
+  h3   { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.45; margin: 0; }
+  p    { font-size: 0.72rem; opacity: 0.5; margin: 0; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<h3>begin="anim.end" — finite repeat (3 cycles) via end= attribute</h3>
+<p>
+  Hypothesis: adding end="8.75s" to all s1_tN blocks the 4th loop trigger.<br>
+  The 4th begin event would fire at s5_t3.end+0.35s = 8.41+0.35 = 8.76s — after end= → ignored.<br>
+  All other animations (s2–s5) need no end= constraint: once s1 stops, the chain dies naturally.<br>
+  cycle dur = 2.92s × 3 repeats = 8.76s total. end= set to 8.75s (1 frame before 4th trigger).
+</p>
+
+<!--
+  Ease keySplines:
+    power1.inOut  →  0.455 0.03 0.515 0.955
+    power1.out    →  0.25  0.46 0.45  0.94
+    sine.inOut    →  0.445 0.05 0.55  0.95
+
+  Cycle timing (seconds, cycle 1):
+    s1 all:  0 → 0.35
+    s2 t0:   0.35 → 0.67   t1: 0.45→0.77   t2: 0.55→0.87   t3: 0.65→0.97 ← sync step3
+    s3 t0:   0.97 → 1.33   t1: 1.07→1.43   t2: 1.17→1.53   t3: 1.27→1.63 ← sync step4
+    s4 all:  1.63 → 1.93                                                   ← sync step5
+    s5 t0:   1.93 → 2.27   t1: 2.03→2.37   t2: 2.13→2.47   t3: 2.23→2.57 ← loop trigger
+    gap:     2.57 → 2.92  (repeatDelay 0.35s)
+    cycle 2: 2.92 → 5.84
+    cycle 3: 5.84 → 8.76
+    4th trigger would fire at 8.76s — blocked by end="8.75s" on s1_tN
+
+  Scale/skewX/fill extended dur works per-instance automatically:
+    cycle 1 t0 scale: s4_t0.end=1.93s, dur=0.99s → ends 2.92s (cycle 2 start) ✓
+    cycle 2 t0 scale: s4_t0 instance 2 ends at 2.92+1.93=4.85s, dur=0.99s → ends 5.84s (cycle 3 start) ✓
+    cycle 3 t0 scale: s4_t0 instance 3 ends at 5.84+1.93=7.77s, dur=0.99s → ends 8.76s (end of last cycle) ✓
+-->
+
+<svg width="280" height="120" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- ═══════ TARGET 0  rect x=28 y=32  pivot=(40,44) ═══════ -->
+  <g>
+    <!-- end="8.75s": 4th begin event at 8.76s falls after end= → blocked → 3 cycles total -->
+    <animateTransform id="s1_t0"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="0 0" to="42 0" dur="0.35s"
+      begin="0s; s5_t3.end+0.35s" end="8.75s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+
+    <animateTransform id="s2_t0"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="42 0" to="42 -24" dur="0.32s"
+      begin="s1_t0.end"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.25 0.46 0.45 0.94" />
+
+    <animateTransform id="s3_t0"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="42 -24" to="0 0" dur="0.36s"
+      begin="s2_t3.end"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.445 0.05 0.55 0.95" />
+
+    <animateTransform id="s4_t0"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="0 0" to="-22 0" dur="0.3s"
+      begin="s3_t3.end"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+
+    <animateTransform id="s5_t0"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="-22 0" to="0 0" dur="0.34s"
+      begin="s4_t0.end"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+
+    <g transform="translate(40,44)">
+      <g>
+        <animateTransform
+          attributeName="transform" attributeType="XML" type="scale"
+          additive="sum" fill="remove"
+          values="1 1; 2 2; 2 2" dur="0.99s"
+          begin="s4_t0.end"
+          calcMode="spline" keyTimes="0; 0.344; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+        <animateTransform
+          attributeName="transform" attributeType="XML" type="skewX"
+          additive="sum" fill="remove"
+          values="0; 10; 10" dur="0.99s"
+          begin="s4_t0.end"
+          calcMode="spline" keyTimes="0; 0.344; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+        <g transform="translate(-40,-44)">
+          <rect x="28" y="32" width="24" height="24" fill="#f97316">
+            <animate attributeName="opacity" fill="freeze"
+              from="1" to="0.45" dur="0.32s" begin="s1_t0.end"
+              calcMode="spline" keyTimes="0; 1" keySplines="0.25 0.46 0.45 0.94" />
+            <animate attributeName="opacity" fill="freeze"
+              from="0.45" to="1" dur="0.36s" begin="s2_t3.end"
+              calcMode="spline" keyTimes="0; 1" keySplines="0.445 0.05 0.55 0.95" />
+            <animate attributeName="fill" fill="remove"
+              values="#f97316; #f59e0b; #f59e0b" dur="0.99s" begin="s4_t0.end"
+              calcMode="spline" keyTimes="0; 0.344; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+          </rect>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- ═══════ TARGET 1  rect x=78 y=32  pivot=(90,44) ═══════ -->
+  <g>
+    <animateTransform id="s1_t1"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="0 0" to="42 0" dur="0.35s"
+      begin="0s; s5_t3.end+0.35s" end="8.75s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+
+    <animateTransform id="s2_t1"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="42 0" to="42 -24" dur="0.32s"
+      begin="s1_t1.end+0.1s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.25 0.46 0.45 0.94" />
+
+    <animateTransform id="s3_t1"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="42 -24" to="0 0" dur="0.36s"
+      begin="s2_t3.end+0.1s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.445 0.05 0.55 0.95" />
+
+    <animateTransform id="s4_t1"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="0 0" to="-22 0" dur="0.3s"
+      begin="s3_t3.end"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+
+    <animateTransform id="s5_t1"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="-22 0" to="0 0" dur="0.34s"
+      begin="s4_t1.end+0.1s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+
+    <g transform="translate(90,44)">
+      <g>
+        <animateTransform
+          attributeName="transform" attributeType="XML" type="scale"
+          additive="sum" fill="remove"
+          values="1 1; 2 2; 2 2" dur="0.89s"
+          begin="s4_t1.end+0.1s"
+          calcMode="spline" keyTimes="0; 0.382; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+        <animateTransform
+          attributeName="transform" attributeType="XML" type="skewX"
+          additive="sum" fill="remove"
+          values="0; 10; 10" dur="0.89s"
+          begin="s4_t1.end+0.1s"
+          calcMode="spline" keyTimes="0; 0.382; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+        <g transform="translate(-90,-44)">
+          <rect x="78" y="32" width="24" height="24" fill="#f97316">
+            <animate attributeName="opacity" fill="freeze"
+              from="1" to="0.45" dur="0.32s" begin="s1_t1.end+0.1s"
+              calcMode="spline" keyTimes="0; 1" keySplines="0.25 0.46 0.45 0.94" />
+            <animate attributeName="opacity" fill="freeze"
+              from="0.45" to="1" dur="0.36s" begin="s2_t3.end+0.1s"
+              calcMode="spline" keyTimes="0; 1" keySplines="0.445 0.05 0.55 0.95" />
+            <animate attributeName="fill" fill="remove"
+              values="#f97316; #f59e0b; #f59e0b" dur="0.89s" begin="s4_t1.end+0.1s"
+              calcMode="spline" keyTimes="0; 0.382; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+          </rect>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- ═══════ TARGET 2  rect x=128 y=32  pivot=(140,44) ═══════ -->
+  <g>
+    <animateTransform id="s1_t2"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="0 0" to="42 0" dur="0.35s"
+      begin="0s; s5_t3.end+0.35s" end="8.75s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+
+    <animateTransform id="s2_t2"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="42 0" to="42 -24" dur="0.32s"
+      begin="s1_t2.end+0.2s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.25 0.46 0.45 0.94" />
+
+    <animateTransform id="s3_t2"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="42 -24" to="0 0" dur="0.36s"
+      begin="s2_t3.end+0.2s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.445 0.05 0.55 0.95" />
+
+    <animateTransform id="s4_t2"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="0 0" to="-22 0" dur="0.3s"
+      begin="s3_t3.end"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+
+    <animateTransform id="s5_t2"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="-22 0" to="0 0" dur="0.34s"
+      begin="s4_t2.end+0.2s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+
+    <g transform="translate(140,44)">
+      <g>
+        <animateTransform
+          attributeName="transform" attributeType="XML" type="scale"
+          additive="sum" fill="remove"
+          values="1 1; 2 2; 2 2" dur="0.79s"
+          begin="s4_t2.end+0.2s"
+          calcMode="spline" keyTimes="0; 0.430; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+        <animateTransform
+          attributeName="transform" attributeType="XML" type="skewX"
+          additive="sum" fill="remove"
+          values="0; 10; 10" dur="0.79s"
+          begin="s4_t2.end+0.2s"
+          calcMode="spline" keyTimes="0; 0.430; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+        <g transform="translate(-140,-44)">
+          <rect x="128" y="32" width="24" height="24" fill="#f97316">
+            <animate attributeName="opacity" fill="freeze"
+              from="1" to="0.45" dur="0.32s" begin="s1_t2.end+0.2s"
+              calcMode="spline" keyTimes="0; 1" keySplines="0.25 0.46 0.45 0.94" />
+            <animate attributeName="opacity" fill="freeze"
+              from="0.45" to="1" dur="0.36s" begin="s2_t3.end+0.2s"
+              calcMode="spline" keyTimes="0; 1" keySplines="0.445 0.05 0.55 0.95" />
+            <animate attributeName="fill" fill="remove"
+              values="#f97316; #f59e0b; #f59e0b" dur="0.79s" begin="s4_t2.end+0.2s"
+              calcMode="spline" keyTimes="0; 0.430; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+          </rect>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- ═══════ TARGET 3  rect x=178 y=32  pivot=(190,44) ═══════
+       s2_t3 and s3_t3 are the cross-target sync anchors.
+       s5_t3 is the loop trigger: all s1_tN reference s5_t3.end.
+  ════════════════════════════════════════════════════════════ -->
+  <g>
+    <animateTransform id="s1_t3"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="0 0" to="42 0" dur="0.35s"
+      begin="0s; s5_t3.end+0.35s" end="8.75s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+
+    <!-- s2_t3: LAST of step2 — all s3_tN begin from this end -->
+    <animateTransform id="s2_t3"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="42 0" to="42 -24" dur="0.32s"
+      begin="s1_t3.end+0.3s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.25 0.46 0.45 0.94" />
+
+    <!-- s3_t3: LAST of step3 — all s4_tN begin from this end -->
+    <animateTransform id="s3_t3"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="42 -24" to="0 0" dur="0.36s"
+      begin="s2_t3.end+0.3s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.445 0.05 0.55 0.95" />
+
+    <animateTransform id="s4_t3"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="0 0" to="-22 0" dur="0.3s"
+      begin="s3_t3.end"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+
+    <!-- s5_t3: LAST of step5 — the loop trigger for all s1_tN -->
+    <animateTransform id="s5_t3"
+      attributeName="transform" attributeType="XML" type="translate"
+      additive="replace" fill="freeze"
+      from="-22 0" to="0 0" dur="0.34s"
+      begin="s4_t3.end+0.3s"
+      calcMode="spline" keyTimes="0; 1" keySplines="0.455 0.03 0.515 0.955" />
+
+    <g transform="translate(190,44)">
+      <g>
+        <animateTransform
+          attributeName="transform" attributeType="XML" type="scale"
+          additive="sum" fill="remove"
+          values="1 1; 2 2; 2 2" dur="0.69s"
+          begin="s4_t3.end+0.3s"
+          calcMode="spline" keyTimes="0; 0.493; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+        <animateTransform
+          attributeName="transform" attributeType="XML" type="skewX"
+          additive="sum" fill="remove"
+          values="0; 10; 10" dur="0.69s"
+          begin="s4_t3.end+0.3s"
+          calcMode="spline" keyTimes="0; 0.493; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+        <g transform="translate(-190,-44)">
+          <rect x="178" y="32" width="24" height="24" fill="#f97316">
+            <animate attributeName="opacity" fill="freeze"
+              from="1" to="0.45" dur="0.32s" begin="s1_t3.end+0.3s"
+              calcMode="spline" keyTimes="0; 1" keySplines="0.25 0.46 0.45 0.94" />
+            <animate attributeName="opacity" fill="freeze"
+              from="0.45" to="1" dur="0.36s" begin="s2_t3.end+0.3s"
+              calcMode="spline" keyTimes="0; 1" keySplines="0.445 0.05 0.55 0.95" />
+            <animate attributeName="fill" fill="remove"
+              values="#f97316; #f59e0b; #f59e0b" dur="0.69s" begin="s4_t3.end+0.3s"
+              calcMode="spline" keyTimes="0; 0.493; 1" keySplines="0.455 0.03 0.515 0.955; 0 0 1 1" />
+          </rect>
+        </g>
+      </g>
+    </g>
+  </g>
+
+</svg>
+
+</body>
+</html>
