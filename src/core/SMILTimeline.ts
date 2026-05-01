@@ -5,7 +5,12 @@ import type {
   TimelineVars,
   PositionParam,
 } from "@/types/index.ts";
-import { SMILTween } from "./SMILTween.ts";
+import { SMILTween, type TransformAccumState } from "./SMILTween.ts";
+import { routeProperties } from "@/utils/property-router.ts";
+
+const defaultAccum = (): TransformAccumState => ({
+  x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1, skewX: 0, skewY: 0,
+});
 
 type ChildEntry = { tween: SMILTween; absoluteStart: number };
 
@@ -25,6 +30,12 @@ export class SMILTimeline extends Animation {
   private _prevStart: number = 0;
   /** End time of the most recently added child, excluding its delay (for `>` position param). */
   private _prevEnd: number = 0;
+  /**
+   * Accumulated absolute transform state per element.
+   * Each entry is the sum of all prior frozen animateTransform(additive="sum") contributions
+   * for that element, in absolute (non-delta) units. New tweens subtract this to get their delta.
+   */
+  private _transformAccum = new Map<Element, TransformAccumState>();
 
   constructor(vars: TimelineVars = {}) {
     super(vars);
@@ -111,8 +122,49 @@ export class SMILTimeline extends Animation {
     }
   };
 
+  /**
+   * Updates `_transformAccum` for each of the tween's targets after the tween is built.
+   * For `to()`/`fromTo()` tweens the accumulated value advances to the tween's absolute `to`.
+   * For `from()` tweens it advances to the identity (the element returns to its natural state).
+   */
+  private _updateTransformAccum = (tween: SMILTween): void => {
+    const { transforms } = routeProperties(tween._vars);
+    for (const target of tween._targets) {
+      const accum = { ...(this._transformAccum.get(target) ?? defaultAccum()) };
+      const n = (v: number | string | undefined, fallback: number) =>
+        v !== undefined ? Number(v) : fallback;
+
+      if (tween._isFrom) {
+        // from() animates TO the identity state for each property it touches.
+        if ("x" in transforms || "xPercent" in transforms) accum.x = 0;
+        if ("y" in transforms || "yPercent" in transforms) accum.y = 0;
+        if ("rotation" in transforms) accum.rotation = 0;
+        if ("scale" in transforms || "scaleX" in transforms || "scaleY" in transforms) {
+          accum.scaleX = 1;
+          accum.scaleY = 1;
+        }
+        if ("skewX" in transforms) accum.skewX = 0;
+        if ("skewY" in transforms) accum.skewY = 0;
+      } else {
+        if ("x" in transforms) accum.x = n(transforms.x, 0);
+        if ("y" in transforms) accum.y = n(transforms.y, 0);
+        if ("rotation" in transforms) accum.rotation = n(transforms.rotation, 0);
+        if ("scale" in transforms) {
+          accum.scaleX = n(transforms.scale, 1);
+          accum.scaleY = n(transforms.scale, 1);
+        }
+        if ("scaleX" in transforms) accum.scaleX = n(transforms.scaleX, 1);
+        if ("scaleY" in transforms) accum.scaleY = n(transforms.scaleY, 1);
+        if ("skewX" in transforms) accum.skewX = n(transforms.skewX, 0);
+        if ("skewY" in transforms) accum.skewY = n(transforms.skewY, 0);
+      }
+      this._transformAccum.set(target, accum);
+    }
+  };
+
   private _addChild = (tween: SMILTween, absoluteStart: number): void => {
     this._rewriteBegin(tween, absoluteStart);
+    tween._injectPending();
     this._children.push({ tween, absoluteStart });
 
     this._prevStart = absoluteStart;
@@ -132,15 +184,21 @@ export class SMILTimeline extends Animation {
 
   to = (targets: TweenTarget, vars: TweenVars, position?: PositionParam): this => {
     const absoluteStart = this._resolvePosition(position);
-    const tween = new SMILTween(targets, { ...this._defaults, ...vars });
+    const tween = new SMILTween(targets, { ...this._defaults, ...vars }, null, false, true);
+    tween._timelineAccum = this._transformAccum;
+    tween._buildDeferred();
     this._addChild(tween, absoluteStart);
+    this._updateTransformAccum(tween);
     return this;
   };
 
   from = (targets: TweenTarget, vars: TweenVars, position?: PositionParam): this => {
     const absoluteStart = this._resolvePosition(position);
-    const tween = new SMILTween(targets, { ...this._defaults, ...vars }, null, true);
+    const tween = new SMILTween(targets, { ...this._defaults, ...vars }, null, true, true);
+    tween._timelineAccum = this._transformAccum;
+    tween._buildDeferred();
     this._addChild(tween, absoluteStart);
+    this._updateTransformAccum(tween);
     return this;
   };
 
@@ -151,8 +209,11 @@ export class SMILTimeline extends Animation {
     position?: PositionParam,
   ): this => {
     const absoluteStart = this._resolvePosition(position);
-    const tween = new SMILTween(targets, { ...this._defaults, ...toVars }, fromVars);
+    const tween = new SMILTween(targets, { ...this._defaults, ...toVars }, fromVars, false, true);
+    tween._timelineAccum = this._transformAccum;
+    tween._buildDeferred();
     this._addChild(tween, absoluteStart);
+    this._updateTransformAccum(tween);
     return this;
   };
 
@@ -183,6 +244,7 @@ export class SMILTimeline extends Animation {
     this._labels = {};
     this._prevStart = 0;
     this._prevEnd = 0;
+    this._transformAccum.clear();
     this._setContentDur(0);
     this._initialized = false;
     return this;

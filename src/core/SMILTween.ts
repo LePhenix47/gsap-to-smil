@@ -6,6 +6,52 @@ import type {
   DirectProps,
   PropertyBuckets,
 } from "@/types/index.ts";
+
+/**
+ * Accumulated absolute transform state for a single element, representing the sum
+ * of all prior frozen animateTransform(additive="sum") contributions in a timeline.
+ * Translate/rotation/skew are additive (subtract to get delta); scale is multiplicative (divide).
+ */
+export type TransformAccumState = {
+  x: number;
+  y: number;
+  rotation: number;
+  scaleX: number;
+  scaleY: number;
+  skewX: number;
+  skewY: number;
+};
+
+/**
+ * Converts absolute transform target values to delta values relative to the
+ * accumulated frozen sum. When applied with additive="sum", the total of all
+ * frozen animations + this delta equals the desired absolute position.
+ */
+const computeTransformDelta = (
+  absolute: TransformProps,
+  accum: TransformAccumState,
+): TransformProps => {
+  const n = (v: number | string | undefined, fallback: number) =>
+    v !== undefined ? Number(v) : fallback;
+  const delta: TransformProps = {};
+  if ("x" in absolute) delta.x = n(absolute.x, 0) - accum.x;
+  if ("y" in absolute) delta.y = n(absolute.y, 0) - accum.y;
+  if ("rotation" in absolute) delta.rotation = n(absolute.rotation, 0) - accum.rotation;
+  // Scale composes multiplicatively under SVG transform concatenation.
+  if ("scale" in absolute) {
+    delta.scaleX = n(absolute.scale, 1) / accum.scaleX;
+    delta.scaleY = n(absolute.scale, 1) / accum.scaleY;
+  } else {
+    if ("scaleX" in absolute) delta.scaleX = n(absolute.scaleX, 1) / accum.scaleX;
+    if ("scaleY" in absolute) delta.scaleY = n(absolute.scaleY, 1) / accum.scaleY;
+  }
+  if ("skewX" in absolute) delta.skewX = n(absolute.skewX, 0) - accum.skewX;
+  if ("skewY" in absolute) delta.skewY = n(absolute.skewY, 0) - accum.skewY;
+  // xPercent/yPercent are resolved to px inside resolveTranslate; pass through as-is.
+  if ("xPercent" in absolute) delta.xPercent = absolute.xPercent;
+  if ("yPercent" in absolute) delta.yPercent = absolute.yPercent;
+  return delta;
+};
 import { routeProperties } from "@/utils/property-router.ts";
 import {
   composeTransforms,
@@ -30,23 +76,45 @@ export class SMILTween extends Animation {
   _fromVars: TweenVars | null;
   _isFrom: boolean;
   _elements: SVGAnimationElement[] = [];
+  /** Set by SMILTimeline before build to enable per-target delta encoding. */
+  _timelineAccum: Map<Element, TransformAccumState> | null = null;
 
   private _originalValues = new Map<Element, Record<string, string | null>>();
   private _wrapperOuters = new Map<Element, SVGGElement>();
+  /** Pending (anim, dest) pairs collected in timeline mode; flushed by _injectPending(). */
+  private _pendingInjections: Array<{ anim: SVGAnimationElement; dest: Element }> = [];
 
   constructor(
     targets: TweenTarget,
     vars: TweenVars,
     fromVars?: TweenVars | null,
     isFrom = false,
+    deferBuild = false,
   ) {
     super(vars);
     this._vars = vars;
     this._fromVars = fromVars ?? null;
     this._isFrom = isFrom;
     this._targets = this._resolveTargets(targets);
-    this._build();
+    if (!deferBuild) this._build();
   }
+
+  /** Triggers build when creation was deferred (timeline usage). No-op if already built. */
+  _buildDeferred = (): void => {
+    if (!this._initialized) this._build();
+  };
+
+  /**
+   * Flushes elements collected in timeline mode into the DOM.
+   * Must be called by SMILTimeline._addChild() after _rewriteBegin() so that
+   * SMIL never sees an animation element without its correct begin= time.
+   */
+  _injectPending = (): void => {
+    for (const { anim, dest } of this._pendingInjections) {
+      dest.appendChild(anim);
+    }
+    this._pendingInjections = [];
+  };
 
   // ===== Target resolution =====
 
@@ -150,10 +218,27 @@ export class SMILTween extends Animation {
         ease: this._vars.ease,
       };
 
+      // Resolve absolute from/to (accounting for the isFrom direction swap).
+      const absoluteTo: TransformProps = this._isFrom
+        ? this._identityFor(transforms)
+        : transforms;
+      const absoluteFrom: TransformProps | undefined = this._isFrom
+        ? transforms
+        : fromRouted?.transforms;
+
+      // In a timeline context, encode deltas so that all frozen prior
+      // animateTransform(additive="sum") contributions still yield the correct
+      // absolute position when summed with this tween's animated value.
+      const accum = this._timelineAccum?.get(target) ?? null;
+      const effectiveTo = accum ? computeTransformDelta(absoluteTo, accum) : absoluteTo;
+      const effectiveFrom = accum
+        ? (absoluteFrom ? computeTransformDelta(absoluteFrom, accum) : undefined)
+        : absoluteFrom;
+
       const { outerAnims, innerAnims, scaffold } = this._buildTransforms(
         target,
-        transforms,
-        fromRouted?.transforms,
+        effectiveTo,
+        effectiveFrom,
         beginDelay,
         groupDuration,
       );
@@ -192,15 +277,29 @@ export class SMILTween extends Animation {
       }
 
       // Inject transform animations into their scaffold targets or directly into the element.
-      if (scaffold) {
-        for (const anim of outerAnims) scaffold.outer.appendChild(anim);
-        for (const anim of innerAnims) scaffold.inner.appendChild(anim);
+      // In timeline mode (_timelineAccum set), defer injection so _rewriteBegin can set
+      // correct begin= times before the SMIL engine ever sees the elements in the DOM.
+      // Without this, elements with beginDelay=0 (no begin attr) start immediately on
+      // insertion, and the subsequent _rewriteBegin has no effect.
+      if (this._timelineAccum) {
+        if (scaffold) {
+          for (const anim of outerAnims) this._pendingInjections.push({ anim, dest: scaffold.outer });
+          for (const anim of innerAnims) this._pendingInjections.push({ anim, dest: scaffold.inner });
+        } else {
+          for (const anim of outerAnims) this._pendingInjections.push({ anim, dest: target });
+        }
+        for (const anim of directAnims) this._pendingInjections.push({ anim, dest: target });
+        for (const anim of drawAnims) this._pendingInjections.push({ anim, dest: target });
       } else {
-        for (const anim of outerAnims) target.appendChild(anim);
+        if (scaffold) {
+          for (const anim of outerAnims) scaffold.outer.appendChild(anim);
+          for (const anim of innerAnims) scaffold.inner.appendChild(anim);
+        } else {
+          for (const anim of outerAnims) target.appendChild(anim);
+        }
+        for (const anim of directAnims) target.appendChild(anim);
+        for (const anim of drawAnims) target.appendChild(anim);
       }
-      // Direct attribute and plugin animations always target the element itself.
-      for (const anim of directAnims) target.appendChild(anim);
-      for (const anim of drawAnims) target.appendChild(anim);
 
       this._elements.push(...elements);
     }
@@ -247,7 +346,7 @@ export class SMILTween extends Animation {
    */
   private _buildTransforms = (
     target: Element,
-    transforms: TransformProps,
+    toTransforms: TransformProps,
     fromTransforms: TransformProps | undefined,
     delay: number,
     dur: number,
@@ -259,11 +358,9 @@ export class SMILTween extends Animation {
       ease: this._vars.ease,
     };
 
-    const composeArgs = this._isFrom
-      ? { target, fromTransforms: transforms, toTransforms: this._identityFor(transforms), transformOrigin: this._vars.transformOrigin, ...timing }
-      : fromTransforms
-        ? { target, fromTransforms, toTransforms: transforms, transformOrigin: this._vars.transformOrigin, ...timing }
-        : { target, toTransforms: transforms, transformOrigin: this._vars.transformOrigin, ...timing };
+    const composeArgs = fromTransforms
+      ? { target, fromTransforms, toTransforms, transformOrigin: this._vars.transformOrigin, ...timing }
+      : { target, toTransforms, transformOrigin: this._vars.transformOrigin, ...timing };
 
     const result = composeTransforms(composeArgs);
 
@@ -272,15 +369,18 @@ export class SMILTween extends Animation {
       if (scaffold) {
         // Earlier flat-mode tweens injected translate <animateTransform> directly onto
         // the element. The element is now inside the scaffold, putting those animations
-        // in the wrong coordinate space. Move them to the outer lane so they continue
-        // to compose correctly with both the new tween and the static pivot transforms.
+        // in the wrong coordinate space. Clone them into the outer lane (new DOM nodes so
+        // the SMIL engine treats them as freshly inserted) and remove the originals.
         const existingTranslates = Array.from(target.children).filter(
           (c): c is Element =>
             c instanceof Element &&
             c.tagName === "animateTransform" &&
             c.getAttribute("type") === "translate",
         );
-        for (const anim of existingTranslates) scaffold.outer.prepend(anim);
+        for (const anim of existingTranslates) {
+          scaffold.outer.prepend(anim.cloneNode(true));
+          anim.remove();
+        }
 
         this._wrapperOuters.set(target, scaffold.outer);
         return { outerAnims: result.outerAnims, innerAnims: result.innerAnims, scaffold };

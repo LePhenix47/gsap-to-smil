@@ -104,7 +104,7 @@
     }, ">");
 
     // 7c. timeline() + alternating stagger / non-stagger steps
-    const gTlAlt = gsap.timeline({ repeat: -1, repeatDelay: 0.35 });
+    const gTlAlt = gsap.timeline({ repeatDelay: 0.35 });
     gTlAlt.to(".g-tl-alt", {
       x: 42,
       duration: 0.35,
@@ -134,6 +134,8 @@
       x: 0,
       fill: "#f59e0b",
       stagger: 0.1,
+      skewX: 10,
+      scale: 2,
       duration: 0.34,
       ease: "power1.inOut",
     }, ">");
@@ -167,10 +169,35 @@
     sTlAlt.to(".s-tl-alt", {
       x: 0,
       fill: "#f59e0b",
+      skewX: 10,
+      scale: 2,
       stagger: 0.1,
       duration: 0.34,
       ease: "power1.inOut",
     }, ">");
+
+    // Debug: dump scaffold DOM structure for .s-tl-alt after timeline build
+    {
+      const dump = document.getElementById("tl-alt-dump");
+      if (dump) {
+        const lines = [];
+        const dumpNode = (node, indent = "") => {
+          const attrs = Array.from(node.attributes)
+            .map(a => `${a.name}="${a.value}"`)
+            .join(" ");
+          lines.push(`${indent}<${node.tagName}${attrs ? " " + attrs : ""}>`);
+          for (const child of node.children) dumpNode(child, indent + "  ");
+        };
+        document.querySelectorAll(".s-tl-alt").forEach((el, i) => {
+          lines.push(`\n=== target[${i}] x=${el.getAttribute("x")} ===`);
+          // Walk up to the direct SVG child (scaffold outer or element itself)
+          let root = el;
+          while (root.parentElement && root.parentElement.tagName !== "svg") root = root.parentElement;
+          dumpNode(root);
+        });
+        dump.textContent = lines.join("\n");
+      }
+    }
 
     // 8. keyframes (% form) + stagger + yoyo — ripple wave
     const waveKf = {
@@ -534,7 +561,7 @@
     <div class="pair">
       <figure class="test test-gsap">
         <figcaption>GSAP</figcaption>
-        <svg class="svg-gsap" width="280" height="120" xmlns="http://www.w3.org/2000/svg">
+        <svg class="svg-gsap tl-alt-gsap" width="280" height="120" xmlns="http://www.w3.org/2000/svg">
           <rect class="g-tl-alt" x="28" y="32" width="24" height="24" fill="#f97316" />
           <rect class="g-tl-alt" x="78" y="32" width="24" height="24" fill="#f97316" />
           <rect class="g-tl-alt" x="128" y="32" width="24" height="24" fill="#f97316" />
@@ -543,7 +570,7 @@
       </figure>
       <figure class="test test-smil">
         <figcaption>SMIL lib</figcaption>
-        <svg class="svg-smil" width="280" height="120" xmlns="http://www.w3.org/2000/svg">
+        <svg class="svg-smil tl-alt-smil" width="280" height="120" xmlns="http://www.w3.org/2000/svg">
           <rect class="s-tl-alt" x="28" y="32" width="24" height="24" fill="#f97316" />
           <rect class="s-tl-alt" x="78" y="32" width="24" height="24" fill="#f97316" />
           <rect class="s-tl-alt" x="128" y="32" width="24" height="24" fill="#f97316" />
@@ -551,6 +578,7 @@
         </svg>
       </figure>
     </div>
+    <pre id="tl-alt-dump" style="margin:0;font-size:0.7rem;opacity:0.82;white-space:pre-wrap;"></pre>
   </section>
 
   <!-- 8. keyframes (% form) + stagger + yoyo — ripple wave -->
