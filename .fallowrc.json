@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "ignorePatterns": ["lib/**"],
+  "health": {
+    "ignore": ["tests/**", "update-project-version.ts"],
+    "maxCyclomatic": 50,
+    "maxCognitive": 90,
+    "maxCrap": 2500
+  }
+}

@@ -1,4 +1,4 @@
-// fallow-ignore-next-line
+// fallow-ignore-file
 import { describe, expect, it } from "bun:test";
 import {
   resolveEase,

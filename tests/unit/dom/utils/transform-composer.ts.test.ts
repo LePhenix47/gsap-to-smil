@@ -1,4 +1,5 @@
 /// <reference lib="dom" />
+// fallow-ignore-file
 import { describe, expect, it, spyOn } from "bun:test";
 import { composeTransforms, resolveOrigin } from "@/utils/transform-composer";
 import { SVG_NS } from "@/utils/builders";

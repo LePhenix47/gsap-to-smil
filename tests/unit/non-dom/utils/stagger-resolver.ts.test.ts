@@ -1,3 +1,4 @@
+// fallow-ignore-file
 import { expect, describe, it } from "bun:test";
 import { resolveStaggerDelays } from "@/utils/stagger-resolver.ts";
 import { roundToFloat } from "@/utils/helpers/math.functions";

@@ -1,4 +1,4 @@
-// fallow-ignore-next-line
+// fallow-ignore-file
 import fs from "node:fs";
 
 function iterateFolders(dir: string = "./") {

@@ -1,4 +1,4 @@
-// fallow-ignore-next-line
+// fallow-ignore-file unused-type
 export type { TweenTarget } from "./target.ts";
 export type { EaseString } from "./easing.ts";
 export type { AttrVars } from "./attr.ts";

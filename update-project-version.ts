@@ -1,3 +1,4 @@
+// fallow-ignore-file unused-file
 import type { BunFile } from "bun";
 import readline from "readline";
 

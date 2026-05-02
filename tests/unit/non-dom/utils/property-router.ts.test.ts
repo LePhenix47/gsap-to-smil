@@ -1,3 +1,4 @@
+// fallow-ignore-file
 import { expect, describe, it } from "bun:test";
 import { routeProperties } from "@/utils/property-router.ts";
 

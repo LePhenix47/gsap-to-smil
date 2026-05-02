@@ -1,4 +1,4 @@
-// fallow-ignore-next-line
+// fallow-ignore-file unused-file
 import dts from "bun-plugin-dts-auto";
 
 console.log("Building...");

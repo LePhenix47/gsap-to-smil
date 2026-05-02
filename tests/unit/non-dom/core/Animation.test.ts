@@ -1,3 +1,4 @@
+// fallow-ignore-file
 import { describe, expect, it } from "bun:test";
 import { Animation } from "@/core/Animation.ts";
 

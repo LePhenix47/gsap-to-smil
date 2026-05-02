@@ -1,4 +1,5 @@
 /// <reference lib="dom" />
+// fallow-ignore-file
 import { describe, expect, it } from "bun:test";
 import {
   buildAnimate,

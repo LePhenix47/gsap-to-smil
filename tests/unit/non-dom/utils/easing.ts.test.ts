@@ -1,3 +1,4 @@
+// fallow-ignore-file
 import { expect, describe, it, spyOn } from "bun:test";
 import {
   resolveEase,

@@ -1,4 +1,5 @@
 /// <reference lib="dom" />
+// fallow-ignore-file
 import { describe, expect, it } from "bun:test";
 import { SMILTimeline } from "@/core/SMILTimeline.ts";
 import { SMILTween } from "@/core/SMILTween.ts";

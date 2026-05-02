@@ -1,4 +1,4 @@
-// fallow-ignore-next-line
+// fallow-ignore-file
 /// <reference lib="dom" />
 import { describe, expect, it } from "bun:test";
 import { SMILTween } from "@/core/SMILTween.ts";
