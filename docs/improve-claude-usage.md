@@ -1,25 +1,36 @@
 # Improve Claude usage (notes)
 
-From the video [Never hit Claude's usage limit again](https://youtu.be/2f7ZkImNHFo?si=lynChNPxvUpyB4qP) by Dubibubii. More rules from the rest of the video can go at the end when you have them.
+From [Never hit Claude's usage limit again](https://youtu.be/2f7ZkImNHFo?si=lynChNPxvUpyB4qP) (Dubibubii). Add the rest of the video later at the bottom.
 
-## Cost is about context, not “how many messages”
+## Cost
 
-Each turn the model sees the whole thread again. So later turns cost more than early ones (the video uses a rough 11× idea for the 10th round vs the 1st; treat it as illustration, not a promise from Anthropic).
+When you send a message, the model reads the whole chat history. Later turns cost more than the first (the video uses a rough “about 11×” for the 10th round vs the first — story only, not a billing rule).
 
-What you pay for is tokens. A long chat means most tokens go to re-reading old messages, even if your new line is short.
+WARNING: Claude counts tokens, not how many messages you sent. Most tokens go to re-reading the full chat context, even when your new line is short.
 
-## Tokens in plain terms
+## Tokens
 
-Rough guesses people use: a few words for one token, and on the order of a hundred words for a bit more than a hundred tokens. Language and tokenizer change the numbers.
+Rough guide from the video: about 3–4 words ≈ 1 token; about 100 words ≈ 130 tokens. Real counts depend on language and tokenizer.
 
-You pay for what you type (input) and what the model types (output). Big prompt or long answer means more tokens on that side.
+You pay for 2 things:
+1. Your text (input token)
+2. Model's response (output token)
 
-Because the full history is usually sent again each time, total cost grows faster than “average message size times number of messages.” A simple thumb from the video is: average tokens per exchange, times n times (n minus 1) over 2, where n is how many messages—that triangle shape is “keep rereading the past.” It is a rule of thumb from the video, not how billing really works line by line.
+Rough total thumb from the video (not an official bill line):
+
+`S × (n × (n − 1) / 2)`
+
+`S` = Average tokens per exchange
+
+`n` = number of messages in the thread
+
+Ex: 5 messages `n = 5` → 10 tokens
+10 messages `n = 10` → 45 tokens
 
 ## Caveman
 
-The video mentions a Caveman plugin that shortens how you phrase prompts so you burn fewer tokens. When you have notes on when to use it, add them here.
+Video: a “Caveman” plugin shortens prompts to save tokens. Add when/how to use it when you have notes.
 
 ## Still to add
 
-Paste Dubibubii’s explicit rules here after you watch that part. Until then: short threads, paste only the code you need, new chat when the task changes.
+Paste Dubibubii’s rules here. Until then: short threads, paste only needed code, new chat when the task changes.
