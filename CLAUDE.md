@@ -10,6 +10,73 @@ GSAP runs on `requestAnimationFrame` (main thread). When the main thread is satu
 
 GSAP interpolates values every frame via rAF. This library runs **once** — generates SMIL elements, injects them into the DOM, then steps back. The browser's SMIL engine handles everything after that. No ticker, no per-frame loop.
 
+## CRITICAL: Mandatory Workflow
+
+**BEFORE modifying ANY file, you MUST follow this exact process:**
+
+### 1. Identify File Type & Load ALL Relevant Skills
+
+Based on the file you're working on, read **ALL** skills in the category:
+
+| File Type | Skills to Read (ALL of them) |
+|-----------|------------------------------|
+| `.ts` files (src/) | Read ALL files in `.claude/skills/typescript/` |
+| `.ts` files (tests/) | Read ALL files in `.claude/skills/typescript/` |
+| `.html` test files | Follow existing test patterns — no skill files needed |
+| Git commits | Read `.claude/skills/git/commit-message-format/SKILL.md` |
+
+**You MUST read ALL skills in the category, not pick and choose. Reading 6/8 skills means you'll miss 2 important conventions.**
+
+### 2. Verification Checklist (Before Declaring Complete)
+
+After making changes, verify you haven't violated ANY of these rules:
+
+#### Code Quality (from `code-conventions`)
+- [ ] No underscore prefixes on fields (`durationSeconds` not `_dur`)
+- [ ] Explicit field names (`repeatCount` not `_repeat`, `hasBuilt` not `_initialized`)
+- [ ] Intermediate calculations broken out into named variables with type annotations
+- [ ] No `=== undefined` — use `isAbsent` type guard pattern
+- [ ] Arrow functions for ALL concrete methods (regular syntax only for `abstract`)
+
+#### TypeScript Patterns (from all 7 pattern skills)
+- [ ] Destructured all objects at top of function (no repeated `obj.prop`)
+- [ ] Used guard clauses (early returns, no deep nesting)
+- [ ] Used `unknown` instead of `any`
+- [ ] Used `type` not `interface`
+- [ ] Used optional chaining (`?.`) where appropriate
+- [ ] Used type guards for union discrimination
+- [ ] Used Map for simple lookups, switch only for complex logic
+
+#### Project-Specific
+- [ ] Read relevant docs before implementing (see Docs section below)
+- [ ] Experiment-first: if hitting a limitation, build minimal HTML repro first (see `docs/research/experiment-first.md`)
+- [ ] `repeatCount = gsapRepeat + 1` (SMIL off-by-one)
+- [ ] No trailing semicolon in `keySplines`
+- [ ] Transform order: translate → rotate → scale → skewX → skewY
+
+### 3. Mandatory Post-Change Checks
+
+Run ALL THREE before claiming any task is done:
+
+```
+bun run ts-types && bun run ts   ← TypeScript types + build
+bun run test                     ← full test suite (unit + smoke)
+bun run ai-slop-check            ← Fallow code quality (dead code, duplication, complexity)
+```
+
+All three must pass clean. Fix failures before reporting completion. Run in parallel when possible.
+
+### 4. If You Skip This Process
+
+If you modify code without reading ALL relevant skills first, you WILL:
+- Use underscore-prefixed fields that violate project conventions
+- Write `=== undefined` checks that the codebase rejects
+- Inline complex math without intermediate variables
+- Miss TypeScript patterns (guard clauses, destructuring, type guards)
+- Create inconsistent code that the user must correct
+
+**There is NO excuse to skip reading all relevant skills. Period.**
+
 ## Docs (read these before touching code)
 
 - `docs/reference/smil-reference.md` — full SMIL feature set, gotchas, browser compat, easing table
@@ -99,18 +166,6 @@ Project-specific coding conventions live in `.claude/skills/typescript/` — rea
 - `use-optional-chaining` — `?.` over manual null checks
 - `type-guards-for-unions` — explicit `value is Type` functions
 - `map-vs-switch-lookup` — Map for simple lookups, switch for complex logic only
-
-## Mandatory checks after every code change
-
-Run ALL THREE before claiming a big task is done:
-
-```
-bun run ts-types && bun run ts ← Tests TS types + builds project
-bun run test        ← full test suite (unit + smoke)
-bun run ai-slop-check  ← Fallow code quality (dead code, duplication, complexity)
-```
-
-All three must pass clean. Fix failures before reporting completion. Run in parallel when possible.
 
 ## Testing
 
