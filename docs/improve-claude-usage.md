@@ -66,12 +66,24 @@ Bonus: 1 batched prompt often gives the model the whole picture at once which im
 
 Sometimes token spent is hight, but what burned it ?
 
-You cannot fix what you do not measure
+Claude Code writes local logs. Point a reader at them: [phuryn/claude-usage](https://github.com/phuryn/claude-usage)
 
-Claude Code already writes local usage data 
+### Rule 5 — Recurring uploads (web only)
 
-Point a small tool at those logs so you see totals, models, and sessions. Example: [phuryn/claude-usage](https://github.com/phuryn/claude-usage) (local dashboard from the JSONL logs).
+Not CC.
+
+Same PDFs in every chat = waste. One project, files live there, update in place.
+
+### Rule 6 — Saved context
+
+No saved context = repeat goals and stack = extra tokens and messages.
+
+Site: memory + preferences. CC: [CLAUDE.md](../CLAUDE.md) + repo docs.
+
+### Rule 7 — Unused features
+
+Web app: turn off what you do not use (web search, effort mode, etc.).
 
 ## Still to add
 
-More rules from the video as we add them. Until then: short threads, paste only needed code, new chat when the task changes.
+More rules if the video adds more. Until then: short threads, paste only needed code, new chat when the task changes.
