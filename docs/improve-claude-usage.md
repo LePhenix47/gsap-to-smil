@@ -42,7 +42,7 @@ Video: a “Caveman” plugin shortens prompts to save tokens. Add when/how to u
 
 ### Rule 1 — Don’t follow up
 
-Wrong reply? Don’t stack a “please fix” message. Edit your last prompt when the app allows it (Claude site, Cursor). Same thread, one less turn to re-read.
+Wrong reply? Don’t stack a “please fix” message. Edit your last prompt when the app allows it (Claude site, Cursor)
 
 Claude Code often cannot do that. There: new chat with one fixed prompt, or keep CC threads short.
 
@@ -51,6 +51,16 @@ Claude Code often cannot do that. There: new chat with one fixed prompt, or keep
 Around every 15–20 messages, start a new chat so history stops growing.
 
 Ask the agent for a short summary (goal, decisions, open tasks, file paths). Paste that into the first message of the new chat
+
+### Rule 3 — Batch your ask
+
+3 small sends = 3 full context reads
+
+1 batched = 1 full context read
+
+Same work, fewer passes through the thread.
+
+Bonus: one batched prompt often gives the model the whole picture at once which improves results
 
 ## Still to add
 
