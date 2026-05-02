@@ -43,11 +43,13 @@ Use [`caveman`](https://github.com/JuliusBrussee/caveman)
 
 Wrong reply? Don’t stack a “please fix” message. Edit your last prompt when the app allows it (Claude site, Cursor).
 
-Claude Code often cannot do that. On CC: new chat with one fixed prompt, or keep threads short.
+**Claude Code:** no edit-last-message — use **`/rewind`**, then one clean prompt; if that fails, new chat. Other CC commands: [claude-code-nate-herk-32-tricks.md](./claude-code-nate-herk-32-tricks.md).
 
 ### Rule 2 — Fresh chat
 
 Around every 15–20 messages, start a new chat so history stops growing.
+
+**Claude Code:** `/compact` / `/rewind` can postpone that ([sheet](./claude-code-nate-herk-32-tricks.md)); long threads still cost (**Cost**). New chat + summary when the task changes or cost stays high.
 
 Ask the agent for a short summary (goal, decisions, open tasks, file paths). Paste that into the first message of the new chat.
 
@@ -97,8 +99,8 @@ The rolling ~5h window still moves while you sleep. Line it up so when you start
 
 ## Related
 
-Claude **Code** (terminal agent) habits and slash-command style tips from another source: [claude-code-nate-herk-32-tricks.md](./claude-code-nate-herk-32-tricks.md).
+[claude-code-nate-herk-32-tricks.md](./claude-code-nate-herk-32-tricks.md) — Claude Code slash / workflow notes.
 
 ## Still to add
 
-More rules if the video adds more. Until then: short threads, paste only needed code, new chat when the task changes.
+More from the video when you have it. Default: short threads, minimal paste; CC: **`/rewind`** before fix-stacking; new chat when the task or thread weight calls for it.
