@@ -52,16 +52,15 @@ const computeTransformDelta = (
   if ("yPercent" in absolute) delta.yPercent = absolute.yPercent;
   return delta;
 };
-import { routeProperties } from "@/utils/property-router.ts";
+import { PropertyRouter } from "@/utils/property-router.ts";
 import {
-  composeTransforms,
-  buildPivotScaffold,
+  TransformComposer,
   type PivotScaffold,
 } from "@/utils/transform-composer.ts";
-import { resolveStaggerDelays } from "@/utils/stagger-resolver.ts";
-import { buildAnimate } from "@/utils/builders.ts";
-import { buildDrawSVGAnimation, applyDrawSVGState } from "@/plugins/DrawSMILPlugin.ts";
-import { resolveEase } from "@/utils/easing.ts";
+import { StaggerResolver } from "@/utils/stagger-resolver.ts";
+import { SMILBuilder } from "@/utils/builders.ts";
+import { DrawSVGPlugin } from "@/plugins/DrawSMILPlugin.ts";
+import { Easing } from "@/utils/easing.ts";
 import { roundToFloat } from "@/utils/helpers/math.functions.ts";
 
 /**
@@ -172,11 +171,11 @@ export class SMILTween extends Animation {
       return;
     }
 
-    const { transforms, direct, plugins } = routeProperties(this._vars);
-    const fromRouted = this._fromVars ? routeProperties(this._fromVars) : null;
+    const { transforms, direct, plugins } = PropertyRouter.route(this._vars);
+    const fromRouted = this._fromVars ? PropertyRouter.route(this._fromVars) : null;
 
     const staggerDelays = this._vars.stagger
-      ? resolveStaggerDelays(this._targets.length, this._vars.stagger)
+      ? StaggerResolver.resolveDelays(this._targets.length, this._vars.stagger)
       : null;
 
     const maxStagger = staggerDelays ? Math.max(...staggerDelays) : 0;
@@ -254,10 +253,10 @@ export class SMILTween extends Animation {
       const drawAnims: SVGAnimationElement[] = (() => {
         if (plugins.drawSVG === undefined) return [];
         if (this._dur === 0) {
-          applyDrawSVGState(target, this._isFrom ? true : plugins.drawSVG);
+          DrawSVGPlugin.applyState(target, this._isFrom ? true : plugins.drawSVG);
           return [];
         }
-        return buildDrawSVGAnimation(
+        return DrawSVGPlugin.buildAnimation(
           target,
           this._isFrom ? true : plugins.drawSVG,
           this._isFrom ? plugins.drawSVG : fromRouted?.plugins.drawSVG,
@@ -362,10 +361,10 @@ export class SMILTween extends Animation {
       ? { target, fromTransforms, toTransforms, transformOrigin: this._vars.transformOrigin, ...timing }
       : { target, toTransforms, transformOrigin: this._vars.transformOrigin, ...timing };
 
-    const result = composeTransforms(composeArgs);
+    const result = TransformComposer.compose(composeArgs);
 
     if (result.needsWrapper) {
-      const scaffold = buildPivotScaffold(target, result.origin.cx, result.origin.cy);
+      const scaffold = TransformComposer.buildPivotScaffold(target, result.origin.cx, result.origin.cy);
       if (scaffold) {
         // Earlier flat-mode tweens injected translate <animateTransform> directly onto
         // the element. The element is now inside the scaffold, putting those animations
@@ -418,11 +417,11 @@ export class SMILTween extends Animation {
       };
 
       if (this._isFrom) {
-        elements.push(buildAnimate({ ...shared, from: String(value) }));
+        elements.push(SMILBuilder.animate({ ...shared, from: String(value) }));
       } else if (fromDirect) {
         const fromValue = fromDirect[attr];
         elements.push(
-          buildAnimate({
+          SMILBuilder.animate({
             ...shared,
             from: fromValue !== undefined ? String(fromValue) : undefined,
             to: String(value),
@@ -432,14 +431,14 @@ export class SMILTween extends Animation {
         // yoyo: set explicit from so _applyYoyoEncoding can read both from and to
         const origVal = originals[attr];
         elements.push(
-          buildAnimate({
+          SMILBuilder.animate({
             ...shared,
             from: origVal != null ? origVal : undefined,
             to: String(value),
           }),
         );
       } else {
-        elements.push(buildAnimate({ ...shared, to: String(value) }));
+        elements.push(SMILBuilder.animate({ ...shared, to: String(value) }));
       }
     }
 
@@ -577,7 +576,7 @@ export class SMILTween extends Animation {
       return;
     }
 
-    const bezier = resolveEase(ease);
+    const bezier = Easing.resolveEase(ease);
     if (!bezier) {
       el.setAttribute("calcMode", "linear");
       el.removeAttribute("keySplines");
@@ -615,7 +614,7 @@ export class SMILTween extends Animation {
       return;
     }
 
-    const bezier = resolveEase(ease);
+    const bezier = Easing.resolveEase(ease);
     if (!bezier) {
       el.setAttribute("calcMode", "linear");
       el.removeAttribute("keySplines");
@@ -654,7 +653,7 @@ export class SMILTween extends Animation {
     if (totalPlays === 1) return;
 
     const ease = this._vars.ease;
-    const bezier = ease && ease !== "none" && ease !== "linear" ? resolveEase(ease) : null;
+    const bezier = ease && ease !== "none" && ease !== "linear" ? Easing.resolveEase(ease) : null;
 
     const makeSplines = (intervalCount: number): string | null => {
       if (!bezier) return null;

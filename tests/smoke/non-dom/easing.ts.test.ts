@@ -1,11 +1,6 @@
 // fallow-ignore-file
 import { describe, expect, it } from "bun:test";
-import {
-  resolveEase,
-  getSvgKeySplines,
-  getSvgUniformKeyTimes,
-  resolveCalcMode,
-} from "@/utils/easing.ts";
+import { Easing } from "@/utils/easing.ts";
 
 describe("easing (smoke)", () => {
   it("SMOKE TEST: keySplines never ends with a trailing semicolon (Chrome silently drops animation if it does)", () => {
@@ -26,7 +21,7 @@ describe("easing (smoke)", () => {
 
     for (const ease of easeNames) {
       for (const intervalCount of [1, 2, 3]) {
-        const result = getSvgKeySplines(ease, intervalCount + 1);
+        const result = Easing.keySplines(ease, intervalCount + 1);
 
         expect(result.trimEnd().endsWith(";")).toBe(false);
       }
@@ -37,8 +32,8 @@ describe("easing (smoke)", () => {
     const easeName = "power2.out";
 
     for (const keyframeCount of [2, 3, 4, 5]) {
-      const keyTimes = getSvgUniformKeyTimes(keyframeCount);
-      const keySplines = getSvgKeySplines(easeName, keyframeCount);
+      const keyTimes = Easing.uniformKeyTimes(keyframeCount);
+      const keySplines = Easing.keySplines(easeName, keyframeCount);
 
       const keyTimesCount = keyTimes.split(";").length;
       const keySplinesCount = keySplines.split(";").length;
@@ -51,7 +46,7 @@ describe("easing (smoke)", () => {
     const easeName = "sine.inOut";
 
     for (const intervalCount of [1, 2, 3, 4]) {
-      const result = resolveCalcMode(easeName, intervalCount);
+      const result = Easing.resolveCalcMode(easeName, intervalCount);
 
       const keyTimesCount = result.keyTimes!.split(";").length;
       const keySplinesCount = result.keySplines!.split(";").length;
@@ -66,19 +61,19 @@ describe("easing (smoke)", () => {
     const canonical = "back.out";
     const keyframeCount = 2;
 
-    const result = getSvgKeySplines(parametrized, keyframeCount);
-    const expected = getSvgKeySplines(canonical, keyframeCount);
+    const result = Easing.keySplines(parametrized, keyframeCount);
+    const expected = Easing.keySplines(canonical, keyframeCount);
 
     expect(result).toBe(expected);
   });
 
   it("SMOKE TEST: custom bezier array and its equivalent named ease produce identical resolveCalcMode output", () => {
     const namedEase = "power1.inOut";
-    const customBezier = resolveEase(namedEase)!;
+    const customBezier = Easing.resolveEase(namedEase)!;
     const intervalCount = 2;
 
-    const fromName = resolveCalcMode(namedEase, intervalCount);
-    const fromArray = resolveCalcMode(customBezier, intervalCount);
+    const fromName = Easing.resolveCalcMode(namedEase, intervalCount);
+    const fromArray = Easing.resolveCalcMode(customBezier, intervalCount);
 
     expect(fromArray.calcMode).toBe(fromName.calcMode);
     expect(fromArray.keySplines).toBe(fromName.keySplines);

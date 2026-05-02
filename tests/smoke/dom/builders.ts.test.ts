@@ -1,12 +1,12 @@
 // fallow-ignore-file
 /// <reference lib="dom" />
 import { describe, expect, it } from "bun:test";
-import { buildAnimate, buildAnimateTransform } from "@/utils/builders";
+import { SMILBuilder } from "@/utils/builders";
 
 describe("builders (smoke)", () => {
   describe("buildAnimate", () => {
     it("SMOKE TEST: repeat:-1 + ease + delay + dur do not corrupt each other", () => {
-      const result = buildAnimate({
+      const result = SMILBuilder.animate({
         attributeName: "opacity",
         to: "0",
         dur: 2,
@@ -27,7 +27,7 @@ describe("builders (smoke)", () => {
     it("SMOKE TEST: repeat:N + ease + from/to sets all spline attributes alongside repeat", () => {
       const gsapRepeat = 3;
 
-      const result = buildAnimate({
+      const result = SMILBuilder.animate({
         attributeName: "fill",
         from: "red",
         to: "blue",
@@ -46,7 +46,7 @@ describe("builders (smoke)", () => {
     });
 
     it("SMOKE TEST: values + ease + delay — values wins over from/to, spline attrs still set", () => {
-      const result = buildAnimate({
+      const result = SMILBuilder.animate({
         attributeName: "opacity",
         values: "0; 0.5; 1",
         dur: 2,
@@ -64,7 +64,7 @@ describe("builders (smoke)", () => {
     it("SMOKE TEST: ease=none + repeat + delay — linear calcMode, no keySplines, correct repeat and begin", () => {
       const gsapRepeat = 1;
 
-      const result = buildAnimate({
+      const result = SMILBuilder.animate({
         attributeName: "opacity",
         to: "1",
         dur: 0.8,
@@ -85,7 +85,7 @@ describe("builders (smoke)", () => {
     it("SMOKE TEST: fixed attrs (attributeName, attributeType, additive) survive alongside repeat + ease + delay", () => {
       const gsapRepeat = 2;
 
-      const result = buildAnimateTransform({
+      const result = SMILBuilder.animateTransform({
         type: "rotate",
         from: "0 60 60",
         to: "360 60 60",
@@ -105,7 +105,7 @@ describe("builders (smoke)", () => {
     });
 
     it("SMOKE TEST: additive=replace + repeat:-1 + ease=none — override and linear calcMode coexist", () => {
-      const result = buildAnimateTransform({
+      const result = SMILBuilder.animateTransform({
         type: "scale",
         from: "1",
         to: "2",

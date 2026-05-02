@@ -6,7 +6,7 @@ import type {
   PositionParam,
 } from "@/types/index.ts";
 import { SMILTween, type TransformAccumState } from "./SMILTween.ts";
-import { routeProperties } from "@/utils/property-router.ts";
+import { PropertyRouter } from "@/utils/property-router.ts";
 
 const defaultAccum = (): TransformAccumState => ({
   x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1, skewX: 0, skewY: 0,
@@ -128,7 +128,7 @@ export class SMILTimeline extends Animation {
    * For `from()` tweens it advances to the identity (the element returns to its natural state).
    */
   private _updateTransformAccum = (tween: SMILTween): void => {
-    const { transforms } = routeProperties(tween._vars);
+    const { transforms } = PropertyRouter.route(tween._vars);
     for (const target of tween._targets) {
       const accum = { ...(this._transformAccum.get(target) ?? defaultAccum()) };
       const n = (v: number | string | undefined, fallback: number) =>

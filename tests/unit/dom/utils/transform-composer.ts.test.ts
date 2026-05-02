@@ -1,10 +1,10 @@
 /// <reference lib="dom" />
 // fallow-ignore-file
 import { describe, expect, it, spyOn } from "bun:test";
-import { composeTransforms, resolveOrigin } from "@/utils/transform-composer";
-import { SVG_NS } from "@/utils/builders";
+import { TransformComposer } from "@/utils/transform-composer";
+import { SMILBuilder } from "@/utils/builders";
 
-const makeSvgEl = () => document.createElementNS(SVG_NS, "rect");
+const makeSvgEl = () => document.createElementNS(SMILBuilder.SVG_NS, "rect");
 
 describe("transform-composer", () => {
   describe("composeTransforms", () => {
@@ -13,7 +13,7 @@ describe("transform-composer", () => {
     it("HAPPY PATH: x+y → outerAnims has one translate, no wrapper needed", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { x: 100, y: 50 },
         target,
         dur: 1,
@@ -30,7 +30,7 @@ describe("transform-composer", () => {
     it("HAPPY PATH: rotation → outerAnims has one rotate, center falls back to 0 0 when not in DOM", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { rotation: 90 },
         target,
         dur: 1,
@@ -46,7 +46,7 @@ describe("transform-composer", () => {
     it("HAPPY PATH: transformOrigin as pixel string with rotation — passes through as-is when element is unrendered (bbox zero in happy-dom)", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { rotation: 180 },
         fromTransforms: { rotation: 0 },
         target,
@@ -65,7 +65,7 @@ describe("transform-composer", () => {
     it("HAPPY PATH: scale → wrapper mode; scale goes to innerAnims, no compensating translate", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { scale: 2 },
         target,
         dur: 1,
@@ -83,7 +83,7 @@ describe("transform-composer", () => {
     it("HAPPY PATH: scaleX + scaleY → wrapper mode; scale in innerAnims", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { scaleX: 3, scaleY: 0.5 },
         fromTransforms: { scaleX: 1, scaleY: 1 },
         target,
@@ -101,7 +101,7 @@ describe("transform-composer", () => {
     it("HAPPY PATH: skewX → wrapper mode; skewX in innerAnims", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { skewX: 30 },
         target,
         dur: 1,
@@ -118,7 +118,7 @@ describe("transform-composer", () => {
     it("HAPPY PATH: skewY → wrapper mode; skewY in innerAnims", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { skewY: 15 },
         target,
         dur: 1,
@@ -135,7 +135,7 @@ describe("transform-composer", () => {
     it("HAPPY PATH: compound transforms are split in canonical order (translate → rotate → scale)", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { x: 50, rotation: 45, scale: 2 },
         target,
         dur: 1,
@@ -153,7 +153,7 @@ describe("transform-composer", () => {
     it("HAPPY PATH: all five types are split in canonical order", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { x: 10, rotation: 30, scale: 1.5, skewX: 10, skewY: 5 },
         target,
         dur: 1,
@@ -172,7 +172,7 @@ describe("transform-composer", () => {
     it("HAPPY PATH: fromTransforms omitted → from values default to zero / one", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { x: 80, scale: 3 },
         target,
         dur: 1,
@@ -186,7 +186,7 @@ describe("transform-composer", () => {
     it("HAPPY PATH: timing options are forwarded to every element", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { x: 50, scale: 2 },
         target,
         dur: 2,
@@ -207,7 +207,7 @@ describe("transform-composer", () => {
     it("HAPPY PATH: every element has additive=sum", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { x: 10, rotation: 45, scale: 2 },
         target,
         dur: 1,
@@ -224,7 +224,7 @@ describe("transform-composer", () => {
     it("EDGE CASE: empty toTransforms → outerAnims and innerAnims are both empty", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: {},
         target,
         dur: 1,
@@ -237,7 +237,7 @@ describe("transform-composer", () => {
     it("EDGE CASE: only y in toTransforms → still produces a translate element in outerAnims", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { y: 30 },
         target,
         dur: 1,
@@ -252,7 +252,7 @@ describe("transform-composer", () => {
     it("EDGE CASE: transformOrigin with % resolves to 0 when element is unrendered — happy-dom getBBox returns zeros so offset+pct*dim = 0", () => {
       const target = makeSvgEl();
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { rotation: 90 },
         target,
         transformOrigin: "50% 50%",
@@ -269,7 +269,7 @@ describe("transform-composer", () => {
       const target = makeSvgEl();
       const warnSpy = spyOn(console, "warn");
 
-      const result = composeTransforms({
+      const result = TransformComposer.compose({
         toTransforms: { rotationX: 45 } as any,
         target,
         dur: 1,
@@ -294,25 +294,25 @@ describe("transform-composer", () => {
     // visually in tests/integration/no-plugins.html.
 
     it("HAPPY PATH: two pixel values — passes through as-is when bbox is zero (unrendered element)", () => {
-      const result = resolveOrigin(makeSvgEl(), "40 60");
+      const result = TransformComposer.resolveOrigin(makeSvgEl(), "40 60");
 
       expect(result).toEqual({ cx: 40, cy: 60 });
     });
 
     it("HAPPY PATH: single pixel value → both axes use that value", () => {
-      const result = resolveOrigin(makeSvgEl(), "50");
+      const result = TransformComposer.resolveOrigin(makeSvgEl(), "50");
 
       expect(result).toEqual({ cx: 50, cy: 50 });
     });
 
     it("HAPPY PATH: negative pixel values are accepted", () => {
-      const result = resolveOrigin(makeSvgEl(), "-10 -20");
+      const result = TransformComposer.resolveOrigin(makeSvgEl(), "-10 -20");
 
       expect(result).toEqual({ cx: -10, cy: -20 });
     });
 
     it("HAPPY PATH: no transformOrigin → getBBoxCenter; returns {0,0} for unrendered element", () => {
-      const result = resolveOrigin(makeSvgEl());
+      const result = TransformComposer.resolveOrigin(makeSvgEl());
 
       expect(result).toEqual({ cx: 0, cy: 0 });
     });
@@ -320,7 +320,7 @@ describe("transform-composer", () => {
     // ===== EDGE CASES =====
 
     it("EDGE CASE: % transformOrigin resolves to 0 for unrendered element (bbox dimensions are zero)", () => {
-      const result = resolveOrigin(makeSvgEl(), "50% 50%");
+      const result = TransformComposer.resolveOrigin(makeSvgEl(), "50% 50%");
 
       // cx = 0 + 0.5*0 = 0, cy = 0 + 0.5*0 = 0
       expect(result).toEqual({ cx: 0, cy: 0 });
@@ -330,7 +330,7 @@ describe("transform-composer", () => {
       const el = document.createElement("div"); // definitely not SVGGraphicsElement
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
-      const result = resolveOrigin(el);
+      const result = TransformComposer.resolveOrigin(el);
 
       expect(result).toEqual({ cx: 0, cy: 0 });
       expect(warnSpy).toHaveBeenCalled();

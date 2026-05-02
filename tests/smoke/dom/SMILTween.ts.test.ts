@@ -2,9 +2,9 @@
 /// <reference lib="dom" />
 import { describe, expect, it } from "bun:test";
 import { SMILTween } from "@/core/SMILTween.ts";
-import { SVG_NS } from "@/utils/builders.ts";
+import { SMILBuilder } from "@/utils/builders.ts";
 
-const makeEl = (tag = "rect") => document.createElementNS(SVG_NS, tag);
+const makeEl = (tag = "rect") => document.createElementNS(SMILBuilder.SVG_NS, tag);
 
 describe("SMILTween (smoke)", () => {
   it("SMOKE TEST: to() — ease + repeat + delay all propagate to the injected <animate>", () => {

@@ -1,13 +1,13 @@
 // fallow-ignore-file
 import { expect, describe, it } from "bun:test";
-import { routeProperties } from "@/utils/property-router.ts";
+import { PropertyRouter } from "@/utils/property-router.ts";
 
 describe("property-router", () => {
   describe("routeProperties", () => {
     // ===== HAPPY PATHS =====
 
     it("HAPPY PATH: routes transform keys to the transforms bucket", () => {
-      const { transforms, direct, plugins } = routeProperties({
+      const { transforms, direct, plugins } = PropertyRouter.route({
         x: 100,
         y: -40,
         rotation: 90,
@@ -21,7 +21,7 @@ describe("property-router", () => {
     });
 
     it("HAPPY PATH: routes direct SVG attribute keys to the direct bucket", () => {
-      const { transforms, direct } = routeProperties({
+      const { transforms, direct } = PropertyRouter.route({
         opacity: 0.5,
         fill: "#ff0000",
         stroke: "blue",
@@ -33,7 +33,7 @@ describe("property-router", () => {
     });
 
     it("HAPPY PATH: special keys are captured in the special bucket with provided values", () => {
-      const { special } = routeProperties({
+      const { special } = PropertyRouter.route({
         duration: 2,
         delay: 0.5,
         ease: "power2.inOut",
@@ -49,7 +49,7 @@ describe("property-router", () => {
     });
 
     it("HAPPY PATH: routes plugin keys to the plugins bucket", () => {
-      const { plugins, transforms, direct } = routeProperties({
+      const { plugins, transforms, direct } = PropertyRouter.route({
         drawSVG: "0% 50%",
       });
 
@@ -59,7 +59,7 @@ describe("property-router", () => {
     });
 
     it("HAPPY PATH: routes attr:{} contents to the attrs bucket", () => {
-      const { attrs, transforms, direct } = routeProperties({
+      const { attrs, transforms, direct } = PropertyRouter.route({
         attr: { cx: 50, r: 20 },
       });
 
@@ -69,7 +69,7 @@ describe("property-router", () => {
     });
 
     it("HAPPY PATH: correctly splits mixed vars across all buckets simultaneously", () => {
-      const { transforms, direct, special, attrs, plugins } = routeProperties({
+      const { transforms, direct, special, attrs, plugins } = PropertyRouter.route({
         x: 100,
         opacity: 0.8,
         duration: 1.5,
@@ -87,7 +87,7 @@ describe("property-router", () => {
     // ===== EDGE CASES =====
 
     it("EDGE CASE: empty vars produce empty transform/direct/attrs/plugin buckets and default special values", () => {
-      const { transforms, direct, attrs, plugins, special } = routeProperties({});
+      const { transforms, direct, attrs, plugins, special } = PropertyRouter.route({});
 
       expect(transforms).toEqual({});
       expect(direct).toEqual({});
@@ -104,7 +104,7 @@ describe("property-router", () => {
     });
 
     it("EDGE CASE: unknown key falls into the direct bucket as a best-effort SVG attribute", () => {
-      const { direct, transforms } = routeProperties({
+      const { direct, transforms } = PropertyRouter.route({
         "data-custom": "expected",
       } as never);
 
@@ -114,7 +114,7 @@ describe("property-router", () => {
 
     it("EDGE CASE: attr:{} is deep-cloned — mutating the original does not affect the returned attrs", () => {
       const attrInput = { cx: 10 };
-      const { attrs } = routeProperties({ attr: attrInput });
+      const { attrs } = PropertyRouter.route({ attr: attrInput });
 
       attrInput.cx = 999;
 
@@ -122,7 +122,7 @@ describe("property-router", () => {
     });
 
     it("EDGE CASE: special defaults fill in keys not present in vars", () => {
-      const { special } = routeProperties({ duration: 2 });
+      const { special } = PropertyRouter.route({ duration: 2 });
 
       // duration was provided
       expect(special.duration).toBe(2);
