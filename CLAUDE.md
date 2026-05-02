@@ -25,6 +25,7 @@ GSAP interpolates values every frame via rAF. This library runs **once** — gen
 - `docs/ai/improve-claude-usage.md` — token / workflow habits for AI-assisted work
 - `docs/ai/claude-code-nate-herk-32-tricks.md` — Claude Code product tips (Nate Herk video notes)
 - `docs/ai/ai-workflow-and-codebase-pain-points.md` — what hurts when coding this repo with agents
+- `docs/ai/fallow.md` — Fallow (codebase cleanup) — quick pointer + links
 
 ## File structure
 

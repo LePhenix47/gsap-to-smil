@@ -11,6 +11,7 @@
     "@happy-dom/global-registrator": "^20.9.0",
     "@types/bun": "latest",
     "bun-plugin-dts-auto": "^0.10.0",
+    "fallow": "^2.61.0",
     "gsap": "^3.15.0",
     "typescript": "^5.4.4"
   },
