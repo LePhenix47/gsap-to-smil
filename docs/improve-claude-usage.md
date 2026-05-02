@@ -10,9 +10,16 @@ WARNING: Claude counts tokens, not how many messages you sent. Most tokens go to
 
 ## Tokens
 
-Rough guide from the video: about 3–4 words ≈ 1 token; about 100 words ≈ 130 tokens. Real counts depend on language and tokenizer.
+3/4 words ≈ 1 token
+↔
+1 word ≈ 4/3 token
+
+About 100 words ≈ 130 tokens.
+
+Real counts depend on language and tokenizer.
 
 You pay for 2 things:
+
 1. Your text (input token)
 2. Model's response (output token)
 
