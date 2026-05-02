@@ -91,7 +91,9 @@ Peak times: CC tends to cost more from 5am–7am and 1pm–7pm (confirm on your 
 
 Split work: morning + afternoon + evening, not one long spike.
 
-Trick: web app cron → tiny message ~4–5am. Idea: let the rolling window move while you sleep so the next block fits better after a hard burst. Check current CC rules before you rely on it.
+Trick: web app cron → tiny message ~4–5am.
+
+The rolling ~5h window still moves while you sleep. Line it up so when you start CC in the morning you may be ~1h from reset, not stuck with a fresh 5h wait after a daytime limit hit. Check current CC rules before you rely on it.
 
 ## Still to add
 
