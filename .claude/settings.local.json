@@ -12,7 +12,8 @@
       "WebFetch(domain:bun.com)",
       "WebFetch(domain:gsap.com)",
       "Bash(node -e ' *)",
-      "Bash(bun tsc *)"
+      "Bash(bun tsc *)",
+      "Bash(dir *)"
     ],
     "deny": [
       "Bash(rm -rf *)",
