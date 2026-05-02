@@ -1,162 +1,135 @@
 import type { TweenVars } from "@/types/index.ts";
 
-let _idCounter = 0;
+// TODO: Fix this, this ain't right we should have a proper way to generate unique ids
+let animationIdCounter = 0;
 
-/**
- * Base class for `SMILTween` and `SMILTimeline`.
- * Owns all timing state and exposes the fluent getter/setter API that mirrors GSAP's `Animation`.
- *
- * Concrete subclasses must implement `kill()` and `revert()`.
- */
 export abstract class Animation {
   readonly id: string;
-
-  _delay: number;
-  _repeat: number;
-  _rDelay: number;
-  _yoyo: boolean;
-  _ts: number;
-  _dur: number;
-  _tDur: number;
-  _start: number;
-  _paused: boolean;
-  _reversed: boolean;
-  _initialized: boolean;
-
   data: unknown;
-  /** Will be typed as `SMILTimeline | null` once that class is written. */
-  parent: Animation | null;
+  parent: Animation | null = null;
 
-  private _calcTotalDuration = (): number => {
-    if (this._repeat === -1) return Infinity;
-    const playCount = this._repeat + 1;
-    const gapTime = this._rDelay * this._repeat;
-    return this._dur * playCount + gapTime;
-  };
+  protected delaySeconds: number;
+  protected durationSeconds: number;
+  protected totalDurationSeconds: number;
+  protected repeatCount: number;
+  protected repeatDelaySeconds: number;
+  protected yoyoEnabled: boolean;
+  protected pausedState: boolean;
+  protected reversedState: boolean;
+  protected hasBuilt: boolean;
 
   constructor(vars: TweenVars) {
-    this.id = vars.id ?? `smil-${++_idCounter}`;
-    this._delay = vars.delay ?? 0;
-    this._repeat = vars.repeat ?? 0;
-    this._rDelay = vars.repeatDelay ?? 0;
-    this._yoyo = vars.yoyo ?? false;
-    this._ts = 1;
-    this._dur = vars.duration ?? 0.5;
-    this._start = 0;
-    this._paused = vars.paused ?? false;
-    this._reversed = vars.reversed ?? false;
-    this._initialized = false;
-    this.data = vars.data ?? null;
-    this.parent = null;
-    this._tDur = this._calcTotalDuration();
+    const {
+      id,
+      delay = 0,
+      duration = 0.5,
+      repeat = 0,
+      repeatDelay = 0,
+      yoyo = false,
+      paused = false,
+      reversed = false,
+      data = null, // ! WTF's the "data" ? What's its type ??
+    } = vars;
+
+    this.id = id ?? `smil-${++animationIdCounter}`;
+    this.delaySeconds = delay;
+    this.durationSeconds = duration;
+    this.repeatCount = repeat;
+    this.repeatDelaySeconds = repeatDelay;
+    this.yoyoEnabled = yoyo;
+    this.pausedState = paused;
+    this.reversedState = reversed;
+    this.hasBuilt = false;
+    this.data = data;
+
+    this.totalDurationSeconds = this.computeTotalDuration();
   }
 
   // ===== Fluent getters / setters =====
-  // Each method returns the current value when called with no argument,
-  // or `this` (for chaining) when called with a value.
 
-  /** Gets or sets the animation duration in seconds. */
   duration = (value?: number): number | this => {
-    if (value === undefined) return this._dur;
-    this._dur = value;
-    this._tDur = this._calcTotalDuration();
+    if (this.isAbsent(value)) return this.durationSeconds;
+    this.durationSeconds = value;
+    this.totalDurationSeconds = this.computeTotalDuration();
     return this;
   };
 
-  /**
-   * Gets or sets the total duration including all repeats and repeat delays.
-   * Setting this adjusts `_dur` proportionally.
-   */
   totalDuration = (value?: number): number | this => {
-    if (value === undefined) return this._tDur;
-    if (this._repeat > 0) {
-      const plays = this._repeat + 1;
-      const gapTime = this._rDelay * this._repeat;
-      this._dur = (value - gapTime) / plays;
+    if (this.isAbsent(value)) return this.totalDurationSeconds;
+
+    if (this.repeatCount > 0) {
+      const totalPlayCount: number = this.repeatCount + 1;
+      const totalGapTimeSeconds: number =
+        this.repeatDelaySeconds * this.repeatCount;
+      this.durationSeconds = (value - totalGapTimeSeconds) / totalPlayCount;
     } else {
-      this._dur = value;
+      this.durationSeconds = value;
     }
-    this._tDur = value;
+
+    this.totalDurationSeconds = value;
     return this;
   };
 
-  /** Gets or sets the delay in seconds before the animation starts. */
   delay = (value?: number): number | this => {
-    if (value === undefined) return this._delay;
-    this._delay = value;
+    if (this.isAbsent(value)) return this.delaySeconds;
+    this.delaySeconds = value;
     return this;
   };
 
-  /** Gets or sets the repeat count. `-1` = infinite. */
   repeat = (value?: number): number | this => {
-    if (value === undefined) return this._repeat;
-    this._repeat = value;
-    this._tDur = this._calcTotalDuration();
+    if (this.isAbsent(value)) return this.repeatCount;
+    this.repeatCount = value;
+    this.totalDurationSeconds = this.computeTotalDuration();
     return this;
   };
 
-  /** Gets or sets the delay between repeats in seconds. */
   repeatDelay = (value?: number): number | this => {
-    if (value === undefined) return this._rDelay;
-    this._rDelay = value;
-    this._tDur = this._calcTotalDuration();
+    if (this.isAbsent(value)) return this.repeatDelaySeconds;
+    this.repeatDelaySeconds = value;
+    this.totalDurationSeconds = this.computeTotalDuration();
     return this;
   };
 
-  /** Gets or sets yoyo (ping-pong) mode. */
   yoyo = (value?: boolean): boolean | this => {
-    if (value === undefined) return this._yoyo;
-    this._yoyo = value;
+    if (this.isAbsent(value)) return this.yoyoEnabled;
+    this.yoyoEnabled = value;
     return this;
   };
 
-  /** Gets or sets the time scale (playback speed multiplier). */
-  timeScale = (value?: number): number | this => {
-    if (value === undefined) return this._ts;
-    this._ts = value;
-    return this;
-  };
-
-  /** Gets or sets the paused state. */
   paused = (value?: boolean): boolean | this => {
-    if (value === undefined) return this._paused;
-    this._paused = value;
+    if (this.isAbsent(value)) return this.pausedState;
+    this.pausedState = value;
     return this;
   };
 
-  /** Gets or sets the reversed state. */
   reversed = (value?: boolean): boolean | this => {
-    if (value === undefined) return this._reversed;
-    this._reversed = value;
+    if (this.isAbsent(value)) return this.reversedState;
+    this.reversedState = value;
     return this;
   };
 
   // ===== State queries =====
 
-  /** Returns `true` if the animation has been initialized and is not paused. */
-  isActive = (): boolean => this._initialized && !this._paused;
+  isActive = (): boolean => this.hasBuilt && !this.pausedState;
 
-  /** Marks the animation as uninitialized so it will re-render on next play. */
   invalidate = (): this => {
-    this._initialized = false;
+    this.hasBuilt = false;
     return this;
   };
 
-  // ===== Promise interface =====
+  // ===== Helpers =====
 
-  /**
-   * Returns a Promise that resolves when the animation completes.
-   * Timeout-based — does not account for seek, pause, or timeScale changes.
-   */
-  then = (onFulfilled?: (value: this) => void): Promise<this> => {
-    const totalMs =
-      (this._tDur === Infinity ? 0 : this._tDur + this._delay) * 1000;
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        onFulfilled?.(this);
-        resolve(this);
-      }, totalMs);
-    });
+  private isAbsent = (value: unknown): value is undefined | null =>
+    !value && ["undefined", "object"].includes(typeof value);
+
+  private computeTotalDuration = (): number => {
+    if (this.repeatCount === -1) return Infinity;
+
+    const totalPlayDurationSeconds: number =
+      this.durationSeconds * (this.repeatCount + 1);
+    const totalGapSeconds: number = this.repeatDelaySeconds * this.repeatCount;
+
+    return totalPlayDurationSeconds + totalGapSeconds;
   };
 
   // ===== Abstract — implemented by subclasses =====
