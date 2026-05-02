@@ -35,7 +35,7 @@ Ex: `n = 5` → `n × (n − 1) / 2` = 10. `n = 10` → 45. That is the triangle
 
 ## Caveman
 
-Use [`caveman`](https://github.com/JuliusBrussee/caveman)
+Terse agent output → fewer tokens: [caveman.md](./caveman.md).
 
 ## Rules
 

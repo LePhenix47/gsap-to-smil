@@ -33,7 +33,7 @@ Borrow the habit from [experiment-first.md](../research/experiment-first.md): sm
 ## What to do next
 
 1. Bring [CLAUDE.md](../../CLAUDE.md) up to date: scope, links to the real docs, experiment-first as default habit.
-2. Keep each agent task small. Shorter prompts, less noise. Optional: a “caveman” pass on the prompt so only the core ask remains.
+2. Keep each agent task small. Shorter prompts, less noise. Optional: [Caveman](./caveman.md) in Claude Code for terse replies, or tighten the prompt manually.
 3. When the project moves, update this file and [experiment-first.md](../research/experiment-first.md) so the next chat does not argue against a POC we already ran.
 
 ## Any assistant
@@ -45,4 +45,5 @@ No project notes, no tiny experiments, no human pass: any model can still ship r
 [experiment-first.md](../research/experiment-first.md)  
 [mapping-challenges.md](../reference/mapping-challenges.md)  
 [refactor-plan.md](../refactor/refactor-plan.md)  
-[transform-origin-analysis.md](../research/transform-origin-analysis.md)
+[transform-origin-analysis.md](../research/transform-origin-analysis.md)  
+[caveman.md](./caveman.md)
