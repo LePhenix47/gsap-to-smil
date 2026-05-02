@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(bun add *)",
+      "Bash(bun run *)",
+      "Bash(bun x *)",
+      "Bash(cat bunfig.toml)",
+      "Bash(cat bun.config.ts)",
+      "Bash(bun test *)",
+      "Bash(bunx tsc *)",
+      "WebFetch(domain:bun.com)",
+      "WebFetch(domain:gsap.com)",
+      "Bash(node -e ' *)",
+      "Bash(bun tsc *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force)",
+      "Bash(git reset --hard)"
+    ]
+  }
+}
