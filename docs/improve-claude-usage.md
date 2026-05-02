@@ -36,7 +36,7 @@ Ex: 5 messages `n = 5` → 10 tokens
 
 ## Caveman
 
-Video: a “Caveman” plugin shortens prompts to save tokens. Add when/how to use it when you have notes.
+Use https://github.com/JuliusBrussee/caveman
 
 ## Rules
 
