@@ -31,6 +31,14 @@ Ex: 5 messages `n = 5` → 10 tokens
 
 Video: a “Caveman” plugin shortens prompts to save tokens. Add when/how to use it when you have notes.
 
+## Rules
+
+### Rule 1 — Don’t follow up
+
+Wrong reply? Don’t stack a “please fix” message. Edit your last prompt when the app allows it (Claude site, Cursor). Same thread, one less turn to re-read.
+
+Claude Code often cannot do that. There: new chat with one fixed prompt, or keep CC threads short.
+
 ## Still to add
 
-Paste Dubibubii’s rules here. Until then: short threads, paste only needed code, new chat when the task changes.
+More rules from the video as we add them. Until then: short threads, paste only needed code, new chat when the task changes.
