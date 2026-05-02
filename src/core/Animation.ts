@@ -197,7 +197,7 @@ export abstract class Animation {
    * that value). Checking `typeof` avoids the `== null` shorthand and catches
    * both `null` (`typeof null === "object"`) and `undefined`.
    */
-  private isAbsent = (value: unknown): value is undefined | null =>
+  protected isAbsent = (value: unknown): value is undefined | null =>
     !value && ["undefined", "object"].includes(typeof value);
 
   /**
