@@ -101,6 +101,8 @@ The rolling ~5h window still moves while you sleep. Line it up so when you start
 
 [claude-code-nate-herk-32-tricks.md](./claude-code-nate-herk-32-tricks.md) — Claude Code slash / workflow notes.
 
+[deepseek-claude-code-jack-roberts.md](./deepseek-claude-code-jack-roberts.md) — cheaper **API backend** (DeepSeek V4) behind Claude Code; video + official env pattern.
+
 ## Still to add
 
 More from the video when you have it. Default: short threads, minimal paste; CC: **`/rewind`** before fix-stacking; new chat when the task or thread weight calls for it.

@@ -27,6 +27,7 @@ GSAP interpolates values every frame via rAF. This library runs **once** — gen
 - `docs/ai/ai-workflow-and-codebase-pain-points.md` — what hurts when coding this repo with agents
 - `docs/ai/fallow.md` — Fallow (codebase cleanup) — quick pointer + links
 - `docs/ai/caveman.md` — Caveman plugin (terse Claude Code replies)
+- `docs/ai/deepseek-claude-code-jack-roberts.md` — DeepSeek V4 backend for Claude Code (cost / setup pointer)
 
 ## File structure
 
