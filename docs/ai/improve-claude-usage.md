@@ -95,6 +95,10 @@ Trick: web app cron → tiny message ~4–5am.
 
 The rolling ~5h window still moves while you sleep. Line it up so when you start CC in the morning you may be ~1h from reset, not stuck with a fresh 5h wait after a daytime limit hit. Check current CC rules before you rely on it.
 
+## Related
+
+Claude **Code** (terminal agent) habits and slash-command style tips from another source: [claude-code-nate-herk-32-tricks.md](./claude-code-nate-herk-32-tricks.md).
+
 ## Still to add
 
 More rules if the video adds more. Until then: short threads, paste only needed code, new chat when the task changes.
