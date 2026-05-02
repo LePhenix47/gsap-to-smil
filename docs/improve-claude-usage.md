@@ -62,6 +62,16 @@ Same work, fewer passes through the thread.
 
 Bonus: 1 batched prompt often gives the model the whole picture at once which improves results
 
+### Rule 4 — Track usage
+
+Sometimes token spent is hight, but what burned it ?
+
+You cannot fix what you do not measure
+
+Claude Code already writes local usage data 
+
+Point a small tool at those logs so you see totals, models, and sessions. Example: [phuryn/claude-usage](https://github.com/phuryn/claude-usage) (local dashboard from the JSONL logs).
+
 ## Still to add
 
 More rules from the video as we add them. Until then: short threads, paste only needed code, new chat when the task changes.
