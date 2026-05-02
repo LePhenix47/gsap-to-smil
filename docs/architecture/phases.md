@@ -24,7 +24,7 @@
 - `delay`
 - `ease` (power1–4, sine, circ, expo, back — elastic/bounce as keyframe fallback)
 - `repeat` (-1 = indefinite)
-- `repeatDelay` (approximated — see mapping-challenges.md)
+- `repeatDelay` (approximated — see [mapping-challenges.md](../reference/mapping-challenges.md))
 - `yoyo`
 
 ### Phase 1 internals to build

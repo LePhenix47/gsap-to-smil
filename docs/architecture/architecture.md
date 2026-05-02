@@ -370,7 +370,7 @@ type EasingAttrs =
   | { calcMode: "linear"; values: string; keyTimes: string }  // elastic/bounce keyframe fallback
 ```
 
-- Named eases → cubic-bezier lookup table (see `smil-reference.md`)
+- Named eases → cubic-bezier lookup table (see [smil-reference.md](../reference/smil-reference.md))
 - `elastic` / `bounce` → sampled keyframe approximation
 - `steps(n)` → `calcMode="discrete"` with `n` keyframes
 - `CustomEase` SVG path → sampled + approximated
@@ -459,6 +459,6 @@ No ticker — the global timeline only exists for position resolution and kill/r
 | `rAF ticker` | SMIL has its own timing engine |
 | `CSSPlugin` | CSS output is phase 2, not phase 1 |
 | `_lazy` render deferral | SMIL inits on injection, no lazy needed |
-| `immediateRender` for `from()` | Handled by setting `from` attribute explicitly (see mapping-challenges.md) |
+| `immediateRender` for `from()` | Handled by setting `from` attribute explicitly (see [mapping-challenges.md](../reference/mapping-challenges.md)) |
 | `overwrite: "auto"` | SMIL has no conflict resolution — elements stack or replace by DOM order |
 | `suppressOverwrites` | Same reason |

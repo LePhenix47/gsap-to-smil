@@ -12,13 +12,18 @@ GSAP interpolates values every frame via rAF. This library runs **once** — gen
 
 ## Docs (read these before touching code)
 
-- `docs/smil-reference.md` — full SMIL feature set, gotchas, browser compat, easing table
-- `docs/gsap-reference.md` — GSAP API surface this library mirrors
-- `docs/mapping-challenges.md` — hard problems when translating GSAP → SMIL (read before implementing anything)
-- `docs/architecture-overview.md` — TL;DR class structure + file layout
-- `docs/architecture.md` — full detailed architecture (verbose)
-- `docs/phases.md` — what's in phase 1/2/3, what's deferred
-- `docs/testing-strategy.md` — how tests work (visual diff with mix-blend-mode)
+- `docs/reference/smil-reference.md` — full SMIL feature set, gotchas, browser compat, easing table
+- `docs/reference/gsap-reference.md` — GSAP API surface this library mirrors
+- `docs/reference/mapping-challenges.md` — hard problems when translating GSAP → SMIL (read before implementing anything)
+- `docs/architecture/architecture-overview.md` — TL;DR class structure + file layout
+- `docs/architecture/architecture.md` — full detailed architecture (verbose)
+- `docs/architecture/phases.md` — what's in phase 1/2/3, what's deferred
+- `docs/architecture/patterns/` — design notes (property router, transform composer, etc.)
+- `docs/testing/testing-strategy.md` — how tests work (visual diff with mix-blend-mode)
+- `docs/research/experiment-first.md` — smallest repro before spec reasoning
+- `docs/refactor/refactor-plan.md` — refactor direction
+- `docs/ai/improve-claude-usage.md` — token / workflow habits for AI-assisted work
+- `docs/ai/ai-workflow-and-codebase-pain-points.md` — what hurts when coding this repo with agents
 
 ## File structure
 
@@ -51,7 +56,7 @@ tests/
 
 ## Current phase
 
-**Phase 1** — core tweens, simple properties. See `docs/phases.md` for full scope.
+**Phase 1** — core tweens, simple properties. See `docs/architecture/phases.md` for full scope.
 
 `smil.to/from/fromTo/set` with transforms, opacity, fill, stroke, repeat, yoyo, delay, easing. No plugins, no timelines, no `attr:{}`.
 

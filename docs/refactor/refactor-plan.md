@@ -4,7 +4,7 @@
 
 Before touching any class:
 
-1. Hit a hurdle → see `docs/experiment-first.md`
+1. Hit a hurdle → see `docs/research/experiment-first.md`
 2. Build the animation by hand in a standalone HTML file (`tests/integration/`)
 3. Fix it until it looks identical to GSAP in the browser
 4. That file becomes the **spec** — the class output must match its structure

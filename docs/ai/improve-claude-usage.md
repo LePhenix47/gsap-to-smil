@@ -77,7 +77,7 @@ Same PDFs in every chat = waste. One project, files live there, update in place.
 
 No saved context = repeat goals and stack = extra tokens and messages.
 
-Site: memory + preferences. CC: [CLAUDE.md](../CLAUDE.md) + repo docs.
+Site: memory + preferences. CC: [CLAUDE.md](../../CLAUDE.md) + repo docs.
 
 ### Rule 7 — Unused features
 
