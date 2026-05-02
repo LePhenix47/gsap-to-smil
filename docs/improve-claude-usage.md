@@ -36,7 +36,7 @@ Ex: 5 messages `n = 5` → 10 tokens
 
 ## Caveman
 
-Use https://github.com/JuliusBrussee/caveman
+Use [`caveman`](https://github.com/JuliusBrussee/caveman)
 
 ## Rules
 
@@ -83,6 +83,16 @@ Site: memory + preferences. CC: [CLAUDE.md](../CLAUDE.md) + repo docs.
 ### Rule 7 — Unused features
 
 Web app: turn off what you do not use (web search, effort mode, etc.).
+
+### Rule 9 — Spread the day
+
+CC limits often use a rolling ~5h window (check your plan).
+
+Peak brackets: CC tends to cost more in 5am–7am and 1pm–7pm (confirm on your plan).
+
+Split work: morning + afternoon + evening, not one long spike.
+
+Trick: web app cron → tiny message ~4–5am. Idea: let the rolling window move while you sleep so the next block lines up better after a heavy hour (leftover headroom / faster-feeling reset). Verify against current CC rules before you rely on it.
 
 ## Still to add
 
