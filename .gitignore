@@ -177,3 +177,6 @@ dist
 
 # Claude
 .claude/
+
+# Local API keys (DeepSeek + Claude Code launcher)
+scripts/claude-deepseek.local.env

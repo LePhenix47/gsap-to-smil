@@ -78,6 +78,22 @@ API keys: [DeepSeek platform](https://platform.deepseek.com/api_keys).
 
 ---
 
+## This repo: launcher scripts
+
+`scripts/claude-deepseek.local.env` is **gitignored** — put your DeepSeek key there only (never commit it). A starter file was created from `scripts/claude-deepseek.env.example`; if yours is missing:
+
+`cp scripts/claude-deepseek.env.example scripts/claude-deepseek.local.env`
+
+1. Edit `scripts/claude-deepseek.local.env` and set `ANTHROPIC_AUTH_TOKEN=` to your key.
+2. Install Claude Code globally if needed: `npm install -g @anthropic-ai/claude-code`.
+3. From **repo root**, run one of:
+   - **Git Bash:** `bash scripts/claude-with-deepseek.sh` (optional args: `bash scripts/claude-with-deepseek.sh --help`)
+   - **PowerShell:** `.\scripts\claude-with-deepseek.ps1`
+
+The scripts `cd` to the repo root, load the local env, apply the same defaults as the DeepSeek doc, then exec `claude`. Use a **different** terminal without these vars for Anthropic-backed Claude Code.
+
+---
+
 ## Why people pair them
 
 - **Price** — per-token list prices can be lower than default Anthropic routing *if* the workload fits the bridge.
