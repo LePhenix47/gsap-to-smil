@@ -86,7 +86,12 @@ SMILPlugin              ← base for DrawSVG / MotionPath / MorphSVG
 
 ## Skills
 
-Project-specific coding conventions live in `.claude/skills/` — read the TypeScript ones before writing code:
+Project-specific coding conventions live in `.claude/skills/typescript/` — read them before writing code:
+
+**Code quality (read first):**
+- `code-conventions` — zero-tolerance rules: no underscores, explicit field names, broken-out intermediate calculations, no `=== undefined`, arrow methods only
+
+**TypeScript patterns:**
 - `use-guard-clauses` — early returns, no deep nesting
 - `destructure-objects-always` — destructure instead of repeated `obj.prop`
 - `prefer-unknown-over-any` — never use `any`
