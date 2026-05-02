@@ -1,3 +1,4 @@
+// fallow-ignore-next-line
 /// <reference lib="dom" />
 import { describe, expect, it } from "bun:test";
 import { SMILTween } from "@/core/SMILTween.ts";
@@ -46,7 +47,9 @@ describe("SMILTween (smoke)", () => {
     expect(animTransform.getAttribute("type")).toBe("translate");
     expect(animTransform.getAttribute("dur")).toBe("2s");
     expect(animTransform.getAttribute("begin")).toBe("1s");
-    expect(animTransform.getAttribute("repeatCount")).toBe(String(gsapRepeat + 1));
+    expect(animTransform.getAttribute("repeatCount")).toBe(
+      String(gsapRepeat + 1),
+    );
     expect(animTransform.getAttribute("calcMode")).toBe("spline");
   });
 
@@ -167,7 +170,12 @@ describe("SMILTween (smoke)", () => {
       const target = makeEl();
       target.setAttribute("opacity", "0.8");
 
-      new SMILTween(target, { opacity: 0, duration: 1.5, repeat: 1, yoyo: true });
+      new SMILTween(target, {
+        opacity: 0,
+        duration: 1.5,
+        repeat: 1,
+        yoyo: true,
+      });
 
       const anim = target.querySelector("animate")!;
       expect(anim.getAttribute("values")).toBe("0.8; 0; 0.8");
@@ -181,7 +189,12 @@ describe("SMILTween (smoke)", () => {
       const target = makeEl();
       target.setAttribute("opacity", "1");
 
-      new SMILTween(target, { opacity: 0, duration: 0.5, repeat: -1, yoyo: true });
+      new SMILTween(target, {
+        opacity: 0,
+        duration: 0.5,
+        repeat: -1,
+        yoyo: true,
+      });
 
       const anim = target.querySelector("animate")!;
       expect(anim.getAttribute("values")).toBe("1; 0; 1");
@@ -217,7 +230,13 @@ describe("SMILTween (smoke)", () => {
       const target = makeEl();
       target.setAttribute("opacity", "1");
 
-      new SMILTween(target, { opacity: 0, duration: 1, repeat: 1, yoyo: true, ease: "power2.out" });
+      new SMILTween(target, {
+        opacity: 0,
+        duration: 1,
+        repeat: 1,
+        yoyo: true,
+        ease: "power2.out",
+      });
 
       const anim = target.querySelector("animate")!;
       expect(anim.getAttribute("calcMode")).toBe("spline");
@@ -231,7 +250,13 @@ describe("SMILTween (smoke)", () => {
       const target = makeEl();
       target.setAttribute("opacity", "1");
 
-      new SMILTween(target, { x: 100, opacity: 0, duration: 1, repeat: 1, yoyo: true });
+      new SMILTween(target, {
+        x: 100,
+        opacity: 0,
+        duration: 1,
+        repeat: 1,
+        yoyo: true,
+      });
 
       const animT = target.querySelector("animateTransform")!;
       const anim = target.querySelector("animate")!;
@@ -306,12 +331,16 @@ describe("SMILTween (smoke)", () => {
       const target = makeEl();
       target.setAttribute("opacity", "0.7");
 
-      const tween = new SMILTween(target, { opacity: 0, duration: 1, repeat: 1, yoyo: true });
+      const tween = new SMILTween(target, {
+        opacity: 0,
+        duration: 1,
+        repeat: 1,
+        yoyo: true,
+      });
       tween.revert();
 
       expect(target.getAttribute("opacity")).toBe("0.7");
       expect(target.childElementCount).toBe(0);
     });
   });
-
 });

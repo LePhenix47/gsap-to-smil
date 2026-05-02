@@ -1,3 +1,4 @@
+// fallow-ignore-next-line
 /// <reference lib="dom" />
 import { describe, expect, it } from "bun:test";
 import { resolveOrigin } from "@/utils/transform-composer";

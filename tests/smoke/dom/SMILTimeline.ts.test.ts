@@ -1,3 +1,4 @@
+// fallow-ignore-next-line
 /// <reference lib="dom" />
 import { describe, expect, it } from "bun:test";
 import { SMILTimeline } from "@/core/SMILTimeline.ts";

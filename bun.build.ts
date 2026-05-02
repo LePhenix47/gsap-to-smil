@@ -1,3 +1,4 @@
+// fallow-ignore-next-line
 import dts from "bun-plugin-dts-auto";
 
 console.log("Building...");
