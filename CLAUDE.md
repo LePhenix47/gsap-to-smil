@@ -84,6 +84,29 @@ SMILPlugin              ← base for DrawSVG / MotionPath / MorphSVG
 - **`keySplines` trailing semicolon**: Chrome silently drops the animation. Always strip.
 - **Firefox event names**: Only spec-defined mouse events work in SMIL `begin`. `pointerenter`/`pointerleave` silently fail — use `mouseover`/`mouseout`.
 
+## Skills
+
+Project-specific coding conventions live in `.claude/skills/` — read the TypeScript ones before writing code:
+- `use-guard-clauses` — early returns, no deep nesting
+- `destructure-objects-always` — destructure instead of repeated `obj.prop`
+- `prefer-unknown-over-any` — never use `any`
+- `type-vs-interface` — always `type`, never `interface`
+- `use-optional-chaining` — `?.` over manual null checks
+- `type-guards-for-unions` — explicit `value is Type` functions
+- `map-vs-switch-lookup` — Map for simple lookups, switch for complex logic only
+
+## Mandatory checks after every code change
+
+Run ALL THREE before claiming a big task is done:
+
+```
+bun run ts-types && bun run ts ← Tests TS types + builds project
+bun run test        ← full test suite (unit + smoke)
+bun run ai-slop-check  ← Fallow code quality (dead code, duplication, complexity)
+```
+
+All three must pass clean. Fix failures before reporting completion. Run in parallel when possible.
+
 ## Testing
 
 Each test file loads GSAP + this library side by side, runs the same animation code with `gsap` swapped for `smil`, and has a "Diff" toggle that overlays both SVGs with `mix-blend-mode: difference`. Black = identical, color = bug.
