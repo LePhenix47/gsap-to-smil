@@ -46,6 +46,12 @@ Wrong reply? Don’t stack a “please fix” message. Edit your last prompt whe
 
 Claude Code often cannot do that. There: new chat with one fixed prompt, or keep CC threads short.
 
+### Rule 2 — Fresh chat
+
+Around every 15–20 messages, start a new chat so history stops growing.
+
+Ask the agent for a short summary (goal, decisions, open tasks, file paths). Paste that into the first message of the new chat
+
 ## Still to add
 
 More rules from the video as we add them. Until then: short threads, paste only needed code, new chat when the task changes.
