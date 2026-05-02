@@ -4,31 +4,31 @@ Short list of what went wrong on this repo so the next session does not repeat i
 
 ## Core classes
 
-[SMILTween.ts](../src/core/SMILTween.ts) and [SMILTimeline.ts](../src/core/SMILTimeline.ts) are hard to keep clean. The same logic shows up in more than one place. There are `as` casts that do not buy much. The flow still matches an older plan (fixed `begin` times, transform bookkeeping) while newer direction lives in [experiment-first.md](./experiment-first.md).
+[SMILTween.ts](../src/core/SMILTween.ts) and [SMILTimeline.ts](../src/core/SMILTimeline.ts) are messy to work on. The same ideas repeat. `as` casts do not help much. The code still follows an older plan (fixed `begin` times, hand-rolled transform state) while the newer direction is in [experiment-first.md](./experiment-first.md).
 
-Guard clauses are thin or uneven. `?? 0` shows up where the real question is null, undefined, or a valid zero, so intent gets muddy. It is still hard to read a long method and know what invariant it is supposed to hold.
+There is almost no guard clause use. `?? 0` shows up everywhere even when we really wanted a falsy fallback (`||` or a small `if`), not a fallback only for `null` or `undefined`. Then `0` or `""` can behave wrong and the reader cannot tell what we meant. Long methods are still hard to scan.
 
-Large AI patches that never got a careful read become the source of truth. When the window ends or you hit a cooldown, you come back to code that is awkward to re-enter and easy to misread.
+Big AI patches that never got a real review become the source of truth. When the chat ends or you hit a cooldown, you open the repo and the code is hard to pick up again.
 
 ## Utils
 
-Under `src/utils/` many small exports sit next to each other. A tighter module boundary (one obvious export, or a small static helper object) would make “who calls what” easier. It is not always obvious what is public API versus internal.
+Under `src/utils/` there are many tiny exports side by side. One clear export or a small static helper object would make it obvious who calls what. Public API vs internal helper is not written down.
 
 ## Agent cheat sheet
 
-[CLAUDE.md](../CLAUDE.md) was not filled in early. Without it, each chat guesses style and rules, leans on the spec, and drifts from docs we already wrote such as [experiment-first.md](./experiment-first.md) and [mapping-challenges.md](./mapping-challenges.md).
+[CLAUDE.md](../CLAUDE.md) was not filled in early. Without it, each chat invents style and rules, reads the spec instead of trying a tiny repro, and ignores docs we already wrote like [experiment-first.md](./experiment-first.md) and [mapping-challenges.md](./mapping-challenges.md). It also skips the repo’s own skill notes under [.claude/skills/](../.claude/skills/) (`git/`, `react/`, `sass/`, `typescript/`, etc.) even though that folder is in the tree next to `CLAUDE.md`.
 
 ## How the tools were used
 
-Big asks with little review meant weak changes in hot paths. Token limits and cooldowns hurt more when a refactor stops halfway: you wait, and you never fully owned what landed.
+Huge prompts with almost no review put weak code on the main paths. If the chat stops mid-refactor, token limits and cooldowns mean you wait, and you never really owned what landed.
 
-That is rough on morale too. Outsourcing most of the typing is a normal thing to chafe at.
+That also feels bad: you are not the one typing most of it.
 
 ## Patterns to avoid
 
-Confident “you cannot do X” from theory, with no tiny HTML or CodePen check. We leaned on math-only transform fixes; then sequential scale and skew fought translate compensation across steps.
+Long rants that “you cannot do X” from theory alone, with no tiny HTML or CodePen. We leaned on math-only transform fixes; then sequential scale and skew broke because translate compensation stacked wrong across steps.
 
-Habit to steal from [experiment-first.md](./experiment-first.md): smallest repro first, then decide if something is impossible.
+Borrow the habit from [experiment-first.md](./experiment-first.md): smallest repro first, then decide if something is impossible.
 
 ## What to do next
 
@@ -38,7 +38,7 @@ Habit to steal from [experiment-first.md](./experiment-first.md): smallest repro
 
 ## Any assistant
 
-Without project notes, without tiny experiments, and without a human pass, any model can still ship plausible refactors that add debt. This file is where we name those failure modes once.
+No project notes, no tiny experiments, no human pass: any model can still ship refactors that sound fine and add debt. This file names those failure modes once.
 
 ## Other docs
 
