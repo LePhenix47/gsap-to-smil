@@ -11,17 +11,17 @@ const makeTl = (vars: ConstructorParameters<typeof SMILTimeline>[0] = {}) =>
 
 describe("SMILTimeline", () => {
   describe("constructor", () => {
-    it("HAPPY PATH: _dur and _tDur start at 0", () => {
+    it("HAPPY PATH: durationSeconds and totalDurationSeconds start at 0", () => {
       const tl = makeTl();
 
-      expect(tl._dur).toBe(0);
-      expect(tl._tDur).toBe(0);
+      expect(tl.durationSeconds).toBe(0);
+      expect(tl.totalDurationSeconds).toBe(0);
     });
 
-    it("HAPPY PATH: _initialized is false before any children are added", () => {
+    it("HAPPY PATH: hasBuilt is false before any children are added", () => {
       const tl = makeTl();
 
-      expect(tl._initialized).toBe(false);
+      expect(tl.hasBuilt).toBe(false);
     });
 
     it("HAPPY PATH: defaults from vars are stored in _defaults", () => {
@@ -33,8 +33,8 @@ describe("SMILTimeline", () => {
     it("HAPPY PATH: delay and repeat from vars are passed to the Animation base", () => {
       const tl = makeTl({ delay: 1.5, repeat: 3 });
 
-      expect(tl._delay).toBe(1.5);
-      expect(tl._repeat).toBe(3);
+      expect(tl.delaySeconds).toBe(1.5);
+      expect(tl.repeatCount).toBe(3);
     });
   });
 
@@ -47,20 +47,20 @@ describe("SMILTimeline", () => {
       expect(tl._children).toHaveLength(1);
     });
 
-    it("HAPPY PATH: _initialized becomes true after the first child", () => {
+    it("HAPPY PATH: hasBuilt becomes true after the first child", () => {
       const tl = makeTl();
 
       tl.to(makeEl(), { opacity: 0, duration: 0.5 });
 
-      expect(tl._initialized).toBe(true);
+      expect(tl.hasBuilt).toBe(true);
     });
 
-    it("HAPPY PATH: _dur updates to the child tween's duration", () => {
+    it("HAPPY PATH: durationSeconds updates to the child tween's duration", () => {
       const tl = makeTl();
 
       tl.to(makeEl(), { opacity: 0, duration: 1.2 });
 
-      expect(tl._dur).toBe(1.2);
+      expect(tl.durationSeconds).toBe(1.2);
     });
 
     it("HAPPY PATH: first child's absoluteStart is 0", () => {
@@ -279,22 +279,22 @@ describe("SMILTimeline", () => {
       expect(tl._children).toHaveLength(0);
     });
 
-    it("HAPPY PATH: resets _dur to 0", () => {
+    it("HAPPY PATH: resets durationSeconds to 0", () => {
       const tl = makeTl();
       tl.to(makeEl(), { opacity: 0, duration: 0.5 });
 
       tl.clear();
 
-      expect(tl._dur).toBe(0);
+      expect(tl.durationSeconds).toBe(0);
     });
 
-    it("HAPPY PATH: _initialized becomes false", () => {
+    it("HAPPY PATH: hasBuilt becomes false", () => {
       const tl = makeTl();
       tl.to(makeEl(), { opacity: 0, duration: 0.5 });
 
       tl.clear();
 
-      expect(tl._initialized).toBe(false);
+      expect(tl.hasBuilt).toBe(false);
     });
 
     it("HAPPY PATH: kills injected SMIL children from the DOM", () => {

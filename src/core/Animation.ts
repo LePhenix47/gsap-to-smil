@@ -8,15 +8,15 @@ export abstract class Animation {
   data: unknown;
   parent: Animation | null = null;
 
-  protected delaySeconds: number;
-  protected durationSeconds: number;
-  protected totalDurationSeconds: number;
-  protected repeatCount: number;
-  protected repeatDelaySeconds: number;
-  protected yoyoEnabled: boolean;
-  protected pausedState: boolean;
-  protected reversedState: boolean;
-  protected hasBuilt: boolean;
+  delaySeconds: number;
+  durationSeconds: number;
+  totalDurationSeconds: number;
+  repeatCount: number;
+  repeatDelaySeconds: number;
+  yoyoEnabled: boolean;
+  pausedState: boolean;
+  reversedState: boolean;
+  hasBuilt: boolean;
 
   constructor(vars: TweenVars) {
     const {

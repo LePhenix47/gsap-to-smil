@@ -41,18 +41,18 @@ export class SMILTimeline extends Animation {
     super(vars);
     this._defaults = vars.defaults ?? {};
     // An empty timeline has no content yet — override Animation's default 0.5s
-    this._dur = 0;
-    this._tDur = 0;
+    this.durationSeconds = 0;
+    this.totalDurationSeconds = 0;
   }
 
   // ===== Internal helpers =====
 
   private _setContentDur(dur: number): void {
-    this._dur = dur;
-    this._tDur =
-      this._repeat === -1
+    this.durationSeconds = dur;
+    this.totalDurationSeconds =
+      this.repeatCount === -1
         ? Infinity
-        : dur * (this._repeat + 1) + this._rDelay * this._repeat;
+        : dur * (this.repeatCount + 1) + this.repeatDelaySeconds * this.repeatCount;
   }
 
   /**
@@ -85,10 +85,10 @@ export class SMILTimeline extends Animation {
     if (str.startsWith(">") && str.length > 1)
       return Math.max(0, this._prevEnd + parseFloat(str.slice(1)));
 
-    if (str.startsWith("+=")) return this._dur + parseFloat(str.slice(2));
+    if (str.startsWith("+=")) return this.durationSeconds + parseFloat(str.slice(2));
 
     if (str.startsWith("-="))
-      return Math.max(0, this._dur - parseFloat(str.slice(2)));
+      return Math.max(0, this.durationSeconds - parseFloat(str.slice(2)));
 
     // "label+=N" or "label-=N"
     const labelMatch = str.match(/^(.+?)([+\-]=)(\d+\.?\d*)$/);
@@ -112,7 +112,7 @@ export class SMILTimeline extends Animation {
     for (const el of tween._elements) {
       const current = el.getAttribute("begin");
       const localSec = current ? parseFloat(current) : 0;
-      const newBegin = this._delay + absoluteStart + localSec;
+      const newBegin = this.delaySeconds + absoluteStart + localSec;
 
       if (newBegin === 0) {
         el.removeAttribute("begin");
@@ -170,14 +170,14 @@ export class SMILTimeline extends Animation {
     this._prevStart = absoluteStart;
     // Sequential end excludes child delay (matches GSAP's position model)
     const sequentialEnd =
-      absoluteStart + (tween._tDur === Infinity ? tween._dur : tween._tDur);
+      absoluteStart + (tween.totalDurationSeconds === Infinity ? tween.durationSeconds : tween.totalDurationSeconds);
     this._prevEnd = sequentialEnd;
 
     // Content boundary includes child delay so the timeline's _dur reflects actual span
-    const contentEnd = absoluteStart + tween._delay + (tween._tDur === Infinity ? tween._dur : tween._tDur);
-    if (contentEnd > this._dur) this._setContentDur(contentEnd);
+    const contentEnd = absoluteStart + tween.delaySeconds + (tween.totalDurationSeconds === Infinity ? tween.durationSeconds : tween.totalDurationSeconds);
+    if (contentEnd > this.durationSeconds) this._setContentDur(contentEnd);
 
-    this._initialized = true;
+    this.hasBuilt = true;
   };
 
   // ===== Child insertion =====
@@ -246,20 +246,20 @@ export class SMILTimeline extends Animation {
     this._prevEnd = 0;
     this._transformAccum.clear();
     this._setContentDur(0);
-    this._initialized = false;
+    this.hasBuilt = false;
     return this;
   };
 
   // ===== Playback =====
 
   play = (): this => {
-    this._paused = false;
+    this.pausedState = false;
     for (const { tween } of this._children) tween.play();
     return this;
   };
 
   pause = (): this => {
-    this._paused = true;
+    this.pausedState = true;
     // SMIL pause is document-wide — delegate to the SVG element
     const firstEl = this._children[0]?.tween._elements[0];
     firstEl?.ownerSVGElement?.pauseAnimations();
@@ -267,7 +267,7 @@ export class SMILTimeline extends Animation {
   };
 
   resume = (): this => {
-    this._paused = false;
+    this.pausedState = false;
     const firstEl = this._children[0]?.tween._elements[0];
     firstEl?.ownerSVGElement?.unpauseAnimations();
     return this;
@@ -278,14 +278,14 @@ export class SMILTimeline extends Animation {
   kill = (): this => {
     for (const { tween } of this._children) tween.kill();
     this._children = [];
-    this._initialized = false;
+    this.hasBuilt = false;
     return this;
   };
 
   revert = (): this => {
     for (const { tween } of this._children) tween.revert();
     this._children = [];
-    this._initialized = false;
+    this.hasBuilt = false;
     return this;
   };
 }

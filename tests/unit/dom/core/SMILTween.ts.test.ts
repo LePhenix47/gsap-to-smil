@@ -146,12 +146,12 @@ describe("SMILTween", () => {
   describe("build — initialization", () => {
     // ===== HAPPY PATHS =====
 
-    it("HAPPY PATH: _initialized is true after construction", () => {
+    it("HAPPY PATH: hasBuilt is true after construction", () => {
       const target = makeEl();
 
       const tween = new SMILTween(target, { opacity: 1, duration: 1 });
 
-      expect(tween._initialized).toBe(true);
+      expect(tween.hasBuilt).toBe(true);
     });
 
     it("HAPPY PATH: _elements contains all injected animation elements", () => {
@@ -195,13 +195,13 @@ describe("SMILTween", () => {
       expect(tween._elements).toHaveLength(0);
     });
 
-    it("HAPPY PATH: sets _initialized to false", () => {
+    it("HAPPY PATH: sets hasBuilt to false", () => {
       const target = makeEl();
       const tween = new SMILTween(target, { opacity: 0, duration: 1 });
 
       tween.kill();
 
-      expect(tween._initialized).toBe(false);
+      expect(tween.hasBuilt).toBe(false);
     });
 
     it("HAPPY PATH: returns this for chaining", () => {

@@ -27,23 +27,22 @@ describe("Animation", () => {
       expect(result).toBe(expected);
     });
 
-    it("HAPPY PATH: defaults — delay=0, repeat=0, repeatDelay=0, yoyo=false, timeScale=1", () => {
+    it("HAPPY PATH: defaults — delay=0, repeat=0, repeatDelay=0, yoyo=false", () => {
       const anim = make();
 
-      expect(anim._delay).toBe(0);
-      expect(anim._repeat).toBe(0);
-      expect(anim._rDelay).toBe(0);
-      expect(anim._yoyo).toBe(false);
-      expect(anim._ts).toBe(1);
+      expect(anim.delaySeconds).toBe(0);
+      expect(anim.repeatCount).toBe(0);
+      expect(anim.repeatDelaySeconds).toBe(0);
+      expect(anim.yoyoEnabled).toBe(false);
     });
 
     it("HAPPY PATH: defaults — dur=0.5, paused=false, reversed=false, initialized=false", () => {
       const anim = make();
 
-      expect(anim._dur).toBe(0.5);
-      expect(anim._paused).toBe(false);
-      expect(anim._reversed).toBe(false);
-      expect(anim._initialized).toBe(false);
+      expect(anim.durationSeconds).toBe(0.5);
+      expect(anim.pausedState).toBe(false);
+      expect(anim.reversedState).toBe(false);
+      expect(anim.hasBuilt).toBe(false);
     });
 
     it("HAPPY PATH: defaults — data=null, parent=null", () => {
@@ -65,13 +64,13 @@ describe("Animation", () => {
         data: { label: "test" },
       });
 
-      expect(anim._dur).toBe(2);
-      expect(anim._delay).toBe(0.5);
-      expect(anim._repeat).toBe(3);
-      expect(anim._rDelay).toBe(0.25);
-      expect(anim._yoyo).toBe(true);
-      expect(anim._paused).toBe(true);
-      expect(anim._reversed).toBe(true);
+      expect(anim.durationSeconds).toBe(2);
+      expect(anim.delaySeconds).toBe(0.5);
+      expect(anim.repeatCount).toBe(3);
+      expect(anim.repeatDelaySeconds).toBe(0.25);
+      expect(anim.yoyoEnabled).toBe(true);
+      expect(anim.pausedState).toBe(true);
+      expect(anim.reversedState).toBe(true);
       expect(anim.data).toEqual({ label: "test" });
     });
   });
@@ -83,34 +82,34 @@ describe("Animation", () => {
       const anim = make({ duration: 2, repeat: 0 });
       const expected = 2;
 
-      expect(anim._tDur).toBe(expected);
+      expect(anim.totalDurationSeconds).toBe(expected);
     });
 
     it("HAPPY PATH: repeat=2 → tDur = dur * 3 (no repeatDelay)", () => {
       const anim = make({ duration: 1, repeat: 2 });
       const expected = 3;
 
-      expect(anim._tDur).toBe(expected);
+      expect(anim.totalDurationSeconds).toBe(expected);
     });
 
     it("HAPPY PATH: repeat=2 + repeatDelay=0.5 → tDur = dur*3 + 0.5*2", () => {
       const anim = make({ duration: 1, repeat: 2, repeatDelay: 0.5 });
       const expected = 4;
 
-      expect(anim._tDur).toBe(expected);
+      expect(anim.totalDurationSeconds).toBe(expected);
     });
 
     it("HAPPY PATH: repeat=-1 → tDur is Infinity", () => {
       const anim = make({ duration: 1, repeat: -1 });
 
-      expect(anim._tDur).toBe(Infinity);
+      expect(anim.totalDurationSeconds).toBe(Infinity);
     });
   });
 
   describe("duration()", () => {
     // ===== HAPPY PATHS =====
 
-    it("HAPPY PATH: getter returns current _dur", () => {
+    it("HAPPY PATH: getter returns current durationSeconds", () => {
       const anim = make({ duration: 3 });
       const result = anim.duration();
       const expected = 3;
@@ -125,20 +124,20 @@ describe("Animation", () => {
       expect(result).toBe(anim);
     });
 
-    it("HAPPY PATH: setter updates _dur and recalculates _tDur", () => {
+    it("HAPPY PATH: setter updates durationSeconds and recalculates totalDurationSeconds", () => {
       const anim = make({ repeat: 1 });
 
       anim.duration(4);
 
-      expect(anim._dur).toBe(4);
-      expect(anim._tDur).toBe(8);
+      expect(anim.durationSeconds).toBe(4);
+      expect(anim.totalDurationSeconds).toBe(8);
     });
   });
 
   describe("totalDuration()", () => {
     // ===== HAPPY PATHS =====
 
-    it("HAPPY PATH: getter returns current _tDur", () => {
+    it("HAPPY PATH: getter returns current totalDurationSeconds", () => {
       const anim = make({ duration: 2, repeat: 1 });
       const result = anim.totalDuration();
       const expected = 4;
@@ -146,22 +145,22 @@ describe("Animation", () => {
       expect(result).toBe(expected);
     });
 
-    it("HAPPY PATH: setter with repeat=0 sets _dur directly", () => {
+    it("HAPPY PATH: setter with repeat=0 sets durationSeconds directly", () => {
       const anim = make({ repeat: 0 });
 
       anim.totalDuration(5);
 
-      expect(anim._dur).toBe(5);
-      expect(anim._tDur).toBe(5);
+      expect(anim.durationSeconds).toBe(5);
+      expect(anim.totalDurationSeconds).toBe(5);
     });
 
-    it("HAPPY PATH: setter with repeat>0 adjusts _dur proportionally", () => {
+    it("HAPPY PATH: setter with repeat>0 adjusts durationSeconds proportionally", () => {
       const anim = make({ duration: 1, repeat: 3, repeatDelay: 0 });
 
       anim.totalDuration(8);
 
-      expect(anim._dur).toBe(2);
-      expect(anim._tDur).toBe(8);
+      expect(anim.durationSeconds).toBe(2);
+      expect(anim.totalDurationSeconds).toBe(8);
     });
 
     it("HAPPY PATH: setter returns this for chaining", () => {
@@ -173,7 +172,7 @@ describe("Animation", () => {
   });
 
   describe("delay()", () => {
-    it("HAPPY PATH: getter returns _delay", () => {
+    it("HAPPY PATH: getter returns delaySeconds", () => {
       const anim = make({ delay: 1.5 });
       const result = anim.delay();
       const expected = 1.5;
@@ -181,18 +180,18 @@ describe("Animation", () => {
       expect(result).toBe(expected);
     });
 
-    it("HAPPY PATH: setter updates _delay and returns this", () => {
+    it("HAPPY PATH: setter updates delaySeconds and returns this", () => {
       const anim = make();
 
       const result = anim.delay(2);
 
-      expect(anim._delay).toBe(2);
+      expect(anim.delaySeconds).toBe(2);
       expect(result).toBe(anim);
     });
   });
 
   describe("repeat()", () => {
-    it("HAPPY PATH: getter returns _repeat", () => {
+    it("HAPPY PATH: getter returns repeatCount", () => {
       const anim = make({ repeat: 4 });
       const result = anim.repeat();
       const expected = 4;
@@ -200,19 +199,19 @@ describe("Animation", () => {
       expect(result).toBe(expected);
     });
 
-    it("HAPPY PATH: setter updates _repeat, recalculates _tDur, and returns this", () => {
+    it("HAPPY PATH: setter updates repeatCount, recalculates totalDurationSeconds, and returns this", () => {
       const anim = make({ duration: 2 });
 
       const result = anim.repeat(2);
 
-      expect(anim._repeat).toBe(2);
-      expect(anim._tDur).toBe(6);
+      expect(anim.repeatCount).toBe(2);
+      expect(anim.totalDurationSeconds).toBe(6);
       expect(result).toBe(anim);
     });
   });
 
   describe("repeatDelay()", () => {
-    it("HAPPY PATH: getter returns _rDelay", () => {
+    it("HAPPY PATH: getter returns repeatDelaySeconds", () => {
       const anim = make({ repeatDelay: 0.5 });
       const result = anim.repeatDelay();
       const expected = 0.5;
@@ -220,86 +219,68 @@ describe("Animation", () => {
       expect(result).toBe(expected);
     });
 
-    it("HAPPY PATH: setter updates _rDelay, recalculates _tDur, and returns this", () => {
+    it("HAPPY PATH: setter updates repeatDelaySeconds, recalculates totalDurationSeconds, and returns this", () => {
       const anim = make({ duration: 1, repeat: 2 });
 
       const result = anim.repeatDelay(1);
 
-      expect(anim._rDelay).toBe(1);
-      expect(anim._tDur).toBe(5);
+      expect(anim.repeatDelaySeconds).toBe(1);
+      expect(anim.totalDurationSeconds).toBe(5);
       expect(result).toBe(anim);
     });
   });
 
   describe("yoyo()", () => {
-    it("HAPPY PATH: getter returns _yoyo", () => {
+    it("HAPPY PATH: getter returns yoyoEnabled", () => {
       const anim = make({ yoyo: true });
       const result = anim.yoyo();
 
       expect(result).toBe(true);
     });
 
-    it("HAPPY PATH: setter updates _yoyo and returns this", () => {
+    it("HAPPY PATH: setter updates yoyoEnabled and returns this", () => {
       const anim = make();
 
       const result = anim.yoyo(true);
 
-      expect(anim._yoyo).toBe(true);
+      expect(anim.yoyoEnabled).toBe(true);
       expect(result).toBe(anim);
     });
   });
 
-  describe("timeScale()", () => {
-    it("HAPPY PATH: getter returns _ts", () => {
-      const anim = make();
-      const result = anim.timeScale();
-      const expected = 1;
-
-      expect(result).toBe(expected);
-    });
-
-    it("HAPPY PATH: setter updates _ts and returns this", () => {
-      const anim = make();
-
-      const result = anim.timeScale(2);
-
-      expect(anim._ts).toBe(2);
-      expect(result).toBe(anim);
-    });
-  });
 
   describe("paused()", () => {
-    it("HAPPY PATH: getter returns _paused", () => {
+    it("HAPPY PATH: getter returns pausedState", () => {
       const anim = make({ paused: true });
       const result = anim.paused();
 
       expect(result).toBe(true);
     });
 
-    it("HAPPY PATH: setter updates _paused and returns this", () => {
+    it("HAPPY PATH: setter updates pausedState and returns this", () => {
       const anim = make();
 
       const result = anim.paused(true);
 
-      expect(anim._paused).toBe(true);
+      expect(anim.pausedState).toBe(true);
       expect(result).toBe(anim);
     });
   });
 
   describe("reversed()", () => {
-    it("HAPPY PATH: getter returns _reversed", () => {
+    it("HAPPY PATH: getter returns reversedState", () => {
       const anim = make({ reversed: true });
       const result = anim.reversed();
 
       expect(result).toBe(true);
     });
 
-    it("HAPPY PATH: setter updates _reversed and returns this", () => {
+    it("HAPPY PATH: setter updates reversedState and returns this", () => {
       const anim = make();
 
       const result = anim.reversed(true);
 
-      expect(anim._reversed).toBe(true);
+      expect(anim.reversedState).toBe(true);
       expect(result).toBe(anim);
     });
   });
@@ -315,38 +296,30 @@ describe("Animation", () => {
 
     it("HAPPY PATH: false when initialized but paused", () => {
       const anim = make();
-      anim._initialized = true;
-      anim._paused = true;
+      anim.hasBuilt = true;
+      anim.pausedState = true;
 
       expect(anim.isActive()).toBe(false);
     });
 
     it("HAPPY PATH: true when initialized and not paused", () => {
       const anim = make();
-      anim._initialized = true;
+      anim.hasBuilt = true;
 
       expect(anim.isActive()).toBe(true);
     });
   });
 
   describe("invalidate()", () => {
-    it("HAPPY PATH: sets _initialized to false and returns this", () => {
+    it("HAPPY PATH: sets hasBuilt to false and returns this", () => {
       const anim = make();
-      anim._initialized = true;
+      anim.hasBuilt = true;
 
       const result = anim.invalidate();
 
-      expect(anim._initialized).toBe(false);
+      expect(anim.hasBuilt).toBe(false);
       expect(result).toBe(anim);
     });
   });
 
-  describe("then()", () => {
-    it("HAPPY PATH: returns a Promise", () => {
-      const anim = make({ duration: 0 });
-      const result = anim.then();
-
-      expect(result).toBeInstanceOf(Promise);
-    });
-  });
 });

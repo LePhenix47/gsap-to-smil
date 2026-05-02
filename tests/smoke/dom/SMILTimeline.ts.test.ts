@@ -97,8 +97,8 @@ describe("SMILTimeline (smoke)", () => {
     expect(a.childElementCount).toBe(0);
     expect(b.childElementCount).toBe(0);
     expect(tl._children).toHaveLength(0);
-    expect(tl._dur).toBe(0);
-    expect(tl._initialized).toBe(false);
+    expect(tl.durationSeconds).toBe(0);
+    expect(tl.hasBuilt).toBe(false);
   });
 
   it("SMOKE TEST: kill() strips every injected element and empties children", () => {
@@ -132,14 +132,14 @@ describe("SMILTimeline (smoke)", () => {
     expect(b.childElementCount).toBe(0);
   });
 
-  it("SMOKE TEST: _tDur equals sum of all sequential children durations", () => {
+  it("SMOKE TEST: totalDurationSeconds equals sum of all sequential children durations", () => {
     const tl = makeTl();
 
     tl.to(makeEl(), { opacity: 0, duration: 1 });
     tl.to(makeEl(), { opacity: 1, duration: 2 });
     tl.to(makeEl(), { opacity: 0.5, duration: 0.5 });
 
-    expect(tl._tDur).toBe(3.5);
+    expect(tl.totalDurationSeconds).toBe(3.5);
   });
 
   it("SMOKE TEST: defaults from timeline are applied to tweens built with to()", () => {
