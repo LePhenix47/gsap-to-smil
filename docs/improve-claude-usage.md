@@ -60,7 +60,7 @@ Ask the agent for a short summary (goal, decisions, open tasks, file paths). Pas
 
 Same work, fewer passes through the thread.
 
-Bonus: one batched prompt often gives the model the whole picture at once which improves results
+Bonus: 1 batched prompt often gives the model the whole picture at once which improves results
 
 ## Still to add
 
