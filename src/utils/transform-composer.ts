@@ -29,8 +29,11 @@ export class TransformComposer {
     el: Element,
     transformOrigin?: string,
   ): { cx: number; cy: number } {
-    if (transformOrigin)
+    if (transformOrigin) {
       return TransformComposer.parseTransformOrigin(el, transformOrigin);
+    }
+
+    // ? If no transform origin is specified, use the element's center
     return TransformComposer.getBBoxCenter(el);
   }
 
@@ -38,26 +41,30 @@ export class TransformComposer {
     el: Element,
     transformOrigin: string,
   ): { cx: number; cy: number } {
+    // ? ex: "20 50%" → { cx: 20, cy: 50% }
     const [rawX = "50%", rawY = rawX] = transformOrigin.trim().split(/\s+/);
 
-    const resolve = (raw: string, dim: "width" | "height"): number => {
-      if (!(el instanceof SVGGraphicsElement)) return 0;
-      let bbox: DOMRect;
-      try {
-        bbox = el.getBBox();
-      } catch {
-        console.warn(
-          "[gsap-to-smil] Cannot determine origin — element not in rendered DOM. Falling back to 0.",
-        );
+    function resolveOriginFrom(raw: string, dim: "width" | "height"): number {
+      if (!(el instanceof SVGGraphicsElement)) {
         return 0;
       }
-      const offset = dim === "width" ? bbox.x : bbox.y;
-      if (raw.endsWith("%"))
-        return offset + (parseFloat(raw) / 100) * bbox[dim];
-      return offset + parseFloat(raw);
-    };
 
-    return { cx: resolve(rawX, "width"), cy: resolve(rawY, "height") };
+      const bbox: DOMRect = el.getBBox();
+
+      const offset: number = dim === "width" ? bbox.x : bbox.y;
+
+      const isPercentage: boolean = raw.endsWith("%");
+      if (isPercentage) {
+        return offset + (parseFloat(raw) / 100) * bbox[dim];
+      }
+
+      return offset + parseFloat(raw);
+    }
+
+    return {
+      cx: resolveOriginFrom(rawX, "width"),
+      cy: resolveOriginFrom(rawY, "height"),
+    };
   }
 
   private static getBBoxCenter(el: Element): { cx: number; cy: number } {
@@ -67,15 +74,11 @@ export class TransformComposer {
       );
       return { cx: 0, cy: 0 };
     }
-    try {
-      const bbox = el.getBBox();
-      return { cx: bbox.x + bbox.width / 2, cy: bbox.y + bbox.height / 2 };
-    } catch {
-      console.warn(
-        "[gsap-to-smil] Cannot determine center — element not in rendered DOM. Falling back to (0, 0).",
-      );
-      return { cx: 0, cy: 0 };
-    }
+
+    const bbox: DOMRect = el.getBBox();
+    const cx: number = bbox.x + bbox.width / 2;
+    const cy: number = bbox.y + bbox.height / 2;
+    return { cx, cy };
   }
 
   private static resolvePercent(
@@ -86,16 +89,16 @@ export class TransformComposer {
     if (typeof value !== "string" || !value.endsWith("%")) {
       return typeof value === "string" ? parseFloat(value) : value;
     }
-    if (!(el instanceof SVGGraphicsElement)) return 0;
-    try {
-      const bbox = el.getBBox();
-      return (parseFloat(value) / 100) * bbox[dim];
-    } catch {
+
+    if (!(el instanceof SVGGraphicsElement)) {
       console.warn(
         "[gsap-to-smil] Cannot determine percent value — element not in rendered DOM. Falling back to 0.",
       );
       return 0;
     }
+
+    const bbox = el.getBBox();
+    return (parseFloat(value) / 100) * bbox[dim]; // ! Repetition of code from `parseTransformOrigin` → resolveOriginFrom inner function
   }
 
   private static translateStr(x: number | string, y: number | string): string {
@@ -119,24 +122,32 @@ export class TransformComposer {
     to: TransformProps,
     target: Element,
   ): TransformPair | null {
-    if (!("x" in to || "y" in to || "xPercent" in to || "yPercent" in to))
-      return null;
-    const toX =
-      to.xPercent !== undefined
-        ? TransformComposer.resolvePercent(to.xPercent, "width", target)
-        : to.x || 0;
-    const toY =
-      to.yPercent !== undefined
-        ? TransformComposer.resolvePercent(to.yPercent, "height", target)
-        : to.y || 0;
-    const fromX =
-      from.xPercent !== undefined
-        ? TransformComposer.resolvePercent(from.xPercent, "width", target)
-        : from.x || 0;
-    const fromY =
-      from.yPercent !== undefined
-        ? TransformComposer.resolvePercent(from.yPercent, "height", target)
-        : from.y || 0;
+    const positionalProperties: Array<
+      keyof Pick<TransformProps, "x" | "y" | "xPercent" | "yPercent">
+    > = ["x", "y", "xPercent", "yPercent"];
+
+    if (!positionalProperties.some((p) => p in to)) return null;
+
+    /** Resolved % coordinates to pixel values from the element's bbox*/
+    function resolveCoord(
+      prop: TransformProps,
+      dim: "width" | "height",
+      defaultValue: number = 0,
+    ): number {
+      if (typeof prop.xPercent !== "undefined") {
+        return TransformComposer.resolvePercent(prop.xPercent, dim, target);
+      } else if (typeof prop.yPercent !== "undefined") {
+        return TransformComposer.resolvePercent(prop.yPercent, dim, target);
+      }
+      return Number(prop.x ?? prop.y ?? defaultValue);
+    }
+
+    const fromX = resolveCoord(from, "width");
+    const fromY = resolveCoord(from, "height");
+
+    const toX = resolveCoord(to, "width");
+    const toY = resolveCoord(to, "height");
+
     return {
       type: "translate",
       from: TransformComposer.translateStr(fromX, fromY),
@@ -151,10 +162,14 @@ export class TransformComposer {
     cy: number,
   ): TransformPair | null {
     if (!("rotation" in to)) return null;
+
+    const fromRotation = from.rotation || 0;
+    const toRotation = to.rotation || 0;
+
     return {
       type: "rotate",
-      from: TransformComposer.rotateStr(from.rotation || 0, cx, cy),
-      to: TransformComposer.rotateStr(to.rotation || 0, cx, cy),
+      from: TransformComposer.rotateStr(fromRotation, cx, cy),
+      to: TransformComposer.rotateStr(toRotation, cx, cy),
     };
   }
 
@@ -162,17 +177,21 @@ export class TransformComposer {
     from: TransformProps,
     to: TransformProps,
   ): TransformPair | null {
-    if (!("scale" in to || "scaleX" in to || "scaleY" in to)) return null;
+    const scaleProperties: Array<
+      keyof Pick<TransformProps, "scale" | "scaleX" | "scaleY">
+    > = ["scale", "scaleX", "scaleY"];
+
+    if (!scaleProperties.some((p) => p in to)) return null;
+
+    const fromSx = from.scale ?? from.scaleX ?? 1;
+    const fromSy = from.scale ?? from.scaleY ?? 1;
+    const toSx = to.scale ?? to.scaleX ?? 1;
+    const toSy = to.scale ?? to.scaleY ?? 1;
+
     return {
       type: "scale",
-      from: TransformComposer.scaleStr(
-        from.scale ?? from.scaleX ?? 1,
-        from.scale ?? from.scaleY ?? 1,
-      ),
-      to: TransformComposer.scaleStr(
-        to.scale ?? to.scaleX ?? 1,
-        to.scale ?? to.scaleY ?? 1,
-      ),
+      from: TransformComposer.scaleStr(fromSx, fromSy),
+      to: TransformComposer.scaleStr(toSx, toSy),
     };
   }
 
@@ -181,6 +200,7 @@ export class TransformComposer {
     to: TransformProps,
   ): TransformPair | null {
     if (!("skewX" in to)) return null;
+
     return {
       type: "skewX",
       from: String(from.skewX || 0),
@@ -193,6 +213,7 @@ export class TransformComposer {
     to: TransformProps,
   ): TransformPair | null {
     if (!("skewY" in to)) return null;
+
     return {
       type: "skewY",
       from: String(from.skewY || 0),
@@ -205,7 +226,7 @@ export class TransformComposer {
     cx: number,
     cy: number,
   ): PivotScaffold | null {
-    const parent = el.parentNode;
+    const parent: ParentNode | null = el.parentNode;
     if (!parent) {
       console.warn(
         "[gsap-to-smil] Cannot build pivot scaffold — element not in DOM. Scale/skew origin ignored.",
@@ -213,13 +234,28 @@ export class TransformComposer {
       return null;
     }
 
-    const ns = "http://www.w3.org/2000/svg";
-    const nextSibling = el.nextSibling;
+    const nextSibling: ChildNode | null = el.nextSibling;
 
-    const outer = document.createElementNS(ns, "g") as SVGGElement;
-    const pivotIn = document.createElementNS(ns, "g") as SVGGElement;
-    const inner = document.createElementNS(ns, "g") as SVGGElement;
-    const pivotOut = document.createElementNS(ns, "g") as SVGGElement;
+    // ? We're using createElementNS instead of createElement because it's for SVG elements, not HTML (browser could misinterpret an SVG tag as an HTML tag)
+    const outer = document.createElementNS(
+      SMILBuilder.SVG_NS,
+      "g",
+    ) as SVGGElement;
+
+    const pivotIn = document.createElementNS(
+      SMILBuilder.SVG_NS,
+      "g",
+    ) as SVGGElement;
+
+    const inner = document.createElementNS(
+      SMILBuilder.SVG_NS,
+      "g",
+    ) as SVGGElement;
+
+    const pivotOut = document.createElementNS(
+      SMILBuilder.SVG_NS,
+      "g",
+    ) as SVGGElement;
 
     pivotIn.setAttribute("transform", `translate(${cx},${cy})`);
     pivotOut.setAttribute("transform", `translate(${-cx},${-cy})`);
@@ -234,10 +270,15 @@ export class TransformComposer {
     return { outer, inner };
   }
 
+  // ! What's this method's purpose ? I guess only for testing but at the very least it should be explicit
   static compose(opts: ComposeOptions): ComposeResult {
+    // ! Wtf are the "opts" ? Terrible parameter name
     const { toTransforms: to, fromTransforms, target, transformOrigin } = opts;
+
+    // ! Useless nullish coalescing here
     const from = fromTransforms ?? {};
 
+    // * SVGs do not support rotationX / rotationY unfortunately
     if ("rotationX" in to || "rotationY" in to) {
       console.warn(
         "[gsap-to-smil] rotationX / rotationY have no SMIL equivalent — skipped.",
@@ -251,6 +292,7 @@ export class TransformComposer {
       ease: opts.ease,
     } satisfies Partial<AnimateTransformOptions>;
 
+    // ! Should be an inner static method, here it's just to check if we need to wrap it with a <g> or not
     const hasScale = "scale" in to || "scaleX" in to || "scaleY" in to;
     const hasSkew = "skewX" in to || "skewY" in to;
     const hasRotation = "rotation" in to;
@@ -261,6 +303,7 @@ export class TransformComposer {
         ? TransformComposer.resolveOrigin(target, transformOrigin)
         : { cx: 0, cy: 0 };
 
+    // ! Code beyond this looks atrocious
     const make = (pair: TransformPair) =>
       SMILBuilder.animateTransform({
         type: pair.type,
@@ -270,13 +313,17 @@ export class TransformComposer {
         ...sharedTiming,
       });
 
+    // * Translate from-to pair
     const translatePair = TransformComposer.resolveTranslate(from, to, target);
 
     if (needsWrapper) {
+      // ! Uh why are cx & cy 0 here ? This is a very serious code smell
       const rotatePair = hasRotation
         ? TransformComposer.resolveRotate(from, to, 0, 0)
         : null;
 
+      // ! Atrocious looking code, The intent is clear: collect all inner transform pairs (rotate, scale, skewX, skewY), filter nulls, map to SMIL.
+      // ! but the code is too fucking dense you can't read JACK SHIT
       const innerPairs = [
         rotatePair,
         TransformComposer.resolveScale(from, to),
@@ -285,6 +332,7 @@ export class TransformComposer {
       ].filter((p): p is TransformPair => p !== null);
 
       return {
+        // ! Atrocious looking code part 2
         outerAnims: translatePair ? [make(translatePair)] : [],
         innerAnims: innerPairs.map(make),
         needsWrapper: true,
@@ -297,6 +345,7 @@ export class TransformComposer {
       : null;
 
     return {
+      // ! Atrocious looking code part 3
       outerAnims: [translatePair, rotatePair]
         .filter((p): p is TransformPair => p !== null)
         .map(make),
