@@ -37,6 +37,12 @@ export class TransformComposer {
     return TransformComposer.getBBoxCenter(el);
   }
 
+  private static isElementAnSvg(
+    element: Element,
+  ): element is SVGGraphicsElement {
+    return element instanceof SVGGraphicsElement;
+  }
+
   private static parseTransformOrigin(
     el: Element,
     transformOrigin: string,
@@ -45,7 +51,7 @@ export class TransformComposer {
     const [rawX = "50%", rawY = rawX] = transformOrigin.trim().split(/\s+/);
 
     function resolveOriginFrom(raw: string, dim: "width" | "height"): number {
-      if (!(el instanceof SVGGraphicsElement)) {
+      if (!TransformComposer.isElementAnSvg(el)) {
         return 0;
       }
 
@@ -68,7 +74,7 @@ export class TransformComposer {
   }
 
   private static getBBoxCenter(el: Element): { cx: number; cy: number } {
-    if (!(el instanceof SVGGraphicsElement)) {
+    if (!TransformComposer.isElementAnSvg(el)) {
       console.warn(
         "[gsap-to-smil] Cannot determine center — element not in rendered DOM. Falling back to (0, 0).",
       );
@@ -90,7 +96,7 @@ export class TransformComposer {
       return typeof value === "string" ? parseFloat(value) : value;
     }
 
-    if (!(el instanceof SVGGraphicsElement)) {
+    if (!TransformComposer.isElementAnSvg(el)) {
       console.warn(
         "[gsap-to-smil] Cannot determine percent value — element not in rendered DOM. Falling back to 0.",
       );

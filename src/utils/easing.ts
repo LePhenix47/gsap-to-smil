@@ -1,7 +1,11 @@
 import type { EaseString } from "@/types/easing.ts";
 
 export class Easing {
-  private static readonly EASE_MAP = new Map<string, [number, number, number, number]>(
+  private static readonly EASE_MAP = new Map<
+    string,
+    [number, number, number, number]
+  >(
+    // ! Review some of the easing cubic Bézier values: https://easings.net, values don't seem right
     Object.entries({
       ease: [0.25, 0.1, 0.25, 1],
       "ease-in": [0.42, 0, 1, 1],
@@ -42,21 +46,40 @@ export class Easing {
     }),
   );
 
+  private static isLinearEasing(ease: EaseString): boolean {
+    // TODO: I wanted to use a return type here: ease is Pick<EaseString, "none" | "linear">
+
+    return ["none", "linear"].includes(ease);
+  }
+
   static resolveEase(
     ease: EaseString | number[],
   ): [number, number, number, number] | null {
+    // ? If it's an array of numbers, it's a cubic-bezier value
     if (Array.isArray(ease)) {
       if (ease.length !== 4) {
         throw new Error(
           `[gsap-to-smil] cubic-bezier array must have exactly 4 values, got ${ease.length}`,
         );
       }
+
       return ease as [number, number, number, number];
     }
 
-    if (ease === "none" || ease === "linear") return null;
+    if (Easing.isLinearEasing(ease)) {
+      return null;
+    }
 
-    const normalized = ease.replace(/\(.*\)$/, "");
+    // ! I don't exactly understand the point of this part ?
+    const normalized: string = ease.replace(/\(.*\)$/, "");
+    /**
+     * // I tested that regex on the browser: verdict → Regex is useless
+     *  const easeKeysArr = Object.keys(Object.fromEntries(EASE_MAP))
+     *  easeKeysArr.forEach(k=>{
+     *  const normalized = k.replace(/\(.*\)$/, "");
+     *  console.log(k, normalized, "same ?", k === normalized)
+     *  })
+     */
 
     if (normalized.startsWith("elastic") || normalized.startsWith("bounce")) {
       return null;
@@ -73,24 +96,35 @@ export class Easing {
   }
 
   static uniformKeyTimes(keyTimesAmount: number): string {
+    // ! "What is a keyTime again ?" Is something I'd ask myself if I were to go back into this class again
+    // ! We need a JSDoc, and if possible one that cross-references the docs/ and/or describes a summary of what it is
+    // ! It's doing a terrible job at explaining what we're doing here
+    // ! Essentially we want to generate an array of keyTimes that are evenly distributed between 0 and 1
     const keyTimesArray: number[] = [0];
     const splinesAmount: number = keyTimesAmount - 1;
     const increment: number = 1 / splinesAmount;
 
     for (let i = 0; i < splinesAmount; i++) {
-      const currentInterpolatedValue: number = keyTimesArray.at(-1)! + increment;
+      const currentInterpolatedValue: number =
+        keyTimesArray.at(-1)! + increment;
+
       keyTimesArray.push(currentInterpolatedValue);
     }
 
     return keyTimesArray.join("; ");
   }
 
+  // TODO: For much later, fir the "keyframes" Not sure so we gotta discuss this first, when it comes to keyframes, the keyTimes aren't uniformaly distributed ? IDK, DO NOT implement anything without discussion
+
   static keySplines(
     timingAnimation: EaseString | number[],
     keyTimesAmount: number,
   ): string {
+    // ! "What is a keySpline ?"" if I checkout the code 6 months from now
     if (!keyTimesAmount) {
-      throw new Error("[gsap-to-smil] keyTimesAmount must be a positive integer");
+      throw new Error(
+        "[gsap-to-smil] keyTimesAmount must be a positive integer",
+      );
     }
 
     const bezier = Easing.resolveEase(timingAnimation);
@@ -110,6 +144,7 @@ export class Easing {
     return splines.join("; ");
   }
 
+  // ! Not explicit enough for a method name, you're generating the attributes for the keyframes as a string
   static timingFunctionString(
     valuesAmount: number,
     timingAnimation: EaseString | number[],
@@ -120,10 +155,15 @@ export class Easing {
     return `keyTimes="${keyTimes}" calcMode="spline" keySplines="${keySplines}"`;
   }
 
+  // ! Not explicit enough for a method name, again
   static resolveCalcMode(
     ease: EaseString | number[] | undefined,
     intervalCount: number,
-  ): { calcMode: "linear" | "spline" | "discrete"; keySplines: string | null; keyTimes: string | null } {
+  ): {
+    calcMode: "linear" | "spline" | "discrete";
+    keySplines: string | null;
+    keyTimes: string | null;
+  } {
     if (!ease || ease === "none" || ease === "linear") {
       return { calcMode: "linear", keySplines: null, keyTimes: null };
     }

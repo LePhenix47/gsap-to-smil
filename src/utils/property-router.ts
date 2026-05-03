@@ -62,7 +62,11 @@ export class PropertyRouter {
     "strokeDasharray",
   ]);
 
-  private static readonly PLUGIN_KEYS = new Set<string>(["drawSVG", "motionPath", "morphSVG"]);
+  private static readonly PLUGIN_KEYS = new Set<string>([
+    "drawSVG",
+    "motionPath",
+    "morphSVG",
+  ]);
 
   private static readonly SPECIAL_DEFAULTS: SpecialProps = {
     duration: 0.5,
@@ -97,7 +101,12 @@ export class PropertyRouter {
     const plugins: PropertyBuckets["plugins"] = {};
 
     for (const [key, value] of Object.entries(vars)) {
-      if (key === "attr") continue;
+      if (key === "attr") {
+        console.warn(
+          "[gsap-to-smil] The `attr` key has not been implemented yet and will be ignored.",
+        );
+        continue;
+      }
 
       if (PropertyRouter.SPECIAL_KEYS.has(key)) {
         (special as unknown as Record<string, unknown>)[key] = value;
