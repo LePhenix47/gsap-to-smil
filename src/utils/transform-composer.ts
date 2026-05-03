@@ -29,7 +29,8 @@ export class TransformComposer {
     el: Element,
     transformOrigin?: string,
   ): { cx: number; cy: number } {
-    if (transformOrigin) return TransformComposer.parseTransformOrigin(el, transformOrigin);
+    if (transformOrigin)
+      return TransformComposer.parseTransformOrigin(el, transformOrigin);
     return TransformComposer.getBBoxCenter(el);
   }
 
@@ -51,7 +52,8 @@ export class TransformComposer {
         return 0;
       }
       const offset = dim === "width" ? bbox.x : bbox.y;
-      if (raw.endsWith("%")) return offset + (parseFloat(raw) / 100) * bbox[dim];
+      if (raw.endsWith("%"))
+        return offset + (parseFloat(raw) / 100) * bbox[dim];
       return offset + parseFloat(raw);
     };
 
@@ -100,7 +102,11 @@ export class TransformComposer {
     return `${x} ${y}`;
   }
 
-  private static rotateStr(angle: number | string, cx: number, cy: number): string {
+  private static rotateStr(
+    angle: number | string,
+    cx: number,
+    cy: number,
+  ): string {
     return `${angle} ${cx} ${cy}`;
   }
 
@@ -118,19 +124,19 @@ export class TransformComposer {
     const toX =
       to.xPercent !== undefined
         ? TransformComposer.resolvePercent(to.xPercent, "width", target)
-        : (to.x ?? 0);
+        : to.x || 0;
     const toY =
       to.yPercent !== undefined
         ? TransformComposer.resolvePercent(to.yPercent, "height", target)
-        : (to.y ?? 0);
+        : to.y || 0;
     const fromX =
       from.xPercent !== undefined
         ? TransformComposer.resolvePercent(from.xPercent, "width", target)
-        : (from.x ?? 0);
+        : from.x || 0;
     const fromY =
       from.yPercent !== undefined
         ? TransformComposer.resolvePercent(from.yPercent, "height", target)
-        : (from.y ?? 0);
+        : from.y || 0;
     return {
       type: "translate",
       from: TransformComposer.translateStr(fromX, fromY),
@@ -147,8 +153,8 @@ export class TransformComposer {
     if (!("rotation" in to)) return null;
     return {
       type: "rotate",
-      from: TransformComposer.rotateStr(from.rotation ?? 0, cx, cy),
-      to: TransformComposer.rotateStr(to.rotation ?? 0, cx, cy),
+      from: TransformComposer.rotateStr(from.rotation || 0, cx, cy),
+      to: TransformComposer.rotateStr(to.rotation || 0, cx, cy),
     };
   }
 
@@ -163,7 +169,10 @@ export class TransformComposer {
         from.scale ?? from.scaleX ?? 1,
         from.scale ?? from.scaleY ?? 1,
       ),
-      to: TransformComposer.scaleStr(to.scale ?? to.scaleX ?? 1, to.scale ?? to.scaleY ?? 1),
+      to: TransformComposer.scaleStr(
+        to.scale ?? to.scaleX ?? 1,
+        to.scale ?? to.scaleY ?? 1,
+      ),
     };
   }
 
@@ -174,8 +183,8 @@ export class TransformComposer {
     if (!("skewX" in to)) return null;
     return {
       type: "skewX",
-      from: String(from.skewX ?? 0),
-      to: String(to.skewX ?? 0),
+      from: String(from.skewX || 0),
+      to: String(to.skewX || 0),
     };
   }
 
@@ -186,8 +195,8 @@ export class TransformComposer {
     if (!("skewY" in to)) return null;
     return {
       type: "skewY",
-      from: String(from.skewY ?? 0),
-      to: String(to.skewY ?? 0),
+      from: String(from.skewY || 0),
+      to: String(to.skewY || 0),
     };
   }
 
@@ -264,7 +273,9 @@ export class TransformComposer {
     const translatePair = TransformComposer.resolveTranslate(from, to, target);
 
     if (needsWrapper) {
-      const rotatePair = hasRotation ? TransformComposer.resolveRotate(from, to, 0, 0) : null;
+      const rotatePair = hasRotation
+        ? TransformComposer.resolveRotate(from, to, 0, 0)
+        : null;
 
       const innerPairs = [
         rotatePair,
