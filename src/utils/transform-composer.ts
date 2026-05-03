@@ -55,7 +55,7 @@ export class TransformComposer {
 
       const isPercentage: boolean = raw.endsWith("%");
       if (isPercentage) {
-        return offset + (parseFloat(raw) / 100) * bbox[dim];
+        return offset + (parseFloat(raw) / 100) * bbox[dim]; // ! Repetition of code from `resolvePercent` method
       }
 
       return offset + parseFloat(raw);
@@ -98,7 +98,7 @@ export class TransformComposer {
     }
 
     const bbox = el.getBBox();
-    return (parseFloat(value) / 100) * bbox[dim]; // ! Repetition of code from `parseTransformOrigin` → resolveOriginFrom inner function
+    return (parseFloat(value) / 100) * bbox[dim];
   }
 
   private static translateStr(x: number | string, y: number | string): string {
