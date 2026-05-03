@@ -1,16 +1,8 @@
-# Claude Code — six skills Nate Herk keeps (May 2026)
+# Nate Herk — six Claude Code picks (May 2026)
 
-Source: [I Tried 100+ Claude Code Skills. These 6 Are The Best](https://youtu.be/eRS3CmvrOvA?si=nEZqx5Z1p8b58vPZ) — Nate Herk | AI Automation (~13:39, published 2026-05-03).
+Video: [I Tried 100+ Claude Code Skills. These 6 Are The Best](https://youtu.be/eRS3CmvrOvA?si=nEZqx5Z1p8b58vPZ) (Nate Herk, ~13 min). He calls most of these “skills”; some are plugins. Same channel’s [32 tricks](./claude-code-nate-herk-32-tricks.md) is a wider list; [usage / tokens](./improve-claude-usage.md) is separate.
 
-**What this video is:** after a lot of Claude Code hours, Nate narrows to **six installs** (he loosely calls them “skills”; some are **plugins**) that match what businesses pay for: boring, reliable wins—time, money, fewer mistakes—plus a **bonus** official skill and a short “how to sell outcomes” closer.
-
-**Related in this repo:** [claude-code-nate-herk-32-tricks.md](./claude-code-nate-herk-32-tricks.md) (broader CC checklist), [improve-claude-usage.md](./improve-claude-usage.md) (token / session habits).
-
----
-
-## Copy-paste installs (from the video description)
-
-Commands as listed on YouTube—**re-verify** names and marketplaces before you run; plugins move fast.
+Check plugin names and marketplaces before you run anything below—they change.
 
 ```text
 /plugin install skill-creator@claude-plugins-official
@@ -23,77 +15,24 @@ npx get-shit-done-cc --claude --global
 /plugin install frontend-design@claude-plugins-official
 ```
 
-**Note from the video:** do **not** rely on a stray `npm install` for Claude Mem that only pulls the SDK without registering hooks—use the **marketplace + plugin install** flow above.
+For Claude Mem, use the marketplace + plugin flow above. Nate warns against an npm install that only pulls the SDK and never registers hooks.
 
----
+1. Skill Creator (official) — You describe a job in plain language; it builds and packages a reusable skill so you are not writing SKILL layout by hand. More like the base tool that feeds the rest than a thing you invoice alone.
 
-## The six (+ bonus)
+2. Superpowers — Plan first, isolate work, tests before code, self-review. Cuts the usual “looks fine until you run it” rush. He has another video on Superpowers and tokens.
 
-### 1. Skill Creator (official)
+3. GSD — Fresh sub-agents per task, gates so dropped scope and security do not get ignored quietly, optional hands-off runs. `/gsd-help` for commands. Costs more tokens on sub-agents; the win is fewer full redos when the main session rots. Not sold as a net token saver.
 
-- **What:** describe a workflow in plain language; it drafts, tests, and packages a reusable **skill** so you are not hand-writing `SKILL.md` structure from scratch.
-- **Why it “sells”:** not billed as a client line item by itself—the **factory** that produces the other repeatable skills (SOP → skill, etc.).
-- **Install:** `skill-creator@claude-plugins-official` (Nate installs globally on user scope in the video).
+4. `/review` and `/ultra review` — Built into Claude Code, not a separate install. `/review` is a quick local pass. `/ultra review` sends the branch to a cloud sandbox with parallel reviewers; Nate says bugs only count after repro. Needs Claude Code 2.1.86+, a normal Claude sign-in (not API-key-only for ultra), often 10–20 minutes, and paid runs after a small free allowance (he ballparks roughly $5–20 per run by size; treat that as “check current pricing”). Use `/review` often; use ultra before scary merges (auth, money, big refactors).
 
-### 2. Superpowers
+5. Context Mode — Tool output goes through a sandbox; only a small summary lands in context (he quotes their before/after sizes; use `/contextmode:ctx-stats` for yours). Also keeps a local event log so after compaction you can inject a snapshot and not lose the thread. Install: add marketplace `mksglu/context-mode`, install `context-mode@context-mode`, restart Claude Code.
 
-- **What:** pushes a more senior-dev loop: plan first, isolated work, tests before code, staged self-review (spec match + quality).
-- **Why:** reduces the default failure mode—rushed code that looks fine until you run it or the client does.
-- **Install:** `superpowers@claude-plugins-official`. Nate references a **separate** deep-dive video on Superpowers and token use.
+6. Claude Mem — Remembers across sessions in a local DB with search, pulls in only what matters for the next chat, can refresh folder-level docs. Less repeating yourself when you open a new session.
 
-### 3. GSD (“get shit done”)
+Bonus: Frontend Design (official) — UI that looks less generic. Install `frontend-design@claude-plugins-official`; he suggests global. He mentions Claude Design in labs if you round-trip projects into Code.
 
-- **What:** context engineering—fresh sub-agents per task, quality gates (e.g. scope dropped vs spec, security checks), optional more autonomous runs; `/gsd-help` for commands.
-- **Why:** fights **context rot** mid-session; trades extra sub-agent tokens for fewer “Claude forgot the requirement” redos (not framed as a token *saver* overall).
-- **Install:** `npx get-shit-done-cc --claude --global`.
+Chapters on YouTube: intro 0:00, #1 0:42, #2 2:57, #3 4:37, #4 6:17, #5 8:06, #6 9:44, bonus 11:52, selling bit 12:25.
 
-### 4. `/review` and `/ultra review` (built-in)
+Closing idea from the video: sell time saved, fewer errors, more leads—not the phrase “AI workflow.” Learn one tool, ship a few demos, then add more.
 
-- **What:** `/review` = structured local review; **`/ultra review`** = cloud sandbox + parallel reviewer agents, bugs only after independent repro (per Nate). Not a separate plugin on recent Claude Code.
-- **Caveats from the video:** Claude Code **≥ 2.1.86**; **Claude account sign-in**—**API key alone is not enough** for Ultra Review; runs can take ~10–20 minutes in background; **cost** after free trials (order-of-magnitude **$5–$20** per run depending on size—pricing may change).
-- **When:** `/review` for fast feedback; `/ultra review` before high-stakes merges (auth, payments, big refactors).
-
-### 5. Context Mode
-
-- **What:** routes tool output through a sandbox, **summarizes** what comes back into context (Nate cites large deltas shrinking dramatically in their benchmarks); **`/contextmode:ctx-stats`** for your numbers. Also tracks session events in **local SQL** and can **re-inject** a snapshot after compaction so work is not “lost” to summarization.
-- **Why:** sessions that used to degrade around ~30 minutes can run much longer without the same slowdown.
-- **Install:** marketplace `mksglu/context-mode`, then `context-mode@context-mode`; restart Claude Code after install (per video).
-
-### 6. Claude Mem
-
-- **What:** cross-session memory—captures edits, decisions, fixes, etc., compresses to semantic store (**local SQLite + vector search**); retrieval is layered so you do not dump everything each session; can auto-maintain folder-level `CLAUDE.md`-style docs (per Nate).
-- **Why:** less **startup tax** every new session; pick up a cold project after weeks with less re-explaining.
-- **Install:** marketplace `thedotmack/claude-mem`, then `claude-mem` plugin—**not** the “SDK-only npm” path warned in the video.
-
-### Bonus 7. Frontend Design (official)
-
-- **What:** Anthropic’s **frontend-design** skill—less generic “AI slop” UI when building in Claude Code; Nate mentions overlap with **Claude Design** for labs workflows brought back into Code.
-- **Install:** `frontend-design@claude-plugins-official` (he recommends **global** install in the video).
-
----
-
-## Chapters (from YouTube)
-
-| Time   | Topic              |
-| ------ | ------------------ |
-| 00:00  | Intro              |
-| 00:42  | Skill #1           |
-| 02:57  | Skill #2           |
-| 04:37  | Skill #3           |
-| 06:17  | Skill #4           |
-| 08:06  | Skill #5           |
-| 09:44  | Skill #6           |
-| 11:52  | Bonus              |
-| 12:25  | How to sell these  |
-
----
-
-## Selling (video closer, compressed)
-
-Sell **outcomes** (hours saved, fewer mistakes, more leads), not the word “AI workflow.” Start with **one** skill, build a few demos, show a business owner value—then stack skills as you learn how they compose.
-
----
-
-## Disclaimer
-
-Plugin names, marketplaces, Claude Code version gates, and **Ultra Review** pricing were accurate **as stated in the video**; they can change. Prefer upstream READMEs and `/help` over this note when they disagree.
+If this file disagrees with the product docs or `/help`, trust those.
