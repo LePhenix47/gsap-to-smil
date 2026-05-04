@@ -15,6 +15,7 @@ export class StaggerResolver {
     }
 
     if (stagger.amount !== undefined) {
+      // ! I don't really understand this, why are we dividing the stagger amount by (count - 1) ?
       const step: number = stagger.amount / (count - 1);
 
       return count <= 1 ? 0 : step;
@@ -30,6 +31,7 @@ export class StaggerResolver {
       return order;
     }
 
+    // ! Why iterate backwards ?
     for (let i = order.length - 1; i > 0; i--) {
       const j: number = Math.floor(Math.random() * (i + 1));
 
@@ -47,6 +49,7 @@ export class StaggerResolver {
   ): number[] {
     switch (from) {
       case undefined:
+      // ! Would be nice if there was a one line comment above each return statement explaining what it does in a few words
       case "start":
         return Array.from({ length: count }, (_, i) => i);
 
