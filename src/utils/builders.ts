@@ -15,12 +15,17 @@ export class SMILBuilder {
     ease: EaseString | number[] | undefined,
     intervalCount: number,
   ): void {
-    const { calcMode, keySplines, keyTimes } = Easing.resolveCalcMode(
-      ease,
-      intervalCount,
-    );
+    const calcMode = Easing.resolveCalcMode(ease);
 
     el.setAttribute("calcMode", calcMode);
+
+    if (calcMode !== "spline") {
+      return;
+    }
+
+    const keyTimes = Easing.resolveKeyTimes(intervalCount);
+    const keySplines = Easing.resolveKeySplines(ease!, intervalCount);
+
     if (keyTimes) el.setAttribute("keyTimes", keyTimes);
     if (keySplines) el.setAttribute("keySplines", keySplines);
   }

@@ -1,6 +1,15 @@
 import type { EaseString } from "@/types/easing.ts";
 
-// ! Missing JSDoc
+/**
+ * Translates GSAP ease names into SMIL timing attributes.
+ *
+ * GSAP eases like `"power2.out"` or `"back.in(1.7)"` are resolved to cubic-bezier
+ * control points, which are then converted to SMIL `calcMode`, `keyTimes`, and
+ * `keySplines` attribute values for `<animate>` / `<animateTransform>` elements.
+ *
+ * SMIL has no native elastic or bounce easing — those fall back to `calcMode="linear"`.
+ * Use keyframe approximation for accurate elastic/bounce curves.
+ */
 export class Easing {
   private static readonly EASE_MAP = new Map<
     string,
@@ -47,16 +56,18 @@ export class Easing {
     }),
   );
 
-  private static isLinearEasing(ease: EaseString): boolean {
-    // TODO: I wanted to use a return type here: ease is Pick<EaseString, "none" | "linear">
-
-    return ["none", "linear"].includes(ease);
-  }
-
+  /**
+   * Resolves a GSAP ease name or raw `[x1,y1,x2,y2]` array to cubic-bezier control points.
+   *
+   * Returns `null` for `"none"`, `"linear"`, `"elastic.*"`, and `"bounce.*"` —
+   * those cannot be expressed as a single cubic-bezier.
+   *
+   * GSAP parameterized eases like `"back.out(1.7)"` have their parameters stripped
+   * so the base name matches the EASE_MAP key.
+   */
   static resolveEase(
     ease: EaseString | number[],
   ): [number, number, number, number] | null {
-    // ? If it's an array of numbers, it's a cubic-bezier value
     if (Array.isArray(ease)) {
       if (ease.length !== 4) {
         throw new Error(
@@ -71,16 +82,8 @@ export class Easing {
       return null;
     }
 
-    // ! I don't exactly understand the point of this part ?
+    // * Strip GSAP parameters, ex: "back.out(1.7)" → "back.out" for Map lookup
     const normalized: string = ease.replace(/\(.*\)$/, "");
-    /**
-     * // I tested that regex on the browser: verdict → Regex is useless
-     *  const easeKeysArr = Object.keys(Object.fromEntries(EASE_MAP))
-     *  easeKeysArr.forEach(k=>{
-     *  const normalized = k.replace(/\(.*\)$/, "");
-     *  console.log(k, normalized, "same ?", k === normalized)
-     *  })
-     */
 
     if (normalized.startsWith("elastic") || normalized.startsWith("bounce")) {
       return null;
@@ -96,77 +99,18 @@ export class Easing {
     return bezier;
   }
 
-  static uniformKeyTimes(keyTimesAmount: number): string {
-    // ! "What is a keyTime again ?" Is something I'd ask myself if I were to go back into this class again
-    // ! We need a JSDoc, and if possible one that cross-references the docs/ and/or describes a summary of what it is
-    // ! It's doing a terrible job at explaining what we're doing here
-    // ! Essentially we want to generate an array of keyTimes that are evenly distributed between 0 and 1
-    const keyTimesArray: number[] = [0];
-    const splinesAmount: number = keyTimesAmount - 1;
-    const increment: number = 1 / splinesAmount;
-
-    for (let i = 0; i < splinesAmount; i++) {
-      const currentInterpolatedValue: number =
-        keyTimesArray.at(-1)! + increment;
-
-      keyTimesArray.push(currentInterpolatedValue);
-    }
-
-    return keyTimesArray.join("; ");
-  }
-
-  // TODO: For much later, fir the "keyframes" Not sure so we gotta discuss this first, when it comes to keyframes, the keyTimes aren't uniformaly distributed ? IDK, DO NOT implement anything without discussion
-
-  static keySplines(
-    timingAnimation: EaseString | number[],
-    keyTimesAmount: number,
-  ): string {
-    // ! "What is a keySpline ?"" if I checkout the code 6 months from now
-    if (!keyTimesAmount) {
-      throw new Error(
-        "[gsap-to-smil] keyTimesAmount must be a positive integer",
-      );
-    }
-
-    const bezier = Easing.resolveEase(timingAnimation);
-    if (!bezier) {
-      throw new Error(
-        `[gsap-to-smil] "${timingAnimation}" resolves to linear or null — use calcMode="linear" instead of keySplines`,
-      );
-    }
-
-    const stringBezier = bezier.join(" ");
-    const splines: string[] = [];
-
-    for (let i = 0; i < keyTimesAmount - 1; i++) {
-      splines.push(stringBezier);
-    }
-
-    return splines.join("; ");
-  }
-
-  // ! Not explicit enough for a method name, you're generating the attributes for the keyframes as a string
-  static timingFunctionString(
-    valuesAmount: number,
-    timingAnimation: EaseString | number[],
-  ): string {
-    const keyTimes = Easing.uniformKeyTimes(valuesAmount);
-    const keySplines = Easing.keySplines(timingAnimation, valuesAmount);
-
-    return `keyTimes="${keyTimes}" calcMode="spline" keySplines="${keySplines}"`;
-  }
-
-  // ! Not explicit enough for a method name, again
+  /**
+   * Determines the SMIL `calcMode` for a given ease.
+   *
+   * - `"linear"` — for `"none"`, `"linear"`, `undefined`, elastic/bounce fallback
+   * - `"spline"` — for any ease that resolves to a cubic-bezier
+   * - `"discrete"` — reserved for stepped eases (not yet implemented)
+   */
   static resolveCalcMode(
     ease: EaseString | number[] | undefined,
-    intervalCount: number,
-  ): {
-    calcMode: "linear" | "spline" | "discrete";
-    keySplines: string | null;
-    keyTimes: string | null;
-  } {
-    if (!ease || ease === "none" || ease === "linear") {
-      return { calcMode: "linear", keySplines: null, keyTimes: null };
+  ): "linear" | "spline" | "discrete" {
+    if (!ease || (typeof ease === "string" && Easing.isLinearEasing(ease))) {
+      return "linear";
     }
 
     const bezier = Easing.resolveEase(ease);
@@ -175,16 +119,69 @@ export class Easing {
       console.warn(
         `[gsap-to-smil] "${ease}" cannot be expressed as a single cubic-bezier. Falling back to linear.`,
       );
-      return { calcMode: "linear", keySplines: null, keyTimes: null };
+      return "linear";
+    }
+
+    return "spline";
+  }
+
+  /**
+   * Generates evenly-spaced `keyTimes` values for `intervalCount` keyframe intervals.
+   *
+   * `keyTimes` is a semicolon-separated list of 0→1 positions marking the boundaries
+   * between keyframe intervals. For `N` intervals there are `N+1` positions:
+   *
+   * - 1 interval → `"0; 1"`
+   * - 2 intervals → `"0; 0.5; 1"`
+   * - 3 intervals → `"0; 0.333; 0.667; 1"`
+   *
+   * SMIL requires `keyTimes` whenever `calcMode="spline"` and `keySplines` is set.
+   */
+  static resolveKeyTimes(intervalCount: number): string {
+    const keyTimesArray: number[] = [0];
+    const increment: number = 1 / intervalCount;
+
+    for (let i = 0; i < intervalCount; i++) {
+      const previousValue: number = keyTimesArray.at(-1)!;
+      keyTimesArray.push(previousValue + increment);
+    }
+
+    return keyTimesArray.join("; ");
+  }
+
+  /**
+   * Generates `keySplines` — one cubic-bezier per keyframe interval, semicolon-separated.
+   *
+   * For a given ease and `intervalCount`, the bezier is repeated for every interval
+   * since SMIL applies the same easing to each segment unless overridden per-segment.
+   *
+   * Returns `null` when the ease resolves to linear (no bezier available) — caller
+   * should use `calcMode="linear"` and skip `keySplines`/`keyTimes`.
+   *
+   * Example: `resolveKeySplines("power1.out", 2)` → `"0.25 0.46 0.45 0.94; 0.25 0.46 0.45 0.94"`
+   */
+  static resolveKeySplines(
+    ease: EaseString | number[],
+    intervalCount: number,
+  ): string | null {
+    if (!intervalCount) {
+      throw new Error(
+        "[gsap-to-smil] intervalCount must be a positive integer",
+      );
+    }
+
+    const bezier = Easing.resolveEase(ease);
+    if (!bezier) {
+      return null;
     }
 
     const stringBezier = bezier.join(" ");
-    const keySplines = Array.from(
-      { length: intervalCount },
-      () => stringBezier,
-    ).join("; ");
-    const keyTimes = Easing.uniformKeyTimes(intervalCount + 1);
+    const splines = Array.from({ length: intervalCount }, () => stringBezier);
 
-    return { calcMode: "spline", keySplines, keyTimes };
+    return splines.join("; ");
+  }
+
+  private static isLinearEasing(ease: EaseString): ease is "none" | "linear" {
+    return ["none", "linear"].includes(ease);
   }
 }

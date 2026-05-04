@@ -77,145 +77,44 @@ describe("easing", () => {
     });
   });
 
-  // ===== getSvgUniformKeyTimes =====
-
-  describe("getSvgUniformKeyTimes", () => {
-    // ===== HAPPY PATHS =====
-
-    it("HAPPY PATH: 2 keyframes produces '0; 1'", () => {
-      const keyframeCount = 2;
-
-      const result = Easing.uniformKeyTimes(keyframeCount);
-      const expected = "0; 1";
-
-      expect(result).toBe(expected);
-    });
-
-    it("HAPPY PATH: 3 keyframes produces '0; 0.5; 1'", () => {
-      const keyframeCount = 3;
-
-      const result = Easing.uniformKeyTimes(keyframeCount);
-      const expected = "0; 0.5; 1";
-
-      expect(result).toBe(expected);
-    });
-
-    it("HAPPY PATH: 5 keyframes produces 4 evenly spaced intervals", () => {
-      const keyframeCount = 5;
-
-      const result = Easing.uniformKeyTimes(keyframeCount);
-      const expected = "0; 0.25; 0.5; 0.75; 1";
-
-      expect(result).toBe(expected);
-    });
-  });
-
-  // ===== getSvgKeySplines =====
-
-  describe("getSvgKeySplines", () => {
-    // ===== HAPPY PATHS =====
-
-    it("HAPPY PATH: 2 keyframes (1 interval) produces a single bezier string", () => {
-      const easeName = "power1.inOut";
-      const keyframeCount = 2;
-      const [x1, y1, x2, y2] = Easing.resolveEase(easeName)!;
-
-      const result = Easing.keySplines(easeName, keyframeCount);
-      const expected = `${x1} ${y1} ${x2} ${y2}`;
-
-      expect(result).toBe(expected);
-    });
-
-    it("HAPPY PATH: 3 keyframes (2 intervals) repeats the bezier twice separated by semicolon", () => {
-      const easeName = "sine.out";
-      const keyframeCount = 3;
-      const [x1, y1, x2, y2] = Easing.resolveEase(easeName)!;
-      const singleSpline = `${x1} ${y1} ${x2} ${y2}`;
-
-      const result = Easing.keySplines(easeName, keyframeCount);
-      const expected = `${singleSpline}; ${singleSpline}`;
-
-      expect(result).toBe(expected);
-    });
-
-    // ===== EDGE CASES =====
-
-    it("EDGE CASE: keyTimesAmount=0 throws", () => {
-      expect(() => Easing.keySplines("power1.out", 0)).toThrow();
-    });
-
-    it("EDGE CASE: linear ease throws — use calcMode=linear instead of keySplines", () => {
-      expect(() => Easing.keySplines("linear", 2)).toThrow();
-    });
-  });
-
-  // ===== getSvgTimingFunctionString =====
-
-  describe("getSvgTimingFunctionString", () => {
-    // ===== HAPPY PATHS =====
-
-    it("HAPPY PATH: produces a correctly formatted keyTimes + calcMode + keySplines string", () => {
-      const easeName = "power1.out";
-      const keyframeCount = 2;
-      const expectedKeyTimes = Easing.uniformKeyTimes(keyframeCount);
-      const expectedKeySplines = Easing.keySplines(easeName, keyframeCount);
-
-      const result = Easing.timingFunctionString(keyframeCount, easeName);
-      const expected = `keyTimes="${expectedKeyTimes}" calcMode="spline" keySplines="${expectedKeySplines}"`;
-
-      expect(result).toBe(expected);
-    });
-  });
-
   // ===== resolveCalcMode =====
 
   describe("resolveCalcMode", () => {
     // ===== HAPPY PATHS =====
 
-    it("HAPPY PATH: undefined ease returns linear mode with no keyTimes or keySplines", () => {
-      const result = Easing.resolveCalcMode(undefined, 1);
-      const expected = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
+    it("HAPPY PATH: undefined ease returns linear", () => {
+      const result = Easing.resolveCalcMode(undefined);
+      const expected = "linear";
 
-      expect(result).toEqual(expected);
+      expect(result).toBe(expected);
     });
 
-    it("HAPPY PATH: 'none' returns linear mode", () => {
-      const result = Easing.resolveCalcMode("none", 1);
-      const expected = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
+    it("HAPPY PATH: 'none' returns linear", () => {
+      const result = Easing.resolveCalcMode("none");
+      const expected = "linear";
 
-      expect(result).toEqual(expected);
+      expect(result).toBe(expected);
     });
 
-    it("HAPPY PATH: 'linear' returns linear mode", () => {
-      const result = Easing.resolveCalcMode("linear", 1);
-      const expected = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
+    it("HAPPY PATH: 'linear' returns linear", () => {
+      const result = Easing.resolveCalcMode("linear");
+      const expected = "linear";
 
-      expect(result).toEqual(expected);
+      expect(result).toBe(expected);
     });
 
-    it("HAPPY PATH: cubic bezier ease with 1 interval returns spline mode", () => {
-      const easeName = "power2.inOut";
-      const intervalCount = 1;
-      const [x1, y1, x2, y2] = Easing.resolveEase(easeName)!;
+    it("HAPPY PATH: cubic bezier ease returns spline", () => {
+      const result = Easing.resolveCalcMode("power2.inOut");
 
-      const result = Easing.resolveCalcMode(easeName, intervalCount);
-
-      expect(result.calcMode).toBe("spline");
-      expect(result.keySplines).toBe(`${x1} ${y1} ${x2} ${y2}`);
-      expect(result.keyTimes).toBe("0; 1");
+      expect(result).toBe("spline");
     });
 
-    it("HAPPY PATH: cubic bezier ease with 2 intervals repeats the spline twice", () => {
-      const easeName = "sine.inOut";
-      const intervalCount = 2;
-      const [x1, y1, x2, y2] = Easing.resolveEase(easeName)!;
-      const singleSpline = `${x1} ${y1} ${x2} ${y2}`;
+    it("HAPPY PATH: raw bezier array returns spline", () => {
+      const customBezier: [number, number, number, number] = [0.42, 0, 0.58, 1];
 
-      const result = Easing.resolveCalcMode(easeName, intervalCount);
+      const result = Easing.resolveCalcMode(customBezier);
 
-      expect(result.calcMode).toBe("spline");
-      expect(result.keySplines).toBe(`${singleSpline}; ${singleSpline}`);
-      expect(result.keyTimes).toBe("0; 0.5; 1");
+      expect(result).toBe("spline");
     });
 
     // ===== EDGE CASES =====
@@ -223,10 +122,9 @@ describe("easing", () => {
     it("EDGE CASE: elastic ease falls back to linear and emits a console warning", () => {
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
-      const result = Easing.resolveCalcMode("elastic.out", 1);
-      const expected = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
+      const result = Easing.resolveCalcMode("elastic.out");
 
-      expect(result).toEqual(expected);
+      expect(result).toBe("linear");
       expect(warnSpy).toHaveBeenCalledTimes(1);
 
       warnSpy.mockRestore();
@@ -235,13 +133,84 @@ describe("easing", () => {
     it("EDGE CASE: bounce ease falls back to linear and emits a console warning", () => {
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
-      const result = Easing.resolveCalcMode("bounce.out", 1);
-      const expected = { calcMode: "linear" as const, keySplines: null, keyTimes: null };
+      const result = Easing.resolveCalcMode("bounce.out");
 
-      expect(result).toEqual(expected);
+      expect(result).toBe("linear");
       expect(warnSpy).toHaveBeenCalledTimes(1);
 
       warnSpy.mockRestore();
+    });
+  });
+
+  // ===== resolveKeyTimes =====
+
+  describe("resolveKeyTimes", () => {
+    // ===== HAPPY PATHS =====
+
+    it("HAPPY PATH: 1 interval produces '0; 1'", () => {
+      const result = Easing.resolveKeyTimes(1);
+      const expected = "0; 1";
+
+      expect(result).toBe(expected);
+    });
+
+    it("HAPPY PATH: 2 intervals produces '0; 0.5; 1'", () => {
+      const result = Easing.resolveKeyTimes(2);
+      const expected = "0; 0.5; 1";
+
+      expect(result).toBe(expected);
+    });
+
+    it("HAPPY PATH: 4 intervals produces evenly spaced positions", () => {
+      const result = Easing.resolveKeyTimes(4);
+      const expected = "0; 0.25; 0.5; 0.75; 1";
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  // ===== resolveKeySplines =====
+
+  describe("resolveKeySplines", () => {
+    // ===== HAPPY PATHS =====
+
+    it("HAPPY PATH: 1 interval produces a single bezier string", () => {
+      const easeName = "power1.inOut";
+      const [x1, y1, x2, y2] = Easing.resolveEase(easeName)!;
+
+      const result = Easing.resolveKeySplines(easeName, 1);
+      const expected = `${x1} ${y1} ${x2} ${y2}`;
+
+      expect(result).toBe(expected);
+    });
+
+    it("HAPPY PATH: 2 intervals repeats the bezier twice separated by semicolon", () => {
+      const easeName = "sine.out";
+      const [x1, y1, x2, y2] = Easing.resolveEase(easeName)!;
+      const singleSpline = `${x1} ${y1} ${x2} ${y2}`;
+
+      const result = Easing.resolveKeySplines(easeName, 2);
+      const expected = `${singleSpline}; ${singleSpline}`;
+
+      expect(result).toBe(expected);
+    });
+
+    it("HAPPY PATH: linear ease returns null — caller should skip keySplines", () => {
+      const result = Easing.resolveKeySplines("linear", 1);
+
+      expect(result).toBeNull();
+    });
+
+    it("HAPPY PATH: 'none' ease returns null — caller should skip keySplines", () => {
+      const result = Easing.resolveKeySplines("none", 2);
+
+      expect(result).toBeNull();
+    });
+
+    // ===== EDGE CASES =====
+
+    it("EDGE CASE: intervalCount=0 throws", () => {
+      expect(() => Easing.resolveKeySplines("power1.out", 0)).toThrow();
     });
   });
 });
