@@ -1,5 +1,6 @@
 import type { StaggerObject } from "@/types/index.ts";
 
+// ! Missing JSDoc
 export class StaggerResolver {
   private static resolveStep(
     count: number,

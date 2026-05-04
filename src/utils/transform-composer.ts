@@ -24,6 +24,7 @@ export type ComposeResult = {
   origin: { cx: number; cy: number };
 };
 
+// ! Missing JSDoc
 export class TransformComposer {
   static resolveOrigin(
     el: Element,

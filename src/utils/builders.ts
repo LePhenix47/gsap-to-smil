@@ -5,8 +5,10 @@ import type {
 import type { EaseString } from "@/types/easing.ts";
 import { Easing } from "./easing.ts";
 
+// ! Missing JSDoc
 export class SMILBuilder {
-  static readonly SVG_NS: SVGElement["namespaceURI"] = "http://www.w3.org/2000/svg";
+  static readonly SVG_NS: SVGElement["namespaceURI"] =
+    "http://www.w3.org/2000/svg";
 
   private static applyEasing(
     el: SVGAnimationElement,
@@ -58,7 +60,10 @@ export class SMILBuilder {
   }
 
   static animate(opts: AnimateOptions): SVGAnimateElement {
-    const el = document.createElementNS(SMILBuilder.SVG_NS, "animate") as SVGAnimateElement;
+    const el = document.createElementNS(
+      SMILBuilder.SVG_NS,
+      "animate",
+    ) as SVGAnimateElement;
 
     el.setAttribute("attributeName", opts.attributeName);
     SMILBuilder.applyValues(el, opts);
@@ -69,7 +74,9 @@ export class SMILBuilder {
     return el;
   }
 
-  static animateTransform(opts: AnimateTransformOptions): SVGAnimateTransformElement {
+  static animateTransform(
+    opts: AnimateTransformOptions,
+  ): SVGAnimateTransformElement {
     const el = document.createElementNS(
       SMILBuilder.SVG_NS,
       "animateTransform",
@@ -86,12 +93,11 @@ export class SMILBuilder {
     return el;
   }
 
-  static set(
-    attributeName: string,
-    to: string,
-    delay?: number,
-  ): SVGSetElement {
-    const el = document.createElementNS(SMILBuilder.SVG_NS, "set") as SVGSetElement;
+  static set(attributeName: string, to: string, delay?: number): SVGSetElement {
+    const el = document.createElementNS(
+      SMILBuilder.SVG_NS,
+      "set",
+    ) as SVGSetElement;
 
     el.setAttribute("attributeName", attributeName);
     el.setAttribute("to", to);
@@ -100,7 +106,10 @@ export class SMILBuilder {
     return el;
   }
 
-  static injectInto(target: Element, ...animations: SVGAnimationElement[]): void {
+  static injectInto(
+    target: Element,
+    ...animations: SVGAnimationElement[]
+  ): void {
     for (const anim of animations) {
       target.appendChild(anim);
     }

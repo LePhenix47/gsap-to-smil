@@ -7,6 +7,7 @@ import type {
   AttrVars,
 } from "@/types/index.ts";
 
+// ! Missing JSDoc
 export class PropertyRouter {
   private static readonly SPECIAL_KEYS = new Set<string>([
     "duration",

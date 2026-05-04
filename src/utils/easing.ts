@@ -1,5 +1,6 @@
 import type { EaseString } from "@/types/easing.ts";
 
+// ! Missing JSDoc
 export class Easing {
   private static readonly EASE_MAP = new Map<
     string,
