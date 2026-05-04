@@ -14,7 +14,8 @@
       "Bash(node -e ' *)",
       "Bash(bun tsc *)",
       "Bash(dir *)",
-      "mcp__plugin_context-mode_context-mode__ctx_batch_execute"
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+      "mcp__plugin_context-mode_context-mode__ctx_execute"
     ],
     "deny": [
       "Bash(rm -rf *)",
