@@ -109,6 +109,8 @@ export class PropertyRouter {
         continue;
       }
 
+      // ! Although the code is readable & intelligible, my pet peeve though is the type assertion: as unknown as Record<string, unknown>, that's terrible
+      // ! Note: I already tried multiple times to refactor this type the code became unreadable
       if (PropertyRouter.SPECIAL_KEYS.has(key)) {
         (special as unknown as Record<string, unknown>)[key] = value;
         continue;
