@@ -141,12 +141,15 @@ export class TransformComposer {
       dim: "width" | "height",
       defaultValue: number = 0,
     ): number {
-      if (typeof prop.xPercent !== "undefined") {
+      if (prop.xPercent !== undefined) {
         return TransformComposer.resolvePercent(prop.xPercent, dim, target);
-      } else if (typeof prop.yPercent !== "undefined") {
+      } else if (prop.yPercent !== undefined) {
         return TransformComposer.resolvePercent(prop.yPercent, dim, target);
       }
-      return Number(prop.x ?? prop.y ?? defaultValue);
+
+      return dim === "width"
+        ? Number(prop.x ?? defaultValue)
+        : Number(prop.y ?? defaultValue);
     }
 
     const fromX = resolveCoord(from, "width");
