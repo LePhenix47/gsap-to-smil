@@ -5,19 +5,34 @@ import type {
 import type { EaseString } from "@/types/easing.ts";
 import { Easing } from "./easing.ts";
 
-// ! Missing JSDoc
+/**
+ * Factory for creating fully-configured SMIL animation elements
+ * (`<animate>`, `<animateTransform>`, `<set>`).
+ *
+ * Encapsulates all SMIL attribute rules: GSAP repeat off-by-one,
+ * ease → calcMode / keySplines / keyTimes, delay → begin.
+ * Stateless — every method is static.
+ */
 export class SMILBuilder {
+  /** SVG namespace URI. */
   static readonly SVG_NS: SVGElement["namespaceURI"] =
     "http://www.w3.org/2000/svg";
 
+  /**
+   * Resolves an ease to `calcMode`, `keyTimes`, and `keySplines`
+   * and sets them on the element.
+   *
+   * When `calcMode` is not `"spline"` the method returns early
+   * without setting `keySplines` or `keyTimes`.
+   */
   private static applyEasing(
-    el: SVGAnimationElement,
+    element: SVGAnimationElement,
     ease: EaseString | number[] | undefined,
     intervalCount: number,
   ): void {
     const calcMode = Easing.resolveCalcMode(ease);
 
-    el.setAttribute("calcMode", calcMode);
+    element.setAttribute("calcMode", calcMode);
 
     if (calcMode !== "spline") {
       return;
@@ -26,97 +41,143 @@ export class SMILBuilder {
     const keyTimes = Easing.resolveKeyTimes(intervalCount);
     const keySplines = Easing.resolveKeySplines(ease!, intervalCount);
 
-    if (keyTimes) el.setAttribute("keyTimes", keyTimes);
-    if (keySplines) el.setAttribute("keySplines", keySplines);
+    if (keyTimes) element.setAttribute("keyTimes", keyTimes);
+    if (keySplines) element.setAttribute("keySplines", keySplines);
   }
 
+  /**
+   * Sets `dur`, `fill` (default `"freeze"`), `delay` → `begin`,
+   * and `repeat` → `repeatCount` on the element.
+   *
+   * GSAP repeat off-by-one: `repeatCount = repeat + 1`.
+   * `-1` maps to `"indefinite"`.
+   */
   private static applyTiming(
-    el: SVGAnimationElement,
-    opts: Pick<AnimateOptions, "dur" | "delay" | "repeat" | "fill">,
+    element: SVGAnimationElement,
+    timingOptions: Pick<AnimateOptions, "dur" | "delay" | "repeat" | "fill">,
   ): void {
-    el.setAttribute("dur", `${opts.dur}s`);
-    el.setAttribute("fill", opts.fill ?? "freeze");
+    element.setAttribute("dur", `${timingOptions.dur}s`);
+    element.setAttribute("fill", timingOptions.fill ?? "freeze");
 
-    if (opts.delay) {
-      el.setAttribute("begin", `${opts.delay}s`);
+    if (timingOptions.delay) {
+      element.setAttribute("begin", `${timingOptions.delay}s`);
     }
 
-    if (opts.repeat !== undefined && opts?.repeat !== 0) {
-      el.setAttribute(
-        "repeatCount",
-        opts.repeat === -1 ? "indefinite" : String(opts.repeat + 1),
-      );
+    if (timingOptions.repeat !== undefined && timingOptions.repeat !== 0) {
+      const repeatCountValue: string =
+        timingOptions.repeat === -1
+          ? "indefinite"
+          : String(timingOptions.repeat + 1);
+
+      element.setAttribute("repeatCount", repeatCountValue);
     }
   }
 
+  /**
+   * Sets `from`/`to` or `values` on the element.
+   *
+   * When `values` is provided the interval count is derived from the
+   * semicolon-separated list. Otherwise `from` and `to` are set
+   * individually and easing uses `intervalCount = 1`.
+   */
   private static applyValues(
-    el: SVGAnimationElement,
-    opts: Pick<AnimateOptions, "from" | "to" | "values" | "ease">,
+    element: SVGAnimationElement,
+    valuesOptions: Pick<AnimateOptions, "from" | "to" | "values" | "ease">,
   ): void {
-    if (opts.values !== undefined) {
-      el.setAttribute("values", opts.values);
-      const intervalCount = opts.values.split(";").length - 1;
-      SMILBuilder.applyEasing(el, opts.ease, intervalCount);
-    } else {
-      if (opts.from !== undefined) el.setAttribute("from", opts.from);
-      if (opts.to !== undefined) el.setAttribute("to", opts.to);
-      SMILBuilder.applyEasing(el, opts.ease, 1);
+    if (valuesOptions.values !== undefined) {
+      element.setAttribute("values", valuesOptions.values);
+      const intervalCount: number = valuesOptions.values.split(";").length - 1;
+      SMILBuilder.applyEasing(element, valuesOptions.ease, intervalCount);
+
+      return;
     }
+
+    if (valuesOptions.from !== undefined) {
+      element.setAttribute("from", valuesOptions.from);
+    }
+    if (valuesOptions.to !== undefined) {
+      element.setAttribute("to", valuesOptions.to);
+    }
+
+    SMILBuilder.applyEasing(element, valuesOptions.ease, 1);
   }
 
-  static animate(opts: AnimateOptions): SVGAnimateElement {
-    const el = document.createElementNS(
+  /**
+   * Creates an `<animate>` element from the given options.
+   *
+   * The returned element has `attributeName`, value/timing/easing
+   * attributes, and an optional `additive` attribute set.
+   */
+  static animate(animationOptions: AnimateOptions): SVGAnimateElement {
+    const element = document.createElementNS(
       SMILBuilder.SVG_NS,
       "animate",
     ) as SVGAnimateElement;
 
-    el.setAttribute("attributeName", opts.attributeName);
-    SMILBuilder.applyValues(el, opts);
-    SMILBuilder.applyTiming(el, opts);
+    element.setAttribute("attributeName", animationOptions.attributeName);
+    SMILBuilder.applyValues(element, animationOptions);
+    SMILBuilder.applyTiming(element, animationOptions);
 
-    if (opts.additive) el.setAttribute("additive", opts.additive);
+    if (animationOptions.additive) {
+      element.setAttribute("additive", animationOptions.additive);
+    }
 
-    return el;
+    return element;
   }
 
+  /**
+   * Creates an `<animateTransform>` element from the given options.
+   *
+   * Always sets `attributeName="transform"` and `attributeType="XML"`.
+   * Defaults `additive` to `"sum"` so compound transforms stack
+   * correctly — override with `additive: "replace"` when needed.
+   */
   static animateTransform(
-    opts: AnimateTransformOptions,
+    transformOptions: AnimateTransformOptions,
   ): SVGAnimateTransformElement {
-    const el = document.createElementNS(
+    const element = document.createElementNS(
       SMILBuilder.SVG_NS,
       "animateTransform",
     ) as SVGAnimateTransformElement;
 
-    el.setAttribute("attributeName", "transform");
-    el.setAttribute("attributeType", "XML");
-    el.setAttribute("type", opts.type);
-    el.setAttribute("additive", opts.additive ?? "sum");
+    element.setAttribute("attributeName", "transform");
+    element.setAttribute("attributeType", "XML");
+    element.setAttribute("type", transformOptions.type);
+    element.setAttribute("additive", transformOptions.additive ?? "sum");
 
-    SMILBuilder.applyValues(el, opts);
-    SMILBuilder.applyTiming(el, opts);
+    SMILBuilder.applyValues(element, transformOptions);
+    SMILBuilder.applyTiming(element, transformOptions);
 
-    return el;
+    return element;
   }
 
+  /**
+   * Creates a `<set>` element for non-interpolated property assignment
+   * at an optional delay.
+   */
   static set(attributeName: string, to: string, delay?: number): SVGSetElement {
-    const el = document.createElementNS(
+    const element = document.createElementNS(
       SMILBuilder.SVG_NS,
       "set",
     ) as SVGSetElement;
 
-    el.setAttribute("attributeName", attributeName);
-    el.setAttribute("to", to);
-    if (delay) el.setAttribute("begin", `${delay}s`);
+    element.setAttribute("attributeName", attributeName);
+    element.setAttribute("to", to);
 
-    return el;
+    if (delay) element.setAttribute("begin", `${delay}s`);
+
+    return element;
   }
 
+  /**
+   * Appends one or more animation elements as children of the target.
+   */
   static injectInto(
     target: Element,
-    ...animations: SVGAnimationElement[]
+    ...animationElements: SVGAnimationElement[]
   ): void {
-    for (const anim of animations) {
-      target.appendChild(anim);
+    for (const animationElement of animationElements) {
+      target.appendChild(animationElement);
     }
   }
 }
