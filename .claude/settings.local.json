@@ -13,7 +13,8 @@
       "WebFetch(domain:gsap.com)",
       "Bash(node -e ' *)",
       "Bash(bun tsc *)",
-      "Bash(dir *)"
+      "Bash(dir *)",
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute"
     ],
     "deny": [
       "Bash(rm -rf *)",
