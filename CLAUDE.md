@@ -157,6 +157,7 @@ Project-specific coding conventions live in `.claude/skills/typescript/` — rea
 
 **Code quality (read first):**
 - `code-conventions` — zero-tolerance rules: no underscores, explicit field names, broken-out intermediate calculations, no `=== undefined`, arrow methods only
+- `no-abbreviations` — full words only: `element` not `el`, `animationOptions` not `opts`, `animationElement` not `anim`
 
 **TypeScript patterns:**
 - `use-guard-clauses` — early returns, no deep nesting
@@ -166,6 +167,7 @@ Project-specific coding conventions live in `.claude/skills/typescript/` — rea
 - `use-optional-chaining` — `?.` over manual null checks
 - `type-guards-for-unions` — explicit `value is Type` functions
 - `map-vs-switch-lookup` — Map for simple lookups, switch for complex logic only
+- `one-return-value-per-method` — split compound returns into single-value methods
 
 ## Testing
 

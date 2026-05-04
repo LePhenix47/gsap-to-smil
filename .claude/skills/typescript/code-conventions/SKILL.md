@@ -175,6 +175,48 @@ Cross-ref: `map-vs-switch-lookup`. When mapping a key to a value, use `Map`. Whe
 
 Cross-ref: `use-optional-chaining`. `el?.ownerSVGElement?.pauseAnimations()`, never `el && el.ownerSVGElement && el.ownerSVGElement.pauseAnimations()`.
 
+## 13. No Abbreviations
+
+Variable and parameter names must be full words. No `el`, `opts`, `anim`, `dur`, `tl`.
+
+Cross-ref: `no-abbreviations` — full rules and replacement table.
+
+```ts
+// ❌ Bad
+static animateTransform(opts: AnimateTransformOptions) {
+  const el = document.createElementNS(...);
+  return el;
+}
+
+// ✅ Good
+static animateTransform(transformOptions: AnimateTransformOptions) {
+  const element = document.createElementNS(...);
+  return element;
+}
+```
+
+**Why:** `el` costs the writer 7 fewer characters but costs every reader a mental decode: element? elevation? electric? `opts` never says WHICH options. Full words answer the question at point of use.
+
+## 14. One Return Value Per Method
+
+Each method returns exactly one value. No compound objects bundling multiple properties.
+
+Cross-ref: `one-return-value-per-method`.
+
+```ts
+// ❌ Bad
+static resolveCalcMode(ease, intervalCount) {
+  return { calcMode, keySplines, keyTimes };
+}
+
+// ✅ Good
+static resolveCalcMode(ease) { return calcMode; }
+static resolveKeyTimes(intervalCount) { return keyTimes; }
+static resolveKeySplines(ease, intervalCount) { return keySplines; }
+```
+
+**Why:** Compound returns force callers to destructure. They obscure which callers need which values. Splitting makes each method's contract explicit and resistant to change.
+
 ## Enforcement order
 
 When writing new code, check in this order:
@@ -182,7 +224,9 @@ When writing new code, check in this order:
 2. Arrow methods, guard clauses (rules 5-6)
 3. Destructure + type guard null checks (rules 4, 7)
 4. Intermediate variables (rule 3)
-5. `type` not `interface`, `unknown` not `any` (rules 8-9)
-6. Map vs switch, optional chaining, type guards (rules 10-12)
+5. No abbreviations (rule 13)
+6. `type` not `interface`, `unknown` not `any` (rules 8-9)
+7. Map vs switch, optional chaining, type guards (rules 10-12)
+8. One return value per method (rule 14)
 
 When reviewing code: run rules 1-3 first. If those fail, stop and reject. The rest can be fixed in follow-up.
