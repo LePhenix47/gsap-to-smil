@@ -1,196 +1,295 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<title>Debug Harness — GSAP vs SMIL frame sampler</title>
-<script type="importmap">
+  <meta charset="UTF-8" />
+  <title>Debug Harness — GSAP vs SMIL frame sampler</title>
+  <script type="importmap">
   {
     "imports": {
       "gsap": "https://cdn.jsdelivr.net/npm/gsap@3/+esm"
     }
   }
 </script>
-<style>
-  :root { color-scheme: dark; }
-  body {
-    background: #111; color: #eee; font-family: monospace; padding: 2rem;
-    display: flex; flex-direction: column; gap: 1.5rem; margin: 0;
-  }
-  h1 { font-size: 1rem; margin: 0; }
-  h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.45; margin: 0; }
-  .row { display: flex; gap: 2rem; align-items: flex-start; }
-  svg { display: block; border: 1px solid #2a2a2a; background: #1a1a1a; }
-  button {
-    background: #2563eb; color: #fff; border: none; padding: 0.5rem 1.2rem;
-    font-family: monospace; font-size: 0.8rem; cursor: pointer;
-  }
-  pre {
-    background: #1a1a1a; border: 1px solid #2a2a2a; padding: 1rem;
-    font-size: 0.7rem; max-height: 70vh; overflow: auto; margin: 0;
-    white-space: pre-wrap;
-  }
-  .fail { color: #f87171; font-weight: bold; }
-  .pass { color: #34d399; }
-  .summary { font-size: 0.8rem; margin: 0; }
-  figure { margin: 0; display: flex; flex-direction: column; gap: 0.35rem; }
-  figcaption { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.4; }
-</style>
-</head>
-<body>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
 
-<h1>GSAP vs SMIL frame sampler</h1>
+    body {
+      background: #111;
+      color: #eee;
+      font-family: monospace;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin: 0;
+    }
 
-<section>
-  <h3>Preset: timeline — translate → scale + skewX (no-plugins.html test 7c)</h3>
-  <div class="row">
-    <figure>
-      <figcaption>GSAP</figcaption>
-      <svg class="svg-gsap" width="280" height="120" xmlns="http://www.w3.org/2000/svg">
-        <rect class="gsap-rect" x="28" y="32" width="24" height="24" fill="#f97316" />
-        <rect class="gsap-rect" x="78" y="32" width="24" height="24" fill="#f97316" />
-        <rect class="gsap-rect" x="128" y="32" width="24" height="24" fill="#f97316" />
-        <rect class="gsap-rect" x="178" y="32" width="24" height="24" fill="#f97316" />
-      </svg>
-    </figure>
-    <figure>
-      <figcaption>SMIL lib</figcaption>
-      <svg class="svg-smil" width="280" height="120" xmlns="http://www.w3.org/2000/svg">
-        <rect class="smil-rect" x="28" y="32" width="24" height="24" fill="#f97316" />
-        <rect class="smil-rect" x="78" y="32" width="24" height="24" fill="#f97316" />
-        <rect class="smil-rect" x="128" y="32" width="24" height="24" fill="#f97316" />
-        <rect class="smil-rect" x="178" y="32" width="24" height="24" fill="#f97316" />
-      </svg>
-    </figure>
-  </div>
-  <button id="run-btn">Run Sample</button>
-</section>
+    h1 {
+      font-size: 1rem;
+      margin: 0;
+    }
 
-<section>
-  <h3>Results</h3>
-  <p class="summary" id="summary"></p>
-  <pre id="output">Press "Run Sample" to start.</pre>
-</section>
+    h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.45;
+      margin: 0;
+    }
 
-<script type="module">
-  import gsap from "gsap";
-  import { smil, AnimationDebugger } from "../../lib/index.js";
+    .row {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+    }
 
-  const output = document.getElementById("output");
-  const summary = document.getElementById("summary");
-  const runBtn = document.getElementById("run-btn");
+    svg {
+      display: block;
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+    }
 
-  runBtn.addEventListener("click", async () => {
-    runBtn.disabled = true;
-    runBtn.textContent = "Sampling...";
+    button {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      font-family: monospace;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
 
-    const gsapRects = Array.from(document.querySelectorAll(".gsap-rect"));
-    const smilRects = Array.from(document.querySelectorAll(".smil-rect"));
+    pre {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      padding: 1rem;
+      font-size: 0.7rem;
+      max-height: 70vh;
+      overflow: auto;
+      margin: 0;
+      white-space: pre-wrap;
+    }
 
-    // Reset any existing SMIL animations (reload wrappers)
-    smilRects.forEach((rect, i) => {
-      const parent = rect.parentElement;
-      const fresh = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      for (const attr of rect.attributes) {
-        fresh.setAttribute(attr.name, attr.value);
-      }
-      parent.replaceChild(fresh, rect);
-      smilRects[i] = fresh;
-    });
+    .fail {
+      color: #f87171;
+      font-weight: bold;
+    }
 
-    // Build timelines
-    const sharedVarTemplate = (selector) => ({
-      targets: selector,
+    .pass {
+      color: #34d399;
+    }
+
+    .summary {
+      font-size: 0.8rem;
+      margin: 0;
+    }
+
+    figure {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    figcaption {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.4;
+    }
+
+    p.note {
+      font-size: 0.65rem;
+      opacity: 0.45;
+      margin: 0;
+    }
+  </style>
+
+  <script type="module">
+    import gsap from "gsap";
+    import { smil, AnimationDebugger } from "../../lib/index.js";
+
+    const output = document.getElementById("output");
+    const summary = document.getElementById("summary");
+    const runBtn = document.getElementById("run-btn");
+
+    const gTlAlt = gsap.timeline({ repeatDelay: 0.35 });
+    gTlAlt.to(".g-tl-alt", {
+      x: 42,
       duration: 0.35,
       ease: "power1.inOut",
     });
-
-    // GSAP timeline
-    const gTl = gsap.timeline();
-    gTl.to(".gsap-rect", { x: 42, duration: 0.35, ease: "power1.inOut" });
-    gTl.to(".gsap-rect", {
-      y: -24, opacity: 0.45, stagger: 0.1, duration: 0.32, ease: "power1.out",
+    gTlAlt.to(".g-tl-alt", {
+      y: -24,
+      opacity: 0.45,
+      stagger: 0.1,
+      duration: 0.32,
+      ease: "power1.out",
     }, ">");
-    gTl.to(".gsap-rect", {
-      x: 0, y: 0, opacity: 1, stagger: 0.1, duration: 0.36, ease: "sine.inOut",
+    gTlAlt.to(".g-tl-alt", {
+      x: 0,
+      y: 0,
+      opacity: 1,
+      stagger: 0.1,
+      duration: 0.36,
+      ease: "sine.inOut",
     }, ">");
-    gTl.to(".gsap-rect", { x: -22, duration: 0.3, ease: "power1.inOut" }, ">");
-    gTl.to(".gsap-rect", {
-      x: 0, fill: "#f59e0b", skewX: 10, scale: 2, stagger: 0.1, duration: 0.34, ease: "power1.inOut",
+    gTlAlt.to(".g-tl-alt", {
+      x: -22,
+      duration: 0.3,
+      ease: "power1.inOut",
+    }, ">");
+    gTlAlt.to(".g-tl-alt", {
+      x: 0,
+      fill: "#f59e0b",
+      stagger: 0.1,
+      skewX: 10,
+      scale: 2,
+      duration: 0.34,
+      ease: "power1.inOut",
     }, ">");
 
-    // SMIL timeline
-    const sTl = smil.timeline();
-    sTl.to(".smil-rect", { x: 42, duration: 0.35, ease: "power1.inOut" });
-    sTl.to(".smil-rect", {
-      y: -24, opacity: 0.45, stagger: 0.1, duration: 0.32, ease: "power1.out",
-    }, ">");
-    sTl.to(".smil-rect", {
-      x: 0, y: 0, opacity: 1, stagger: 0.1, duration: 0.36, ease: "sine.inOut",
-    }, ">");
-    sTl.to(".smil-rect", { x: -22, duration: 0.3, ease: "power1.inOut" }, ">");
-    sTl.to(".smil-rect", {
-      x: 0, fill: "#f59e0b", skewX: 10, scale: 2, stagger: 0.1, duration: 0.34, ease: "power1.inOut",
-    }, ">");
-
-    // Wait for SMIL injection
-    await new Promise(r => setTimeout(r, 50));
-
-    // Total duration ≈ 2.6s (sum of all step durations + stagger offsets)
-    const sampleDuration = 3;
-
-    const pairs = smilRects.map((smilRect, i) => ({
-      gsapElement: gsapRects[i],
-      smilElement: smilRect,
-      label: `rect[${i}]`,
-    }));
-
-    const samples = await AnimationDebugger.sample({
-      pairs,
-      duration: sampleDuration,
-      fps: 30,
+    const sTlAlt = smil.timeline({ repeatDelay: 0.35 });
+    sTlAlt.to(".s-tl-alt", {
+      x: 42,
+      duration: 0.35,
+      ease: "power1.inOut",
     });
+    sTlAlt.to(".s-tl-alt", {
+      y: -24,
+      opacity: 0.45,
+      stagger: 0.1,
+      duration: 0.32,
+      ease: "power1.out",
+    }, ">");
+    sTlAlt.to(".s-tl-alt", {
+      x: 0,
+      y: 0,
+      opacity: 1,
+      stagger: 0.1,
+      duration: 0.36,
+      ease: "sine.inOut",
+    }, ">");
+    sTlAlt.to(".s-tl-alt", {
+      x: -22,
+      duration: 0.3,
+      ease: "power1.inOut",
+    }, ">");
+    sTlAlt.to(".s-tl-alt", {
+      x: 0,
+      fill: "#f59e0b",
+      skewX: 10,
+      scale: 2,
+      stagger: 0.1,
+      duration: 0.34,
+      ease: "power1.inOut",
+    }, ">");
+    runBtn.addEventListener("click", async () => {
+      runBtn.disabled = true;
+      runBtn.textContent = "Sampling...";
 
-    // --- Render ---
-    let maxDeltaX = 0;
-    let maxDeltaY = 0;
-    let failCount = 0;
-    const threshold = 1;
 
-    const lines = [];
-    lines.push("timestamp  elapsed   element    gsap(x,y)          smil(x,y)          Δx      Δy");
-    lines.push("─".repeat(100));
+      // Wait for SMIL injection
+      await new Promise(r => setTimeout(r, 50));
 
-    for (const frame of samples) {
-      for (const pair of frame.pairs) {
-        const fail = pair.deltaX > threshold || pair.deltaY > threshold;
-        if (fail) failCount++;
+      const sampleDuration = 3;
 
-        const tag = fail ? "FAIL" : "ok";
-        lines.push(
-          `${String(Math.round(frame.timestamp)).padStart(6)}  ` +
-          `${String(frame.elapsed.toFixed(3)).padStart(7)}s  ` +
-          `${pair.label.padEnd(10)} ` +
-          `(${pair.gsapLeft.toFixed(1).padStart(6)}, ${pair.gsapTop.toFixed(1).padStart(6)})  ` +
-          `(${pair.smilLeft.toFixed(1).padStart(6)}, ${pair.smilTop.toFixed(1).padStart(6)})  ` +
-          `${pair.deltaX.toFixed(1).padStart(5)}  ${pair.deltaY.toFixed(1).padStart(5)}  ${tag}`
-        );
+      const pairs = Array.from(document.querySelectorAll(".s-tl-alt")).map((smilRect, i) => ({
+        gsapElement: document.querySelectorAll(".g-tl-alt")[i],
+        smilElement: smilRect,
+        label: `rect[${i}]`,
+      }));
 
-        if (pair.deltaX > maxDeltaX) maxDeltaX = pair.deltaX;
-        if (pair.deltaY > maxDeltaY) maxDeltaY = pair.deltaY;
+      const samples = await AnimationDebugger.sample({
+        pairs,
+        duration: sampleDuration,
+        fps: 30,
+      });
+
+      // --- Render ---
+      let maxDeltaX = 0;
+      let maxDeltaY = 0;
+      let failCount = 0;
+      const threshold = 1;
+
+      const lines = [];
+      lines.push("timestamp  elapsed   element    gsap(x,y)          smil(x,y)          Δx      Δy");
+      lines.push("─".repeat(100));
+
+      for (const frame of samples) {
+        for (const pair of frame.pairs) {
+          const fail = pair.deltaX > threshold || pair.deltaY > threshold;
+          if (fail) failCount++;
+
+          const tag = fail ? "FAIL" : "ok";
+          lines.push(
+            `${String(Math.round(frame.timestamp)).padStart(6)}  ` +
+            `${String(frame.elapsed.toFixed(3)).padStart(7)}s  ` +
+            `${pair.label.padEnd(10)} ` +
+            `(${pair.gsapLeft.toFixed(1).padStart(6)}, ${pair.gsapTop.toFixed(1).padStart(6)})  ` +
+            `(${pair.smilLeft.toFixed(1).padStart(6)}, ${pair.smilTop.toFixed(1).padStart(6)})  ` +
+            `${pair.deltaX.toFixed(1).padStart(5)}  ${pair.deltaY.toFixed(1).padStart(5)}  ${tag}`
+          );
+
+          if (pair.deltaX > maxDeltaX) maxDeltaX = pair.deltaX;
+          if (pair.deltaY > maxDeltaY) maxDeltaY = pair.deltaY;
+        }
       }
-    }
 
-    output.textContent = lines.join("\n");
-    summary.innerHTML =
-      `${samples.length} frames, ${pairs.length} elements, ` +
-      `max Δx = <span class="${maxDeltaX > threshold ? 'fail' : 'pass'}">${maxDeltaX.toFixed(1)}px</span>, ` +
-      `max Δy = <span class="${maxDeltaY > threshold ? 'fail' : 'pass'}">${maxDeltaY.toFixed(1)}px</span>, ` +
-      `<span class="${failCount > 0 ? 'fail' : 'pass'}">${failCount} failing frames</span>`;
+      output.textContent = lines.join("\n");
+      summary.innerHTML =
+        `${samples.length} frames, ${pairs.length} elements, ` +
+        `max Δx = <span class="${maxDeltaX > threshold ? 'fail' : 'pass'}">${maxDeltaX.toFixed(1)}px</span>, ` +
+        `max Δy = <span class="${maxDeltaY > threshold ? 'fail' : 'pass'}">${maxDeltaY.toFixed(1)}px</span>, ` +
+        `<span class="${failCount > 0 ? 'fail' : 'pass'}">${failCount} failing frames</span>`;
 
-    runBtn.disabled = false;
-    runBtn.textContent = "Run Sample";
-  });
-</script>
+      runBtn.disabled = false;
+      runBtn.textContent = "Run Sample";
+    });
+  </script>
+</head>
+
+<body>
+
+  <h1>GSAP vs SMIL frame sampler</h1>
+  <p class="note">Refresh page between runs to reset SMIL animations.</p>
+
+  <section>
+    <h3>no-plugins.html test 7c — alternating stagger + non-stagger, single pass</h3>
+    <h3>timeline() — alternating stagger and non-stagger steps</h3>
+    <div class="pair">
+      <figure class="test test-gsap">
+        <figcaption>GSAP</figcaption>
+        <svg class="svg-gsap tl-alt-gsap" width="280" height="120" xmlns="http://www.w3.org/2000/svg">
+          <rect class="g-tl-alt" x="28" y="32" width="24" height="24" fill="#f97316" />
+          <rect class="g-tl-alt" x="78" y="32" width="24" height="24" fill="#f97316" />
+          <rect class="g-tl-alt" x="128" y="32" width="24" height="24" fill="#f97316" />
+          <rect class="g-tl-alt" x="178" y="32" width="24" height="24" fill="#f97316" />
+        </svg>
+      </figure>
+      <figure class="test test-smil">
+        <figcaption>SMIL lib</figcaption>
+        <svg class="svg-smil tl-alt-smil" width="280" height="120" xmlns="http://www.w3.org/2000/svg">
+          <rect class="s-tl-alt" x="28" y="32" width="24" height="24" fill="#f97316" />
+          <rect class="s-tl-alt" x="78" y="32" width="24" height="24" fill="#f97316" />
+          <rect class="s-tl-alt" x="128" y="32" width="24" height="24" fill="#f97316" />
+          <rect class="s-tl-alt" x="178" y="32" width="24" height="24" fill="#f97316" />
+        </svg>
+      </figure>
+    </div>
+    <button id="run-btn">Run Sample</button>
+  </section>
+
+  <section>
+    <h3>Results</h3>
+    <p class="summary" id="summary"></p>
+    <pre id="output">Press "Run Sample" to start.</pre>
+  </section>
+
 
 </body>
+
 </html>
