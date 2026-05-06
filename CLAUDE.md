@@ -153,13 +153,19 @@ SMILPlugin              ← base for DrawSVG / MotionPath / MorphSVG
 
 ## Skills
 
-Project-specific coding conventions live in `.claude/skills/typescript/` — read them before writing code:
+Project-specific conventions and workflows live in `.claude/skills/` — read them before working:
 
-**Code quality (read first):**
+### Debugging workflow (apply before touching library code)
+
+- `manual-debug` — experiment-first: isolate in hand-crafted SMIL + GSAP test, compare numerically with `AnimationDebugger.sample()`, iterate until deltas match, then port to library. Use when user says "debug X manually", "let's isolate", "prove it first". Also trigger proactively when user reports GSAP-vs-SMIL mismatch.
+
+### Code quality (read before writing any `.ts` file)
+
 - `code-conventions` — zero-tolerance rules: no underscores, explicit field names, broken-out intermediate calculations, no `=== undefined`, arrow methods only
 - `no-abbreviations` — full words only: `element` not `el`, `animationOptions` not `opts`, `animationElement` not `anim`
 
-**TypeScript patterns:**
+### TypeScript patterns (read before writing any `.ts` file)
+
 - `use-guard-clauses` — early returns, no deep nesting
 - `destructure-objects-always` — destructure instead of repeated `obj.prop`
 - `prefer-unknown-over-any` — never use `any`
