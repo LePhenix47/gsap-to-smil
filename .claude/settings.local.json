@@ -16,7 +16,9 @@
       "Bash(dir *)",
       "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
       "mcp__plugin_context-mode_context-mode__ctx_execute",
-      "Bash(Get-ChildItem *)"
+      "Bash(Get-ChildItem *)",
+      "Bash(start \"\" \"tests\\\\debug\\\\g-hack-isolated.html\")",
+      "Bash(start *)"
     ],
     "deny": [
       "Bash(rm -rf *)",
