@@ -17,6 +17,14 @@ Experiment before implementation. Library code is complex — TransformComposer,
 
 ## The workflow
 
+### 0. Start the dev log server
+
+```bash
+bun run dev-server
+```
+
+Keeps running on `http://localhost:3456`. Debug HTML pages POST their log output to `POST /log` — the server writes `tests/debug/<name>.log` automatically. No more manual copy-paste.
+
 ### 1. Create isolated test file
 
 Create `tests/debug/<feature-name>.html`. It must contain:
@@ -38,11 +46,12 @@ Template:
 <pre id="output">Sampling...</pre>
 <script type="module">
   import gsap from "https://cdn.jsdelivr.net/npm/gsap@3/+esm";
-  import { AnimationDebugger } from "../../lib/index.js";
+  import { AnimationDebugger, writeDebugLog } from "../../lib/index.js";
   // GSAP animation setup ...
   // AnimationDebugger.sample() call ...
   // Normalize coords by subtracting svg.getBoundingClientRect()
   // Print per-frame deltas to <pre>
+  // writeDebugLog("test-name", lines);  // auto-saves to tests/debug/test-name.log
 </script>
 ```
 
@@ -54,6 +63,8 @@ start "" "tests/debug/<feature-name>.html"
 ```
 
 Both elements must be in the **same SVG** so `getBoundingClientRect()` coordinates are directly comparable. Normalize by subtracting the SVG container position.
+
+The page auto-POSTs log output to the dev server (step 0). If the server isn't running, logs still render in `<pre>` — the `writeDebugLog` call silently fails.
 
 ### 3. Read the log
 

@@ -29,6 +29,7 @@
   "keywords": [],
   "license": "ISC",
   "scripts": {
+    "dev-server": "bun run scripts/dev-server.ts",
     "ai-slop-check": "bunx fallow",
     "ts": "bun build ./src/index.ts --outdir lib",
     "ts-types": "bun run tsc --noEmit",

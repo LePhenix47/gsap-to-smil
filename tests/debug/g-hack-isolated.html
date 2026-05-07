@@ -90,7 +90,7 @@
 
 <script type="module">
   import gsap from "https://cdn.jsdelivr.net/npm/gsap@3/+esm";
-  import { AnimationDebugger } from "../../lib/index.js";
+  import { AnimationDebugger, writeDebugLog } from "../../lib/index.js";
 
   // GSAP with percentage origin (matches SMIL pivot scaffold's BBox-center approach)
   const tl = gsap.timeline();
@@ -193,10 +193,12 @@
     lines.push(`SMIL  rect getBBox():  x=${smilEl.getBBox().x.toFixed(1)} y=${smilEl.getBBox().y.toFixed(1)}`);
     lines.push(`SMIL  outerG getBBox(): x=${smilOuterG.getBBox().x.toFixed(1)} y=${smilOuterG.getBBox().y.toFixed(1)} w=${smilOuterG.getBBox().width.toFixed(1)} h=${smilOuterG.getBBox().height.toFixed(1)}`);
 
-    output.innerHTML = lines.join("\n")
+    const html = lines.join("\n")
       .replace(/FAIL/g, `<span class="fail">FAIL</span>`)
       .replace(/(max Δx:.*|max Δy:.*|failing frames:.*)/gi,
         m => (m.match(/max Δx: 0\.\d|max Δy: 0\.\d|0\//) ? `<span class="pass">${m}</span>` : m));
+    output.innerHTML = html;
+    writeDebugLog("g-hack-isolated", lines);
   }
 
   run();
