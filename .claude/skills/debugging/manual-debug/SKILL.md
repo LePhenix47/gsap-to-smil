@@ -17,11 +17,13 @@ Experiment before implementation. Library code is complex — TransformComposer,
 
 ## The workflow
 
-### 0. Start the dev log server
+### 0. Start the debug log server
 
 ```bash
-bun run dev-server
+bun run debug-server
 ```
+
+Uses `bun --watch` — auto-restarts on file changes.
 
 Keeps running on `http://localhost:3456`. Debug HTML pages POST their log output to `POST /log` — the server writes `tests/debug/<name>.log` automatically. No more manual copy-paste.
 
@@ -64,7 +66,7 @@ start "" "tests/debug/<feature-name>.html"
 
 Both elements must be in the **same SVG** so `getBoundingClientRect()` coordinates are directly comparable. Normalize by subtracting the SVG container position.
 
-The page auto-POSTs log output to the dev server (step 0). If the server isn't running, logs still render in `<pre>` — the `writeDebugLog` call silently fails.
+The page auto-POSTs log output to the debug server (step 0). If the server isn't running, logs still render in `<pre>` — the `writeDebugLog` call silently fails.
 
 ### 3. Read the log
 

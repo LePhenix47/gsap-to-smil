@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
 const PORT = parseInt(process.env["PORT"] ?? "3456", 10);
-const DEBUG_DIR = join(import.meta.dirname, "..", "tests", "debug");
+const DEBUG_DIR = join(import.meta.dirname, "tests", "debug");
 
 type LogBody = {
   filename: string;
@@ -38,6 +38,8 @@ Bun.serve({
       );
       const filePath: string = join(DEBUG_DIR, `${sanitizedName}.log`);
 
+      console.log(`Writing log to ${filePath}`);
+
       await mkdir(DEBUG_DIR, { recursive: true });
       await Bun.write(filePath, body.lines.join("\n") + "\n");
 
@@ -55,5 +57,5 @@ Bun.serve({
   },
 });
 
-console.log(`Dev log server running on http://localhost:${PORT}`);
+console.log(`Debug log server running on http://localhost:${PORT}`);
 console.log(`Accepting POST /log → tests/debug/<name>.log`);
