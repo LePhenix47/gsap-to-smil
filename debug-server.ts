@@ -1,5 +1,5 @@
 import { mkdir } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const PORT = parseInt(process.env["PORT"] ?? "3456", 10);
 const DEBUG_DIR = join(import.meta.dirname, "tests", "debug");
@@ -43,7 +43,7 @@ Bun.serve({
         `Writing log to ${filePath} the ${date.toLocaleString("en")}`,
       );
 
-      await mkdir(DEBUG_DIR, { recursive: true });
+      await mkdir(dirname(filePath), { recursive: true });
 
       const fileContent = date + "\n".repeat(2) + body.lines.join("\n") + "\n";
       await Bun.write(filePath, fileContent);

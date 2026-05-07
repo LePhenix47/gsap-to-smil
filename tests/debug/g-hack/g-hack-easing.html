@@ -21,41 +21,14 @@
 </head>
 <body>
 
-<h1>&lt;g&gt; hack — easing variant (power2.inOut)</h1>
+<h1>&lt;g&gt; hack — easing comparison</h1>
 
-<h3>Test A: bare &lt;rect&gt; with &lt;animateTransform&gt; + easing — must slide right (eased)</h3>
-<svg width="300" height="60" xmlns="http://www.w3.org/2000/svg">
-  <rect x="20" y="10" width="40" height="30" fill="#60a5fa">
-    <animateTransform attributeName="transform" type="translate"
-      from="0 0" to="100 0" begin="0s" dur="1s" fill="freeze"
-      calcMode="spline" keyTimes="0; 1" keySplines="0.65 0 0.35 1" />
-  </rect>
-  <circle cx="160" cy="25" r="3" fill="none" stroke="#fff" stroke-width="0.5" opacity="0.4" />
-  <text x="162" y="27" fill="#fff" font-size="7" opacity="0.4">expected</text>
-</svg>
-
-<h3>Test B: pivot scaffold, single tween (translate + scale) + easing</h3>
-<svg width="350" height="80" xmlns="http://www.w3.org/2000/svg">
-  <g>
-    <animateTransform attributeName="transform" type="translate"
-      from="0 0" to="60 0" begin="0s" dur="1s" fill="freeze" additive="sum"
-      calcMode="spline" keyTimes="0; 1" keySplines="0.65 0 0.35 1" />
-    <g transform="translate(45,35)">
-      <g>
-        <animateTransform attributeName="transform" type="scale"
-          from="1 1" to="1.6 1.6" begin="0s" dur="1s" fill="freeze" additive="sum"
-          calcMode="spline" keyTimes="0; 1" keySplines="0.65 0 0.35 1" />
-        <g transform="translate(-45,-35)">
-          <rect x="25" y="15" width="40" height="30" fill="#f97316" fill-opacity="0.85" />
-        </g>
-      </g>
-    </g>
-  </g>
-  <circle cx="105" cy="35" r="3" fill="none" stroke="#fff" stroke-width="0.5" opacity="0.4" />
-</svg>
-
-<h3>Test C: GSAP vs SMIL — power2.inOut easing, same SVG</h3>
-<p>Green = GSAP, Orange = SMIL. Both use power2.inOut. Overlap = match.</p>
+<h3>
+  <label>
+    <input type="checkbox" class="log-toggle" id="log-p2" checked>
+    <span>Test C: power2.inOut</span>
+  </label>
+</h3>
 <svg id="svg-c" width="500" height="100" xmlns="http://www.w3.org/2000/svg">
   <rect id="gsap-rect" x="50" y="20" width="40" height="40" fill="#34d399" fill-opacity="0.5" />
 
@@ -89,39 +62,94 @@
   </g>
 </svg>
 
+<!-- ═══════════════════════════════════════════ -->
+<!-- Test D: ease-in-out                          -->
+<!-- ═══════════════════════════════════════════ -->
+<h3>
+  <label>
+    <input type="checkbox" class="log-toggle" id="log-ease" checked>
+    <span>Test D: ease-in-out (0.42, 0, 0.58, 1)</span>
+  </label>
+</h3>
+<svg id="svg-d" width="500" height="100" xmlns="http://www.w3.org/2000/svg">
+  <rect id="gsap-ease" x="50" y="20" width="40" height="40" fill="#34d399" fill-opacity="0.5" />
+
+  <g>
+    <g id="smil-outer-d">
+      <animateTransform attributeName="transform" type="translate"
+        from="0 0" to="50 0" begin="0s" dur="1s" fill="freeze" additive="sum"
+        calcMode="spline" keyTimes="0; 1" keySplines="0.42 0 0.58 1" />
+      <animateTransform attributeName="transform" type="translate"
+        from="0 0" to="100 0" begin="1s" dur="1s" fill="freeze" additive="sum"
+        calcMode="spline" keyTimes="0; 1" keySplines="0.42 0 0.58 1" />
+
+      <g transform="translate(70,40)">
+        <g>
+          <animateTransform attributeName="transform" type="scale"
+            from="1 1" to="1.5 1.5" begin="0s" dur="1s" fill="freeze" additive="sum"
+            calcMode="spline" keyTimes="0; 1" keySplines="0.42 0 0.58 1" />
+          <animateTransform attributeName="transform" type="scale"
+            from="1 1" to="1.333 1.333" begin="1s" dur="1s" fill="freeze" additive="sum"
+            calcMode="spline" keyTimes="0; 1" keySplines="0.42 0 0.58 1" />
+          <animateTransform attributeName="transform" type="skewX"
+            from="0" to="10" begin="0s" dur="1s" fill="freeze" additive="sum"
+            calcMode="spline" keyTimes="0; 1" keySplines="0.42 0 0.58 1" />
+
+          <g transform="translate(-70,-40)">
+            <rect id="smil-ease" x="50" y="20" width="40" height="40" fill="#f97316" fill-opacity="0.5" />
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
+
 <pre id="output">Sampling...</pre>
 
 <script type="module">
   import gsap from "https://cdn.jsdelivr.net/npm/gsap@3/+esm";
   import { AnimationDebugger, writeDebugLog } from "../../../lib/index.js";
 
-  const tl = gsap.timeline();
-  tl.to("#gsap-rect", {
+  // GSAP timeline for Test C (power2.inOut)
+  const tlP2 = gsap.timeline();
+  tlP2.to("#gsap-rect", {
     x: 50, scale: 1.5, skewX: 10,
     transformOrigin: "50% 50%",
     duration: 1, ease: "power2.inOut",
   });
-  tl.to("#gsap-rect", {
+  tlP2.to("#gsap-rect", {
     x: 150, scale: 2,
     transformOrigin: "50% 50%",
     duration: 1, ease: "power2.inOut",
   });
 
-  async function run() {
-    await new Promise(r => setTimeout(r, 40));
+  // GSAP timeline for Test D (ease-in-out)
+  const tlEase = gsap.timeline();
+  tlEase.to("#gsap-ease", {
+    x: 50, scale: 1.5, skewX: 10,
+    transformOrigin: "50% 50%",
+    duration: 1, ease: "ease-in-out",
+  });
+  tlEase.to("#gsap-ease", {
+    x: 150, scale: 2,
+    transformOrigin: "50% 50%",
+    duration: 1, ease: "ease-in-out",
+  });
 
-    const svg = document.getElementById("svg-c");
+  async function buildLog(testId, gsapId, smilId, svgId, label) {
+    const svg = document.getElementById(svgId);
     const svgRect = svg.getBoundingClientRect();
-    const gsapEl = document.getElementById("gsap-rect");
-    const smilEl = document.getElementById("smil-rect");
+    const gsapEl = document.getElementById(gsapId);
+    const smilEl = document.getElementById(smilId);
 
     const samples = await AnimationDebugger.sample({
-      pairs: [{ gsapElement: gsapEl, smilElement: smilEl, label: "rect" }],
+      pairs: [{ gsapElement: gsapEl, smilElement: smilEl, label }],
       duration: 2.3,
       fps: 15,
     });
 
-    const lines = ["time     elapsed  GSAP(x,y)         SMIL(x,y)          Δx      Δy"];
+    const lines = [`easing: ${label}`];
+    lines.push("time     elapsed  GSAP(x,y)         SMIL(x,y)          Δx      Δy");
     lines.push("─".repeat(78));
     let maxDx = 0, maxDy = 0, fails = 0;
 
@@ -152,22 +180,52 @@
 
     await new Promise(r => setTimeout(r, 2500));
     const gsapMatrix = gsapEl.getAttribute("transform") || "(none)";
-    const smilOuterG = document.getElementById("smil-outer");
+    const smilOuterEl = svg.querySelector('[id^="smil-outer"]');
 
     lines.push("");
-    lines.push("─── Raw transform inspection at t=2.5s ───");
-    lines.push(`GSAP (% origin):  ${gsapMatrix}`);
-    lines.push(`GSAP rect natural center from BBox: (${50+20},${20+20}) = (70,40)`);
-    lines.push("");
-    lines.push(`SMIL  rect getBBox():  x=${smilEl.getBBox().x.toFixed(1)} y=${smilEl.getBBox().y.toFixed(1)}`);
-    lines.push(`SMIL  outerG getBBox(): x=${smilOuterG.getBBox().x.toFixed(1)} y=${smilOuterG.getBBox().y.toFixed(1)} w=${smilOuterG.getBBox().width.toFixed(1)} h=${smilOuterG.getBBox().height.toFixed(1)}`);
+    lines.push("─── Rest state ───");
+    lines.push(`GSAP transform: ${gsapMatrix}`);
+    lines.push(`SMIL  rect BBox:  x=${smilEl.getBBox().x.toFixed(1)} y=${smilEl.getBBox().y.toFixed(1)}`);
+    lines.push(`SMIL  outer BBox: x=${smilOuterEl.getBBox().x.toFixed(1)} y=${smilOuterEl.getBBox().y.toFixed(1)}`);
 
-    const html = lines.join("\n")
-      .replace(/FAIL/g, `<span class="fail">FAIL</span>`)
-      .replace(/(max Δx:.*|max Δy:.*|failing frames:.*)/gi,
-        m => (m.match(/max Δx: 0\.\d|max Δy: 0\.\d|0\//) ? `<span class="pass">${m}</span>` : m));
-    output.innerHTML = html;
-    writeDebugLog("g-hack/g-hack-easing", lines);
+    writeDebugLog(`g-hack/g-hack-easing/${label}`, lines);
+
+    return { label, maxDx, maxDy, fails, total: samples.length };
+  }
+
+  async function run() {
+    const output = document.getElementById("output");
+    const allLines = [];
+
+    const tasks = [];
+
+    if (document.getElementById("log-p2").checked) {
+      tasks.push(
+        buildLog("log-p2", "gsap-rect", "smil-rect", "svg-c", "power2-inOut")
+      );
+    }
+
+    if (document.getElementById("log-ease").checked) {
+      tasks.push(
+        buildLog("log-ease", "gsap-ease", "smil-ease", "svg-d", "ease-in-out")
+      );
+    }
+
+    if (tasks.length === 0) {
+      output.textContent = "No tests selected — check at least one checkbox.";
+      return;
+    }
+
+    const results = await Promise.all(tasks);
+
+    for (const r of results) {
+      const status = r.fails === 0 && r.maxDx < 1 && r.maxDy < 1 ? "PASS" : "FAIL";
+      allLines.push(`${status}  ${r.label.padEnd(20)}  maxΔx=${r.maxDx.toFixed(1)}  maxΔy=${r.maxDy.toFixed(1)}  fails=${r.fails}/${r.total}`);
+    }
+
+    allLines.push("");
+    allLines.push(`Done — ${results.length} log(s) saved.`);
+    output.textContent = allLines.join("\n");
   }
 
   run();
