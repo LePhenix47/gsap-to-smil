@@ -27,12 +27,12 @@ Keeps running on `http://localhost:3456`. Debug HTML pages POST their log output
 
 ### 1. Create isolated test file
 
-Create `tests/debug/<feature-name>.html`. It must contain:
+Create `tests/debug/<feature>/<variant>.html`. Files group by feature in subfolders (e.g. `tests/debug/g-hack/` for all `<g>` pivot scaffold tests). It must contain:
 
 - **One SVG** with both GSAP and SMIL elements side by side (same coordinate space)
 - **GSAP side**: `gsap.timeline()` or `gsap.to()` with the target properties
 - **SMIL side**: raw `<animate>` / `<animateTransform>` — no library code
-- Import `AnimationDebugger` from `../../lib/index.js`
+- Import `AnimationDebugger` from `../../../lib/index.js` (3 levels up from feature subfolder)
 - Import GSAP from CDN
 
 Template:
@@ -46,12 +46,12 @@ Template:
 <pre id="output">Sampling...</pre>
 <script type="module">
   import gsap from "https://cdn.jsdelivr.net/npm/gsap@3/+esm";
-  import { AnimationDebugger, writeDebugLog } from "../../lib/index.js";
+  import { AnimationDebugger, writeDebugLog } from "../../../lib/index.js";
   // GSAP animation setup ...
   // AnimationDebugger.sample() call ...
   // Normalize coords by subtracting svg.getBoundingClientRect()
   // Print per-frame deltas to <pre>
-  // writeDebugLog("test-name", lines);  // auto-saves to tests/debug/test-name.log
+  // writeDebugLog("feature/test-name", lines);  // auto-saves to tests/debug/feature/test-name.log
 </script>
 ```
 
@@ -108,4 +108,4 @@ Summarize discovered rules, then port to library code.
 
 ## Reference: `g-hack-isolated.html`
 
-`tests/debug/g-hack-isolated.html` is the reference implementation for pivot scaffold debugging. It demonstrates three test SVGs (sanity checks + full test), GSAP `"50% 50%"` vs SMIL scaffold comparison, DOM insertion order fix, and raw matrix inspection.
+`tests/debug/g-hack/g-hack-isolated.html` is the reference implementation for pivot scaffold debugging. It demonstrates three test SVGs (sanity checks + full test), GSAP `"50% 50%"` vs SMIL scaffold comparison, DOM insertion order fix, and raw matrix inspection.

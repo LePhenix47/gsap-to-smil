@@ -33,7 +33,7 @@ Bun.serve({
     try {
       const body: LogBody = await request.json();
       const sanitizedName: string = body.filename.replace(
-        /[^a-zA-Z0-9._-]/g,
+        /[^a-zA-Z0-9._\-\/]/g,
         "_",
       );
       const filePath: string = join(DEBUG_DIR, `${sanitizedName}.log`);
