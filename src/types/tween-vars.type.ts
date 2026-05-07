@@ -1,7 +1,7 @@
-import type { EaseString } from "./easing.ts";
-import type { AttrVars } from "./attr.ts";
-import type { StaggerObject } from "./stagger.ts";
-import type { DrawSVGValue, MotionPathVars, MorphSVGVars } from "./plugins.ts";
+import type { EaseString } from "./easing.type.ts";
+import type { AttrVars } from "./attr.type.ts";
+import type { StaggerObject } from "./stagger.type.ts";
+import type { DrawSVGValue, MotionPathVars, MorphSVGVars } from "./plugins.type.ts";
 
 /**
  * Third argument to `tl.to()` / `tl.from()` etc. — controls where in the timeline the tween is inserted.

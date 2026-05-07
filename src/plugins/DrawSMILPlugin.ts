@@ -1,5 +1,5 @@
 import type { DrawSVGValue } from "@/types/index.ts";
-import type { AnimateOptions } from "@/types/builders.ts";
+import type { AnimateOptions } from "@/types/builders.type.ts";
 import { SMILBuilder } from "@/utils/builders.ts";
 
 type DrawState = { start: number; end: number };

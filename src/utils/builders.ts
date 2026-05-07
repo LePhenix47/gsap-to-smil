@@ -1,8 +1,8 @@
 import type {
   AnimateOptions,
   AnimateTransformOptions,
-} from "@/types/builders.ts";
-import type { EaseString } from "@/types/easing.ts";
+} from "@/types/builders.type.ts";
+import type { EaseString } from "@/types/easing.type.ts";
 import { Easing } from "./easing.ts";
 
 /**

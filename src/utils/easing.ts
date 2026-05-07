@@ -1,4 +1,4 @@
-import type { EaseString } from "@/types/easing.ts";
+import type { EaseString } from "@/types/easing.type.ts";
 
 /**
  * Translates GSAP ease names into SMIL timing attributes.

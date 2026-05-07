@@ -1,4 +1,4 @@
-import type { EaseString } from "./easing.ts";
+import type { EaseString } from "./easing.type.ts";
 
 /**
  * Options passed to `buildAnimate()` to create a SMIL `<animate>` element.

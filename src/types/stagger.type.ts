@@ -1,4 +1,4 @@
-import type { EaseString } from "./easing.ts";
+import type { EaseString } from "./easing.type.ts";
 
 /**
  * Where the stagger wave originates from across the target list.
