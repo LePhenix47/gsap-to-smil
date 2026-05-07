@@ -40,8 +40,11 @@ Bun.serve({
 
       console.log(`Writing log to ${filePath}`);
 
+      const date = new Date();
       await mkdir(DEBUG_DIR, { recursive: true });
-      await Bun.write(filePath, body.lines.join("\n") + "\n");
+
+      const fileContent = date + "\n" + body.lines.join("\n") + "\n";
+      await Bun.write(filePath, fileContent);
 
       return new Response(JSON.stringify({ ok: true }), {
         status: 200,
