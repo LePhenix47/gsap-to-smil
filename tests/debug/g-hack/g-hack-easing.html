@@ -142,8 +142,23 @@
     return svg;
   }
 
+  const LS_KEY = "g-hack-easing-checked";
+
+  function loadCheckedSet() {
+    try {
+      const stored = localStorage.getItem(LS_KEY);
+      return stored ? new Set(JSON.parse(stored)) : null;
+    } catch { return null; }
+  }
+
+  function saveCheckedState() {
+    const checked = [...document.querySelectorAll(".log-toggle:checked")].map(el => el.dataset.ease);
+    localStorage.setItem(LS_KEY, JSON.stringify(checked));
+  }
+
   // Build DOM
   const testsContainer = document.getElementById("tests");
+  const savedChecked = loadCheckedSet();
   for (const easing of EASINGS) {
     const h3 = document.createElement("h3");
     const label = document.createElement("label");
@@ -151,7 +166,8 @@
     cb.type = "checkbox";
     cb.className = "log-toggle";
     cb.dataset.ease = easing.name;
-    cb.checked = true;
+    cb.checked = savedChecked ? savedChecked.has(easing.name) : true;
+    cb.addEventListener("change", saveCheckedState);
     const span = document.createElement("span");
     span.textContent = easing.name;
     label.appendChild(cb);
