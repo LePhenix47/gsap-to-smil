@@ -38,12 +38,14 @@ Bun.serve({
       );
       const filePath: string = join(DEBUG_DIR, `${sanitizedName}.log`);
 
-      console.log(`Writing log to ${filePath}`);
-
       const date = new Date();
+      console.log(
+        `Writing log to ${filePath} the ${date.toLocaleString("en")}`,
+      );
+
       await mkdir(DEBUG_DIR, { recursive: true });
 
-      const fileContent = date + "\n" + body.lines.join("\n") + "\n";
+      const fileContent = date + "\n".repeat(2) + body.lines.join("\n") + "\n";
       await Bun.write(filePath, fileContent);
 
       return new Response(JSON.stringify({ ok: true }), {
