@@ -41,20 +41,205 @@ export class Easing {
       "sine.in": [0.47, 0, 0.745, 0.715],
       "sine.out": [0.39, 0.575, 0.565, 1],
       "sine.inOut": [0.445, 0.05, 0.55, 0.95],
-
-      "circ.in": [0.6, 0.04, 0.98, 0.335],
-      "circ.out": [0.075, 0.82, 0.165, 1],
-      "circ.inOut": [0.785, 0.135, 0.15, 0.86],
-
-      "expo.in": [0.95, 0.05, 0.795, 0.035],
-      "expo.out": [0.19, 1, 0.22, 1],
-      "expo.inOut": [1, 0, 0, 1],
-
-      "back.in": [0.6, -0.28, 0.735, 0.045],
-      "back.out": [0.175, 0.885, 0.32, 1.275],
-      "back.inOut": [0.68, -0.55, 0.265, 1.55],
     }),
   );
+
+  /**
+   * Penner overshoot constant for back easing.
+   *
+   * From the standard Penner easing equation, produces ~10% overshoot
+   * — the canonical GSAP back ease default when no parameter is passed.
+   *
+   * @see https://github.com/jesusgollonet/penner_easing/blob/master/equations.js
+   */
+  private static readonly PENNER_OVERSHOOT: number = 1.70158;
+
+  /**
+   * Scale factor for `back.inOut` so overshoot feels symmetric on both
+   * sides of the midpoint. Without this, the first-half overshoot
+   * appears weaker than the second-half.
+   *
+   * Value `1.525` is the empirically-tuned Penner constant.
+   */
+  private static readonly BACK_INOUT_AMPLITUDE: number = 1.525;
+
+  /**
+   * Base exponent for exponential easing (`2^10`).
+   *
+   * `10` gives a sharp but not instant curve — standard across all
+   * Penner-based libraries. The same constant drives `expo.in`,
+   * `expo.out`, and `expo.inOut`.
+   */
+  private static readonly EXPONENT_BASE: number = 10;
+
+  /**
+   * Easing math functions for curves that cannot be expressed as a
+   * single cubic-bezier (back, circ, expo, elastic, bounce).
+   *
+   * Each function takes `timePosition` in `[0, 1]` and returns the
+   * eased progress — which may overshoot outside `[0, 1]` for back
+   * and elastic families.
+   *
+   * Sampled into `keyTimes` + `values` by `sampleProgress()` instead
+   * of using `keySplines`.
+   */
+  private static readonly EASE_FUNCTIONS = new Map<
+    string,
+    (timePosition: number) => number
+  >(
+    Object.entries({
+      // ═══════════════════════════════════════════════════════════
+      // Back easing — quadratic polynomial with configurable overshoot
+      // Formula:  f(t) = t² * ((s+1) * t - s)  where s = overshoot
+      // ═══════════════════════════════════════════════════════════
+
+      "back.in": (timePosition: number): number => {
+        const overshoot: number = Easing.PENNER_OVERSHOOT;
+        const accelerationFactor: number = overshoot + 1;
+        const squaredTime: number = timePosition * timePosition;
+        const overshootTerm: number =
+          accelerationFactor * timePosition - overshoot;
+        const easedProgress: number = squaredTime * overshootTerm;
+
+        return easedProgress;
+      },
+
+      "back.out": (timePosition: number): number => {
+        const overshoot: number = Easing.PENNER_OVERSHOOT;
+        const accelerationFactor: number = overshoot + 1;
+        const reversedTime: number = timePosition - 1;
+        const squaredReversed: number = reversedTime * reversedTime;
+        const overshootTerm: number =
+          accelerationFactor * reversedTime + overshoot;
+        const normalizedProgress: number = squaredReversed * overshootTerm + 1;
+
+        return normalizedProgress;
+      },
+
+      "back.inOut": (timePosition: number): number => {
+        const overshoot: number =
+          Easing.PENNER_OVERSHOOT * Easing.BACK_INOUT_AMPLITUDE;
+        const accelerationFactor: number = overshoot + 1;
+        const doubledTime: number = timePosition * 2;
+
+        // First half — back.in scaled to [0, 0.5]
+        if (doubledTime < 1) {
+          const squaredDouble: number = doubledTime * doubledTime;
+          const overshootTerm: number =
+            accelerationFactor * doubledTime - overshoot;
+          const firstHalfProgress: number = 0.5 * squaredDouble * overshootTerm;
+
+          return firstHalfProgress;
+        }
+
+        // Second half — back.out offset by 1, scaled to [0.5, 1]
+        const shiftedTime: number = doubledTime - 2;
+        const squaredShifted: number = shiftedTime * shiftedTime;
+        const overshootTerm: number =
+          accelerationFactor * shiftedTime + overshoot;
+        const backOutCore: number = squaredShifted * overshootTerm;
+        const secondHalfProgress: number = 0.5 * (backOutCore + 2);
+
+        return secondHalfProgress;
+      },
+
+      // ═══════════════════════════════════════════════════════════
+      // Circular easing — quarter-circle arc
+      // Formula:  f(t) = 1 - √(1 - t²)  (in),  f(t) = √(1 - (t-1)²)  (out)
+      // ═══════════════════════════════════════════════════════════
+
+      "circ.in": (timePosition: number): number => {
+        const squaredTime: number = timePosition * timePosition;
+        const complementRadius: number = 1 - squaredTime;
+        const distanceOnArc: number = Math.sqrt(complementRadius);
+        const easedProgress: number = 1 - distanceOnArc;
+
+        return easedProgress;
+      },
+
+      "circ.out": (timePosition: number): number => {
+        const reversedTime: number = timePosition - 1;
+        const squaredReversed: number = reversedTime * reversedTime;
+        const complementRadius: number = 1 - squaredReversed;
+        const easedProgress: number = Math.sqrt(complementRadius);
+
+        return easedProgress;
+      },
+
+      "circ.inOut": (timePosition: number): number => {
+        const doubledTime: number = timePosition * 2;
+
+        // First half — circ.in scaled to [0, 0.5]
+        if (doubledTime < 1) {
+          const squaredDouble: number = doubledTime * doubledTime;
+          const complementRadius: number = 1 - squaredDouble;
+          const distanceOnArc: number = Math.sqrt(complementRadius);
+          const distanceFromTop: number = distanceOnArc - 1;
+          const firstHalfProgress: number = -0.5 * distanceFromTop;
+
+          return firstHalfProgress;
+        }
+
+        // Second half — circ.out offset by 1, scaled to [0.5, 1]
+        const shiftedTime: number = doubledTime - 2;
+        const squaredShifted: number = shiftedTime * shiftedTime;
+        const complementRadius: number = 1 - squaredShifted;
+        const distanceOnArc: number = Math.sqrt(complementRadius);
+        const secondHalfProgress: number = 0.5 * (distanceOnArc + 1);
+
+        return secondHalfProgress;
+      },
+
+      // ═══════════════════════════════════════════════════════════
+      // Exponential easing — powers of 2
+      // Formula:  f(t) = 2^(10*(t-1))  (in),  f(t) = 1 - 2^(-10*t)  (out)
+      // ═══════════════════════════════════════════════════════════
+
+      "expo.in": (timePosition: number): number => {
+        if (timePosition === 0) return 0;
+
+        const exponent: number = Easing.EXPONENT_BASE * (timePosition - 1);
+        const easedProgress: number = Math.pow(2, exponent);
+
+        return easedProgress;
+      },
+
+      "expo.out": (timePosition: number): number => {
+        if (timePosition === 1) return 1;
+
+        const exponent: number = -Easing.EXPONENT_BASE * timePosition;
+        const powerValue: number = Math.pow(2, exponent);
+        const easedProgress: number = 1 - powerValue;
+
+        return easedProgress;
+      },
+
+      "expo.inOut": (timePosition: number): number => {
+        const isAtBoundary: boolean = [0, 1].includes(timePosition);
+        if (isAtBoundary) return timePosition;
+
+        const doubledTime: number = timePosition * 2;
+        const isFirstHalf: boolean = doubledTime < 1;
+
+        if (isFirstHalf) {
+          const exponent: number = Easing.EXPONENT_BASE * (doubledTime - 1);
+          const powerValue: number = Math.pow(2, exponent);
+          const firstHalfProgress: number = 0.5 * powerValue;
+
+          return firstHalfProgress;
+        }
+
+        const exponent: number = -Easing.EXPONENT_BASE * (doubledTime - 1);
+        const powerValue: number = Math.pow(2, exponent);
+        const invertedPower: number = 2 - powerValue;
+        const secondHalfProgress: number = 0.5 * invertedPower;
+
+        return secondHalfProgress;
+      },
+    }),
+  );
+
+  private static readonly SAMPLE_CACHE = new Map<string, number[]>();
 
   /**
    * Resolves a GSAP ease name or raw `[x1,y1,x2,y2]` array to cubic-bezier control points.
@@ -106,16 +291,23 @@ export class Easing {
    * - `"spline"` — for any ease that resolves to a cubic-bezier
    * - `"discrete"` — reserved for stepped eases (not yet implemented)
    */
-  static resolveCalcMode(
+  static resolveCalcMode = (
     ease: EaseString | number[] | undefined,
-  ): "linear" | "spline" | "discrete" {
-    if (!ease || (typeof ease === "string" && Easing.isLinearEasing(ease))) {
+  ): "linear" | "spline" | "discrete" => {
+    if (
+      ease === undefined ||
+      (typeof ease === "string" && Easing.isLinearEasing(ease))
+    ) {
+      return "linear";
+    }
+
+    if (typeof ease === "string" && Easing.needsSampling(ease)) {
       return "linear";
     }
 
     const bezier = Easing.resolveEase(ease);
 
-    if (!bezier) {
+    if (bezier === null) {
       console.warn(
         `[gsap-to-smil] "${ease}" cannot be expressed as a single cubic-bezier. Falling back to linear.`,
       );
@@ -123,7 +315,7 @@ export class Easing {
     }
 
     return "spline";
-  }
+  };
 
   /**
    * Generates evenly-spaced `keyTimes` values for `intervalCount` keyframe intervals.
@@ -180,6 +372,51 @@ export class Easing {
 
     return splines.join("; ");
   }
+
+  static needsSampling = (ease: EaseString | number[] | undefined): boolean => {
+    if (ease === undefined || ease === null) return false;
+    if (Array.isArray(ease)) return false;
+
+    const normalized: string = ease.replace(/\(.*\)$/, "");
+    const hasEasingFunction: boolean = Easing.EASE_FUNCTIONS.has(normalized);
+    const isElasticFamily: boolean = normalized.startsWith("elastic");
+    const isBounceFamily: boolean = normalized.startsWith("bounce");
+
+    return hasEasingFunction || isElasticFamily || isBounceFamily;
+  };
+
+  static sampleProgress = (
+    ease: EaseString,
+    pointCount: number = 20,
+  ): number[] | null => {
+    const normalized: string = ease.replace(/\(.*\)$/, "");
+    const cacheKey: string = `${normalized}:${pointCount}`;
+
+    const cachedEntry: number[] | undefined = Easing.SAMPLE_CACHE.get(cacheKey);
+    if (cachedEntry !== undefined) return cachedEntry;
+
+    const easingFunction = Easing.EASE_FUNCTIONS.get(normalized);
+    if (easingFunction === undefined) return null;
+
+    const sampleCount: number = pointCount;
+    const progressValues: number[] = [];
+    const timeIncrement: number = 1 / (sampleCount - 1);
+
+    for (let index = 0; index < sampleCount; index++) {
+      const timePosition: number = index * timeIncrement;
+
+      const progressValue: number = easingFunction(timePosition);
+      progressValues.push(progressValue);
+    }
+
+    // Force exact endpoints — floating-point drift on the increment
+    // can leave the last value at 0.9999 instead of 1.0
+    progressValues[0] = easingFunction(0);
+    progressValues[sampleCount - 1] = easingFunction(1);
+
+    Easing.SAMPLE_CACHE.set(cacheKey, progressValues);
+    return progressValues;
+  };
 
   private static isLinearEasing(ease: EaseString): ease is "none" | "linear" {
     return ["none", "linear"].includes(ease);

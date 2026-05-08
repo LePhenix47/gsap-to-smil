@@ -80,27 +80,71 @@ export class SMILBuilder {
    * semicolon-separated list. Otherwise `from` and `to` are set
    * individually and easing uses `intervalCount = 1`.
    */
-  private static applyValues(
+  private static applyValues = (
     element: SVGAnimationElement,
     valuesOptions: Pick<AnimateOptions, "from" | "to" | "values" | "ease">,
-  ): void {
-    if (valuesOptions.values !== undefined) {
-      element.setAttribute("values", valuesOptions.values);
-      const intervalCount: number = valuesOptions.values.split(";").length - 1;
-      SMILBuilder.applyEasing(element, valuesOptions.ease, intervalCount);
+  ): void => {
+    const { from, to, values, ease } = valuesOptions;
 
+    // TODO: Improve code quality here, e.g. remove useless conditionals, group conditional logic ex: a === 0 || a === 1 → [0,1].includes(a) etc.
+
+    // Path 1: explicit values string → pass through unchanged
+    if (values !== undefined) {
+      element.setAttribute("values", values);
+      const intervalCount: number = values.split(";").length - 1;
+      SMILBuilder.applyEasing(element, ease, intervalCount);
       return;
     }
 
-    if (valuesOptions.from !== undefined) {
-      element.setAttribute("from", valuesOptions.from);
-    }
-    if (valuesOptions.to !== undefined) {
-      element.setAttribute("to", valuesOptions.to);
+    // Path 2: sampled easing → compute values from math function
+    const isSampledEase: boolean =
+      typeof ease === "string" && Easing.needsSampling(ease);
+
+    // ! Why is this not a separate inner private method ?
+    if (isSampledEase) {
+      if (from === undefined || to === undefined) return;
+
+      const progressValues: number[] | null = Easing.sampleProgress(
+        ease as string,
+      );
+
+      // No easing function yet (e.g. elastic/bounce) → fall through to Path 3
+      if (progressValues === null) {
+        // skip — fall through to Path 3 below
+      } else {
+        const fromNumber: number = parseFloat(from);
+        const toNumber: number = parseFloat(to);
+        const isNotNumeric: boolean = isNaN(fromNumber) || isNaN(toNumber);
+        if (isNotNumeric) return;
+
+        const range: number = toNumber - fromNumber;
+        const sampledValues: string = progressValues
+          .map((progressValue: number): string => {
+            const interpolatedValue: number =
+              fromNumber + range * progressValue;
+            return interpolatedValue.toFixed(4);
+          })
+          .join("; ");
+
+        const intervalCount: number = progressValues.length - 1;
+        const keyTimes: string = Easing.resolveKeyTimes(intervalCount);
+
+        element.setAttribute("calcMode", "linear");
+        element.setAttribute("keyTimes", keyTimes);
+        element.setAttribute("values", sampledValues);
+        return;
+      }
     }
 
-    SMILBuilder.applyEasing(element, valuesOptions.ease, 1);
-  }
+    // Path 3: from/to with cubic-bezier easing
+    if (from !== undefined) {
+      element.setAttribute("from", from);
+    }
+    if (to !== undefined) {
+      element.setAttribute("to", to);
+    }
+    SMILBuilder.applyEasing(element, ease, 1);
+  };
 
   /**
    * Creates an `<animate>` element from the given options.
