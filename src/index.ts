@@ -23,7 +23,6 @@ export const smil = {
 export { AnimationDebugger } from "./utils/animation-debugger.ts";
 export type { FrameSample, SampleOptions } from "./utils/animation-debugger.ts";
 export { writeDebugLog } from "./utils/log-writer.ts";
-export { Easing } from "./utils/easing.ts";
 export { SMILTween } from "./core/SMILTween.ts";
 export { SMILTimeline } from "./core/SMILTimeline.ts";
 export { Animation } from "./core/Animation.ts";
