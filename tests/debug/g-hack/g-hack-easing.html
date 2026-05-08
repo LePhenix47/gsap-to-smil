@@ -30,64 +30,60 @@
 
 <script type="module">
   import gsap from "https://cdn.jsdelivr.net/npm/gsap@3/+esm";
-  import { AnimationDebugger, writeDebugLog } from "../../../lib/index.js";
+  import { AnimationDebugger, writeDebugLog, Easing } from "../../../lib/index.js";
 
   const SVG_NS = "http://www.w3.org/2000/svg";
 
-  // Ordered exactly as in src/utils/easing.ts
+  // Ordered exactly as in src/utils/easing.ts — names only, no duplicated values
   const EASINGS = [
-    { name: "linear",        keySplines: null },
-    { name: "power1-in",     keySplines: "0.55 0.085 0.68 0.53" },
-    { name: "power1-out",    keySplines: "0.25 0.46 0.45 0.94" },
-    { name: "power1-inOut",  keySplines: "0.455 0.03 0.515 0.955" },
-    { name: "power2-in",     keySplines: "0.55 0.055 0.675 0.19" },
-    { name: "power2-out",    keySplines: "0.215 0.61 0.355 1" },
-    { name: "power2-inOut",  keySplines: "0.645 0.045 0.355 1" },
-    { name: "power3-in",     keySplines: "0.895 0.03 0.685 0.22" },
-    { name: "power3-out",    keySplines: "0.165 0.84 0.44 1" },
-    { name: "power3-inOut",  keySplines: "0.77 0 0.175 1" },
-    { name: "power4-in",     keySplines: "0.755 0.05 0.855 0.06" },
-    { name: "power4-out",    keySplines: "0.23 1 0.32 1" },
-    { name: "power4-inOut",  keySplines: "0.86 0 0.07 1" },
-    { name: "sine-in",       keySplines: "0.47 0 0.745 0.715" },
-    { name: "sine-out",      keySplines: "0.39 0.575 0.565 1" },
-    { name: "sine-inOut",    keySplines: "0.445 0.05 0.55 0.95" },
-    { name: "circ-in",       keySplines: "0.6 0.04 0.98 0.335" },
-    { name: "circ-out",      keySplines: "0.075 0.82 0.165 1" },
-    { name: "circ-inOut",    keySplines: "0.785 0.135 0.15 0.86" },
-    { name: "expo-in",       keySplines: "0.95 0.05 0.795 0.035" },
-    { name: "expo-out",      keySplines: "0.19 1 0.22 1" },
-    { name: "expo-inOut",    keySplines: "1 0 0 1" },
-    { name: "back-in",       keySplines: "0.6 -0.28 0.735 0.045" },
-    { name: "back-out",      keySplines: "0.175 0.885 0.32 1.275" },
-    { name: "back-inOut",    keySplines: "0.68 -0.55 0.265 1.55" },
+    "linear",
+    "power1-in", "power1-out", "power1-inOut",
+    "power2-in", "power2-out", "power2-inOut",
+    "power3-in", "power3-out", "power3-inOut",
+    "power4-in", "power4-out", "power4-inOut",
+    "sine-in", "sine-out", "sine-inOut",
+    "circ-in", "circ-out", "circ-inOut",
+    "expo-in", "expo-out", "expo-inOut",
+    "back-in", "back-out", "back-inOut",
   ];
 
-  function makeAnimTransform(type, from, to, begin, dur, keySplines, tweenIndex) {
-    const el = document.createElementNS(SVG_NS, "animateTransform");
-    el.setAttribute("attributeName", "transform");
-    el.setAttribute("attributeType", "XML");
-    el.setAttribute("type", type);
-    el.setAttribute("from", from);
-    el.setAttribute("to", to);
-    el.setAttribute("begin", begin);
-    el.setAttribute("dur", `${dur}s`);
-    el.setAttribute("fill", "freeze");
-    el.setAttribute("additive", "sum");
-    el.dataset.tween = String(tweenIndex);
-    if (keySplines) {
-      el.setAttribute("calcMode", "spline");
-      el.setAttribute("keyTimes", "0; 1");
-      el.setAttribute("keySplines", keySplines);
-    }
-    return el;
+  function resolveEasingAttributes(easeName) {
+    if (easeName === "linear") return {};
+
+    const gsapEaseName = easeName.replace(/-/g, ".");
+    const keySplines = Easing.resolveKeySplines(gsapEaseName, 1);
+    if (keySplines === null) return {};
+
+    const keyTimes = Easing.resolveKeyTimes(1);
+    return { calcMode: "spline", keyTimes, keySplines };
   }
 
-  function buildTestSVG(easing) {
+  function makeAnimTransform(type, from, to, begin, dur, easeName, tweenIndex) {
+    const element = document.createElementNS(SVG_NS, "animateTransform");
+    element.setAttribute("attributeName", "transform");
+    element.setAttribute("attributeType", "XML");
+    element.setAttribute("type", type);
+    element.setAttribute("from", from);
+    element.setAttribute("to", to);
+    element.setAttribute("begin", begin);
+    element.setAttribute("dur", `${dur}s`);
+    element.setAttribute("fill", "freeze");
+    element.setAttribute("additive", "sum");
+    element.dataset.tween = String(tweenIndex);
+
+    const easingAttributes = resolveEasingAttributes(easeName);
+    for (const [attribute, value] of Object.entries(easingAttributes)) {
+      element.setAttribute(attribute, value);
+    }
+
+    return element;
+  }
+
+  function buildTestSVG(easeName) {
     const svg = document.createElementNS(SVG_NS, "svg");
     svg.setAttribute("width", "500");
     svg.setAttribute("height", "80");
-    svg.id = `svg-${easing.name}`;
+    svg.id = `svg-${easeName}`;
 
     const gsapRect = document.createElementNS(SVG_NS, "rect");
     gsapRect.setAttribute("x", "50");
@@ -96,25 +92,23 @@
     gsapRect.setAttribute("height", "40");
     gsapRect.setAttribute("fill", "#34d399");
     gsapRect.setAttribute("fill-opacity", "0.5");
-    gsapRect.id = `gsap-${easing.name}`;
+    gsapRect.id = `gsap-${easeName}`;
     svg.appendChild(gsapRect);
-
-    const { keySplines } = easing;
 
     const outerG = document.createElementNS(SVG_NS, "g");
     const animG = document.createElementNS(SVG_NS, "g");
 
-    animG.appendChild(makeAnimTransform("translate", "0 0", "50 0", "indefinite", 1, keySplines, 1));
-    animG.appendChild(makeAnimTransform("translate", "0 0", "100 0", "indefinite", 1, keySplines, 2));
+    animG.appendChild(makeAnimTransform("translate", "0 0", "50 0", "indefinite", 1, easeName, 1));
+    animG.appendChild(makeAnimTransform("translate", "0 0", "100 0", "indefinite", 1, easeName, 2));
 
     const pivotOuter = document.createElementNS(SVG_NS, "g");
     pivotOuter.setAttribute("transform", "translate(70,40)");
 
     const innerG = document.createElementNS(SVG_NS, "g");
 
-    innerG.appendChild(makeAnimTransform("scale", "1 1", "1.5 1.5", "indefinite", 1, keySplines, 1));
-    innerG.appendChild(makeAnimTransform("scale", "1 1", "1.333 1.333", "indefinite", 1, keySplines, 2));
-    innerG.appendChild(makeAnimTransform("skewX", "0", "10", "indefinite", 1, keySplines, 1));
+    innerG.appendChild(makeAnimTransform("scale", "1 1", "1.5 1.5", "indefinite", 1, easeName, 1));
+    innerG.appendChild(makeAnimTransform("scale", "1 1", "1.333 1.333", "indefinite", 1, easeName, 2));
+    innerG.appendChild(makeAnimTransform("skewX", "0", "10", "indefinite", 1, easeName, 1));
 
     const pivotInner = document.createElementNS(SVG_NS, "g");
     pivotInner.setAttribute("transform", "translate(-70,-40)");
@@ -126,7 +120,7 @@
     smilRect.setAttribute("height", "40");
     smilRect.setAttribute("fill", "#f97316");
     smilRect.setAttribute("fill-opacity", "0.5");
-    smilRect.id = `smil-${easing.name}`;
+    smilRect.id = `smil-${easeName}`;
 
     pivotInner.appendChild(smilRect);
     innerG.appendChild(pivotInner);
@@ -161,11 +155,11 @@
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.className = "log-toggle";
-    cb.dataset.ease = easing.name;
-    cb.checked = savedChecked ? savedChecked.has(easing.name) : true;
+    cb.dataset.ease = easing;
+    cb.checked = savedChecked ? savedChecked.has(easing) : true;
     cb.addEventListener("change", saveCheckedState);
     const span = document.createElement("span");
-    span.textContent = easing.name;
+    span.textContent = easing;
     label.appendChild(cb);
     label.appendChild(span);
     h3.appendChild(label);
@@ -175,16 +169,16 @@
 
   async function sampleEasing(easing, svg) {
     const svgRect = svg.getBoundingClientRect();
-    const gsapEl = document.getElementById(`gsap-${easing.name}`);
-    const smilEl = document.getElementById(`smil-${easing.name}`);
+    const gsapEl = document.getElementById(`gsap-${easing}`);
+    const smilEl = document.getElementById(`smil-${easing}`);
 
     const samples = await AnimationDebugger.sample({
-      pairs: [{ gsapElement: gsapEl, smilElement: smilEl, label: easing.name }],
+      pairs: [{ gsapElement: gsapEl, smilElement: smilEl, label: easing }],
       duration: 2.3,
       fps: 15,
     });
 
-    const lines = [`easing: ${easing.name}`];
+    const lines = [`easing: ${easing}`];
     lines.push("time     elapsed  GSAP(x,y)         SMIL(x,y)          Δx      Δy");
     lines.push("─".repeat(78));
     let maxDx = 0, maxDy = 0, fails = 0;
@@ -220,9 +214,9 @@
     lines.push(`GSAP transform: ${gsapMatrix}`);
     lines.push(`SMIL  BBox: x=${smilEl.getBBox().x.toFixed(1)} y=${smilEl.getBBox().y.toFixed(1)}`);
 
-    writeDebugLog(`g-hack/g-hack-easing/${easing.name}`, lines);
+    writeDebugLog(`g-hack/g-hack-easing/${easing}`, lines);
 
-    return { name: easing.name, maxDx, maxDy, fails, total: samples.length };
+    return { name: easing, maxDx, maxDy, fails, total: samples.length };
   }
 
   async function run() {
@@ -231,7 +225,7 @@
     // Get selected easings
     const selected = [];
     for (const easing of EASINGS) {
-      const cb = document.querySelector(`[data-ease="${easing.name}"]`);
+      const cb = document.querySelector(`[data-ease="${easing}"]`);
       if (cb && cb.checked) selected.push(easing);
     }
 
@@ -251,21 +245,21 @@
     // Fire all GSAP timelines
     for (const easing of selected) {
       const tl = gsap.timeline();
-      tl.to(`#gsap-${easing.name}`, {
+      tl.to(`#gsap-${easing}`, {
         x: 50, scale: 1.5, skewX: 10,
         transformOrigin: "50% 50%",
-        duration: 1, ease: gsapName(easing.name),
+        duration: 1, ease: gsapName(easing),
       });
-      tl.to(`#gsap-${easing.name}`, {
+      tl.to(`#gsap-${easing}`, {
         x: 150, scale: 2,
         transformOrigin: "50% 50%",
-        duration: 1, ease: gsapName(easing.name),
+        duration: 1, ease: gsapName(easing),
       });
     }
 
     // Sync SMIL — tween 1 begins now, tween 2 begins after 1s
     for (const easing of selected) {
-      const svg = document.getElementById(`svg-${easing.name}`);
+      const svg = document.getElementById(`svg-${easing}`);
       const t1 = svg.querySelectorAll('animateTransform[data-tween="1"]');
       const t2 = svg.querySelectorAll('animateTransform[data-tween="2"]');
       for (const anim of t1) anim.beginElement();
@@ -276,10 +270,10 @@
 
     // Build pairs for snapshot sampling
     const pairs = selected.map(easing => {
-      const svg = document.getElementById(`svg-${easing.name}`);
-      const gsapEl = document.getElementById(`gsap-${easing.name}`);
-      const smilEl = document.getElementById(`smil-${easing.name}`);
-      return { gsapElement: gsapEl, smilElement: smilEl, label: easing.name };
+      const svg = document.getElementById(`svg-${easing}`);
+      const gsapEl = document.getElementById(`gsap-${easing}`);
+      const smilEl = document.getElementById(`smil-${easing}`);
+      return { gsapElement: gsapEl, smilElement: smilEl, label: easing };
     });
 
     const samples = await AnimationDebugger.sample({ pairs, duration: 2.3, fps: 15 });
@@ -288,12 +282,12 @@
     const results = [];
     for (let i = 0; i < selected.length; i++) {
       const easing = selected[i];
-      const svg = document.getElementById(`svg-${easing.name}`);
+      const svg = document.getElementById(`svg-${easing}`);
       const svgRect = svg.getBoundingClientRect();
-      const gsapEl = document.getElementById(`gsap-${easing.name}`);
-      const smilEl = document.getElementById(`smil-${easing.name}`);
+      const gsapEl = document.getElementById(`gsap-${easing}`);
+      const smilEl = document.getElementById(`smil-${easing}`);
 
-      const lines = [`easing: ${easing.name}`];
+      const lines = [`easing: ${easing}`];
       lines.push("time     elapsed  GSAP(x,y)         SMIL(x,y)          Δx      Δy");
       lines.push("─".repeat(78));
       let maxDx = 0, maxDy = 0, fails = 0;
@@ -327,7 +321,7 @@
       lines.push(`GSAP transform: ${gsapEl.getAttribute("transform") || "(none)"}`);
       lines.push(`SMIL  BBox: x=${smilEl.getBBox().x.toFixed(1)} y=${smilEl.getBBox().y.toFixed(1)}`);
 
-      writeDebugLog(`g-hack/g-hack-easing/${easing.name}`, lines);
+      writeDebugLog(`g-hack/g-hack-easing/${easing}`, lines);
 
       const status = fails === 0 && maxDx < 1 && maxDy < 1 ? "PASS" : "FAIL";
       results.push({ ...easing, status, maxDx, maxDy, fails, total: samples.length });

@@ -22,7 +22,8 @@
       "Bash(Select-String \"dev-server|log-writer\")",
       "Bash(git mv *)",
       "mcp__plugin_context-mode_context-mode__ctx_execute_file",
-      "mcp__plugin_context-mode_context-mode__ctx_fetch_and_index"
+      "mcp__plugin_context-mode_context-mode__ctx_fetch_and_index",
+      "Bash(git *)"
     ],
     "deny": [
       "Bash(rm -rf *)",
