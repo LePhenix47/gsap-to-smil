@@ -49,10 +49,6 @@ export class Easing {
       "expo.in": [0.95, 0.05, 0.795, 0.035],
       "expo.out": [0.19, 1, 0.22, 1],
       "expo.inOut": [1, 0, 0, 1],
-
-      "back.in": [0.6, -0.28, 0.735, 0.045],
-      "back.out": [0.175, 0.885, 0.32, 1.275],
-      "back.inOut": [0.68, -0.55, 0.265, 1.55],
     }),
   );
 
@@ -75,6 +71,12 @@ export class Easing {
         );
       }
 
+      if (ease.some((v) => v < 0 || v > 1)) {
+        throw new Error(
+          `[gsap-to-smil] in SMIL cubic-bezier values must be between 0 and 1`,
+        );
+      }
+
       return ease as [number, number, number, number];
     }
 
@@ -85,7 +87,11 @@ export class Easing {
     // * Strip GSAP parameters, ex: "back.out(1.7)" → "back.out" for Map lookup
     const normalized: string = ease.replace(/\(.*\)$/, "");
 
-    if (normalized.startsWith("elastic") || normalized.startsWith("bounce")) {
+    if (
+      normalized.startsWith("elastic") ||
+      normalized.startsWith("bounce") ||
+      normalized.startsWith("back")
+    ) {
       return null;
     }
 
