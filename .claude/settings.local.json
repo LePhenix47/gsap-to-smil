@@ -20,7 +20,8 @@
       "Bash(start \"\" \"tests\\\\debug\\\\g-hack-isolated.html\")",
       "Bash(start *)",
       "Bash(Select-String \"dev-server|log-writer\")",
-      "Bash(git mv *)"
+      "Bash(git mv *)",
+      "mcp__plugin_context-mode_context-mode__ctx_execute_file"
     ],
     "deny": [
       "Bash(rm -rf *)",
