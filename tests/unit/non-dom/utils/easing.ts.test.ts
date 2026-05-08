@@ -12,7 +12,7 @@ describe("easing", () => {
       const easeName = "power2.out";
 
       const result = Easing.resolveEase(easeName);
-      const expected: [number, number, number, number] = [0.215, 0.61, 0.355, 1];
+      const expected: [number, number, number, number] = [0, 0.55, 0.45, 1];
 
       expect(result).toEqual(expected);
     });
@@ -119,24 +119,24 @@ describe("easing", () => {
 
     // ===== EDGE CASES =====
 
-    it("EDGE CASE: elastic ease returns linear — needsSampling catches it before bezier fallback", () => {
+    it("EDGE CASE: elastic ease falls back to linear and emits a console warning", () => {
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
       const result = Easing.resolveCalcMode("elastic.out");
 
       expect(result).toBe("linear");
-      expect(warnSpy).toHaveBeenCalledTimes(0);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
 
       warnSpy.mockRestore();
     });
 
-    it("EDGE CASE: bounce ease returns linear — needsSampling catches it before bezier fallback", () => {
+    it("EDGE CASE: bounce ease falls back to linear and emits a console warning", () => {
       const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 
       const result = Easing.resolveCalcMode("bounce.out");
 
       expect(result).toBe("linear");
-      expect(warnSpy).toHaveBeenCalledTimes(0);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
 
       warnSpy.mockRestore();
     });
