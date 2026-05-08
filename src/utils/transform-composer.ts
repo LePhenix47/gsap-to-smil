@@ -36,6 +36,15 @@ export type ComposeResult = {
  * all with `additive="sum"` so they stack instead of replacing
  * each other.
  *
+ * **CRITICAL — this class does NOT perform additive delta conversion.**
+ * It passes `from`/`to` values straight through to SMIL as absolute
+ * numbers. For a single tween (`smil.to`), this is correct: `from="0 0"`
+ * and `to="100 0"` adds 0→100 on top of the identity base. For
+ * multi-segment timelines, the **caller** (SMILTimeline) must compute
+ * deltas before invoking `compose`. Passing absolute GSAP values
+ * for timeline segment N will double-accumulate because SMIL's
+ * `additive="sum"` stacks on top of previously frozen segments.
+ *
  * When `scale` or `skew` is present, a "pivot scaffold" — nested
  * `<g>` elements that translate to the transform origin and back —
  * is built via {@link buildPivotScaffold}. This replicates CSS
