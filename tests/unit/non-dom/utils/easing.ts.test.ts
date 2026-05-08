@@ -12,7 +12,9 @@ describe("easing", () => {
       const easeName = "power2.out";
 
       const result = Easing.resolveEase(easeName);
-      const expected: [number, number, number, number] = [0, 0.55, 0.45, 1];
+      const expected: [number, number, number, number] = [
+        0.215, 0.61, 0.355, 1,
+      ];
 
       expect(result).toEqual(expected);
     });
@@ -67,25 +69,38 @@ describe("easing", () => {
     // ===== EDGE CASES =====
 
     it("EDGE CASE: unrecognised ease name throws", () => {
-      expect(() => Easing.resolveEase("totally.unknown")).toThrow();
+      const ease = "totally.unknown";
+      expect(() => Easing.resolveEase(ease)).toThrow(
+        `[gsap-to-smil] Unknown ease "${ease}". Use a named GSAP ease, "linear", or a [x1,y1,x2,y2] array.`,
+      );
     });
 
     it("EDGE CASE: raw array with wrong length throws", () => {
       const badArray: number[] = [0.42, 0, 0.58];
 
-      expect(() => Easing.resolveEase(badArray)).toThrow();
+      expect(() => Easing.resolveEase(badArray)).toThrow(
+        `[gsap-to-smil] cubic-bezier array must have exactly 4 values, got ${badArray.length}`,
+      );
     });
 
     it("EDGE CASE: raw array with a value below 0 throws — SMIL cubic-bezier requires all values in [0,1]", () => {
-      const underflowArray: [number, number, number, number] = [0.42, -0.2, 0.58, 1];
+      const underflowArray: [number, number, number, number] = [
+        0.42, -0.2, 0.58, 1,
+      ];
 
-      expect(() => Easing.resolveEase(underflowArray)).toThrow();
+      expect(() => Easing.resolveEase(underflowArray)).toThrow(
+        "[gsap-to-smil] in SMIL cubic-bezier values must be between 0 and 1",
+      );
     });
 
     it("EDGE CASE: raw array with a value above 1 throws — SMIL cubic-bezier requires all values in [0,1]", () => {
-      const overflowArray: [number, number, number, number] = [0.42, 0, 0.58, 1.4];
+      const overflowArray: [number, number, number, number] = [
+        0.42, 0, 0.58, 1.4,
+      ];
 
-      expect(() => Easing.resolveEase(overflowArray)).toThrow();
+      expect(() => Easing.resolveEase(overflowArray)).toThrow(
+        "[gsap-to-smil] in SMIL cubic-bezier values must be between 0 and 1",
+      );
     });
   });
 
