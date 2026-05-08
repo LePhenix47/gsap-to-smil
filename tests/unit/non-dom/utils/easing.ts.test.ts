@@ -75,6 +75,18 @@ describe("easing", () => {
 
       expect(() => Easing.resolveEase(badArray)).toThrow();
     });
+
+    it("EDGE CASE: raw array with a value below 0 throws — SMIL cubic-bezier requires all values in [0,1]", () => {
+      const underflowArray: [number, number, number, number] = [0.42, -0.2, 0.58, 1];
+
+      expect(() => Easing.resolveEase(underflowArray)).toThrow();
+    });
+
+    it("EDGE CASE: raw array with a value above 1 throws — SMIL cubic-bezier requires all values in [0,1]", () => {
+      const overflowArray: [number, number, number, number] = [0.42, 0, 0.58, 1.4];
+
+      expect(() => Easing.resolveEase(overflowArray)).toThrow();
+    });
   });
 
   // ===== resolveCalcMode =====
