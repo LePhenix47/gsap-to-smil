@@ -31,6 +31,7 @@
   "scripts": {
     "debug": "bun --watch debug-server.ts",
     "ai-slop-check": "bunx fallow",
+    "ts-debug": "bun build ./src/debug-index.ts --outdir debug-lib --debug",
     "ts": "bun build ./src/index.ts --outdir lib",
     "ts-types": "bun run tsc --noEmit",
     "test": "bun run test:non-dom && bun run test:dom && bun run test:smoke",
