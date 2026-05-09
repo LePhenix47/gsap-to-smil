@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Debug — scale</title>
@@ -7,223 +8,311 @@
     { "imports": { "gsap": "https://cdn.jsdelivr.net/npm/gsap@3/+esm" } }
   </script>
   <style>
-    :root { color-scheme: dark; }
-    :root:has(#diff:checked) .smil-fig {
-      position: absolute; top: 0; left: 0;
-      mix-blend-mode: difference; pointer-events: none;
+    :root {
+      color-scheme: dark;
     }
+
+    :root:has(#diff:checked) .smil-fig {
+      position: absolute;
+      top: 0;
+      left: 0;
+      mix-blend-mode: difference;
+      pointer-events: none;
+    }
+
     body {
       --p: 2rem;
-      display: flex; flex-direction: column; gap: 2.5rem;
-      padding: var(--p); font-family: monospace;
-      background: #111; color: #eee; margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+      padding: var(--p);
+      font-family: monospace;
+      background: #111;
+      color: #eee;
+      margin: 0;
     }
+
     header {
-      display: flex; align-items: center; gap: 2rem;
-      padding: var(--p); margin: calc(var(--p) * -1);
-      position: sticky; top: 0; background: #111; z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      padding: var(--p);
+      margin: calc(var(--p) * -1);
+      position: sticky;
+      top: 0;
+      background: #111;
+      z-index: 3;
       border-bottom: 1px solid #222;
     }
-    h1 { font-size: 1rem; margin: 0; }
-    h2 { font-size: 0.8rem; margin: 0 0 0.4rem; color: #aaa; }
-    h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.45; margin: 0; }
-    label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer; }
-    section { display: flex; flex-direction: column; gap: 0.6rem; }
-    .pair { position: relative; display: flex; gap: 2rem; align-items: flex-start; }
-    figure { margin: 0; display: flex; flex-direction: column; gap: 0.35rem; }
-    figcaption { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.4; }
-    svg { display: block; border: 1px solid #2a2a2a; background: #1a1a1a; }
+
+    h1 {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    h2 {
+      font-size: 0.8rem;
+      margin: 0 0 0.4rem;
+      color: #aaa;
+    }
+
+    h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.45;
+      margin: 0;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .pair {
+      position: relative;
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+    }
+
+    figure {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    figcaption {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.4;
+    }
+
+    svg {
+      display: block;
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+    }
   </style>
 </head>
+
 <body>
 
-<header>
-  <h1>scale / scaleX / scaleY — transformOrigin: "50% 50%"</h1>
-  <label><input type="checkbox" id="diff"> Diff</label>
-</header>
+  <header>
+    <h1>scale / scaleX / scaleY — transformOrigin: "50% 50%"</h1>
+    <label><input type="checkbox" id="diff"> Diff</label>
+  </header>
 
-<!-- rect -->
-<section>
-  <h3>rect — scaleX: 2 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <rect id="g-rect" x="100" y="50" width="200" height="100" fill="steelblue" opacity="0.8"/>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <rect id="s-rect" x="100" y="50" width="200" height="100" fill="steelblue" opacity="0.8"/>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- rect -->
+  <section>
+    <h3>rect — scaleX: 2 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <rect id="g-rect" x="100" y="50" width="200" height="100" fill="steelblue" opacity="0.8" />
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <rect id="s-rect" x="100" y="50" width="200" height="100" fill="steelblue" opacity="0.8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- circle -->
-<section>
-  <h3>circle — scaleX: 2 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <circle id="g-circle" cx="200" cy="100" r="60" fill="coral" opacity="0.8"/>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <circle id="s-circle" cx="200" cy="100" r="60" fill="coral" opacity="0.8"/>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- circle -->
+  <section>
+    <h3>circle — scaleX: 2 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <circle id="g-circle" cx="200" cy="100" r="60" fill="coral" opacity="0.8" />
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <circle id="s-circle" cx="200" cy="100" r="60" fill="coral" opacity="0.8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- ellipse -->
-<section>
-  <h3>ellipse — scaleY: 2 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <line x1="0" y1="100" x2="400" y2="100" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <ellipse id="g-ellipse" cx="200" cy="100" rx="100" ry="40" fill="mediumseagreen" opacity="0.8"/>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <line x1="0" y1="100" x2="400" y2="100" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <ellipse id="s-ellipse" cx="200" cy="100" rx="100" ry="40" fill="mediumseagreen" opacity="0.8"/>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- ellipse -->
+  <section>
+    <h3>ellipse — scaleY: 2 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <line x1="0" y1="100" x2="400" y2="100" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <ellipse id="g-ellipse" cx="200" cy="100" rx="100" ry="40" fill="mediumseagreen" opacity="0.8" />
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <line x1="0" y1="100" x2="400" y2="100" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <ellipse id="s-ellipse" cx="200" cy="100" rx="100" ry="40" fill="mediumseagreen" opacity="0.8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- text -->
-<section>
-  <h3>text — scaleX: 2 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 400 100" width="300" height="75">
-        <text id="g-text" x="200" y="60" text-anchor="middle" font-size="32" fill="orchid" opacity="0.9">Hello</text>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 400 100" width="300" height="75">
-        <text id="s-text" x="200" y="60" text-anchor="middle" font-size="32" fill="orchid" opacity="0.9">Hello</text>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- text -->
+  <section>
+    <h3>text — scaleX: 2 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 400 100" width="300" height="75">
+          <text id="g-text" x="200" y="60" text-anchor="middle" font-size="32" fill="orchid" opacity="0.9">Hello</text>
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 400 100" width="300" height="75">
+          <text id="s-text" x="200" y="60" text-anchor="middle" font-size="32" fill="orchid" opacity="0.9">Hello</text>
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- path -->
-<section>
-  <h3>path — scale: 2 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <path id="g-path" d="M200,50 L270,150 L130,150 Z" fill="gold" opacity="0.8"/>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <path id="s-path" d="M200,50 L270,150 L130,150 Z" fill="gold" opacity="0.8"/>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- path -->
+  <section>
+    <h3>path — scale: 2 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <path id="g-path" d="M200,50 L270,150 L130,150 Z" fill="gold" opacity="0.8" />
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <path id="s-path" d="M200,50 L270,150 L130,150 Z" fill="gold" opacity="0.8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- polygon -->
-<section>
-  <h3>polygon — scaleX: 2 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <polygon id="g-polygon" points="200,30 270,150 130,150" fill="tomato" opacity="0.8"/>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <polygon id="s-polygon" points="200,30 270,150 130,150" fill="tomato" opacity="0.8"/>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- polygon -->
+  <section>
+    <h3>polygon — scaleX: 2 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <polygon id="g-polygon" points="200,30 270,150 130,150" fill="tomato" opacity="0.8" />
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <polygon id="s-polygon" points="200,30 270,150 130,150" fill="tomato" opacity="0.8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- line -->
-<section>
-  <h3>line — scaleX: 3 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <line id="g-line" x1="120" y1="100" x2="280" y2="100" stroke="cyan" stroke-width="6" opacity="0.8"/>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <line id="s-line" x1="120" y1="100" x2="280" y2="100" stroke="cyan" stroke-width="6" opacity="0.8"/>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- line -->
+  <section>
+    <h3>line — scaleX: 3 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <line id="g-line" x1="120" y1="100" x2="280" y2="100" stroke="cyan" stroke-width="6" opacity="0.8" />
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <line id="s-line" x1="120" y1="100" x2="280" y2="100" stroke="cyan" stroke-width="6" opacity="0.8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- g (group) -->
-<section>
-  <h3>g (group) — scaleX: 2 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <g id="g-group">
-          <rect x="130" y="50" width="60" height="60" fill="plum" opacity="0.8"/>
-          <rect x="210" y="50" width="60" height="60" fill="lightblue" opacity="0.8"/>
-        </g>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 400 200" width="300" height="150">
-        <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <g id="s-group">
-          <rect x="130" y="50" width="60" height="60" fill="plum" opacity="0.8"/>
-          <rect x="210" y="50" width="60" height="60" fill="lightblue" opacity="0.8"/>
-        </g>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- g (group) -->
+  <section>
+    <h3>g (group) — scaleX: 2 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <g id="g-group">
+            <rect x="130" y="50" width="60" height="60" fill="plum" opacity="0.8" />
+            <rect x="210" y="50" width="60" height="60" fill="lightblue" opacity="0.8" />
+          </g>
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 400 200" width="300" height="150">
+          <line x1="200" y1="0" x2="200" y2="200" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <g id="s-group">
+            <rect x="130" y="50" width="60" height="60" fill="plum" opacity="0.8" />
+            <rect x="210" y="50" width="60" height="60" fill="lightblue" opacity="0.8" />
+          </g>
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<script type="module">
-  import gsap from "gsap";
-  import { smil } from "../../../lib/index.js";
+  <script type="module">
+    import gsap from "gsap";
+    import smil from "../../../lib/index.js";
 
-  const opts = { duration: 1.5, repeat: -1, yoyo: true, ease: "power1.inOut" };
+    const opts = { duration: 1.5, repeat: -1, yoyo: true, ease: "power1.inOut" };
 
-  gsap.to("#g-rect",    { scaleX: 2, transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-rect",    { scaleX: 2, transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-rect", { scaleX: 2, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-rect", { scaleX: 2, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-circle",  { scaleX: 2, transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-circle",  { scaleX: 2, transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-circle", { scaleX: 2, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-circle", { scaleX: 2, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-ellipse", { scaleY: 2, transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-ellipse", { scaleY: 2, transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-ellipse", { scaleY: 2, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-ellipse", { scaleY: 2, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-text",    { scaleX: 2, transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-text",    { scaleX: 2, transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-text", { scaleX: 2, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-text", { scaleX: 2, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-path",    { scale: 2, transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-path",    { scale: 2, transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-path", { scale: 2, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-path", { scale: 2, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-polygon", { scaleX: 2, transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-polygon", { scaleX: 2, transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-polygon", { scaleX: 2, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-polygon", { scaleX: 2, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-line",    { scaleX: 3, transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-line",    { scaleX: 3, transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-line", { scaleX: 3, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-line", { scaleX: 3, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-group",   { scaleX: 2, transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-group",   { scaleX: 2, transformOrigin: "50% 50%", ...opts });
-</script>
+    gsap.to("#g-group", { scaleX: 2, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-group", { scaleX: 2, transformOrigin: "50% 50%", ...opts });
+  </script>
 
 </body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Debug — rotation</title>
@@ -7,236 +8,319 @@
     { "imports": { "gsap": "https://cdn.jsdelivr.net/npm/gsap@3/+esm" } }
   </script>
   <style>
-    :root { color-scheme: dark; }
-    :root:has(#diff:checked) .smil-fig {
-      position: absolute; top: 0; left: 0;
-      mix-blend-mode: difference; pointer-events: none;
+    :root {
+      color-scheme: dark;
     }
+
+    :root:has(#diff:checked) .smil-fig {
+      position: absolute;
+      top: 0;
+      left: 0;
+      mix-blend-mode: difference;
+      pointer-events: none;
+    }
+
     body {
       --p: 2rem;
-      display: flex; flex-direction: column; gap: 2.5rem;
-      padding: var(--p); font-family: monospace;
-      background: #111; color: #eee; margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+      padding: var(--p);
+      font-family: monospace;
+      background: #111;
+      color: #eee;
+      margin: 0;
     }
+
     header {
-      display: flex; align-items: center; gap: 2rem;
-      padding: var(--p); margin: calc(var(--p) * -1);
-      position: sticky; top: 0; background: #111; z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      padding: var(--p);
+      margin: calc(var(--p) * -1);
+      position: sticky;
+      top: 0;
+      background: #111;
+      z-index: 3;
       border-bottom: 1px solid #222;
     }
-    h1 { font-size: 1rem; margin: 0; }
-    h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.45; margin: 0; }
-    label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer; }
-    section { display: flex; flex-direction: column; gap: 0.6rem; }
-    .pair { position: relative; display: flex; gap: 2rem; align-items: flex-start; }
-    figure { margin: 0; display: flex; flex-direction: column; gap: 0.35rem; }
-    figcaption { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.4; }
-    svg { display: block; border: 1px solid #2a2a2a; background: #1a1a1a; }
+
+    h1 {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.45;
+      margin: 0;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .pair {
+      position: relative;
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+    }
+
+    figure {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    figcaption {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.4;
+    }
+
+    svg {
+      display: block;
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+    }
   </style>
 </head>
+
 <body>
 
-<header>
-  <h1>rotation — transformOrigin: "50% 50%"</h1>
-  <label><input type="checkbox" id="diff"> Diff</label>
-</header>
+  <header>
+    <h1>rotation — transformOrigin: "50% 50%"</h1>
+    <label><input type="checkbox" id="diff"> Diff</label>
+  </header>
 
-<!-- rect -->
-<section>
-  <h3>rect — rotation: 45 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 300 300" width="200" height="200">
-        <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <rect id="g-rect" x="75" y="75" width="150" height="150" fill="steelblue" opacity="0.8"/>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 300 300" width="200" height="200">
-        <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <rect id="s-rect" x="75" y="75" width="150" height="150" fill="steelblue" opacity="0.8"/>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- rect -->
+  <section>
+    <h3>rect — rotation: 45 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 300 300" width="200" height="200">
+          <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <rect id="g-rect" x="75" y="75" width="150" height="150" fill="steelblue" opacity="0.8" />
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 300 300" width="200" height="200">
+          <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <rect id="s-rect" x="75" y="75" width="150" height="150" fill="steelblue" opacity="0.8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- circle -->
-<section>
-  <h3>circle — rotation: 90 · transformOrigin: "50% 50%" (should stay in place — circle is symmetric)</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 300 300" width="200" height="200">
-        <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <circle id="g-circle" cx="150" cy="150" r="80" fill="none" stroke="coral" stroke-width="4" opacity="0.8"/>
-        <rect x="145" y="70" width="10" height="10" fill="coral" opacity="0.6"/>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 300 300" width="200" height="200">
-        <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <circle id="s-circle" cx="150" cy="150" r="80" fill="none" stroke="coral" stroke-width="4" opacity="0.8"/>
-        <rect x="145" y="70" width="10" height="10" fill="coral" opacity="0.6"/>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- circle -->
+  <section>
+    <h3>circle — rotation: 90 · transformOrigin: "50% 50%" (should stay in place — circle is symmetric)</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 300 300" width="200" height="200">
+          <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <circle id="g-circle" cx="150" cy="150" r="80" fill="none" stroke="coral" stroke-width="4" opacity="0.8" />
+          <rect x="145" y="70" width="10" height="10" fill="coral" opacity="0.6" />
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 300 300" width="200" height="200">
+          <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <circle id="s-circle" cx="150" cy="150" r="80" fill="none" stroke="coral" stroke-width="4" opacity="0.8" />
+          <rect x="145" y="70" width="10" height="10" fill="coral" opacity="0.6" />
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- ellipse -->
-<section>
-  <h3>ellipse — rotation: 45 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 300 300" width="200" height="200">
-        <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <ellipse id="g-ellipse" cx="150" cy="150" rx="110" ry="50" fill="mediumseagreen" opacity="0.8"/>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 300 300" width="200" height="200">
-        <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <ellipse id="s-ellipse" cx="150" cy="150" rx="110" ry="50" fill="mediumseagreen" opacity="0.8"/>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- ellipse -->
+  <section>
+    <h3>ellipse — rotation: 45 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 300 300" width="200" height="200">
+          <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <ellipse id="g-ellipse" cx="150" cy="150" rx="110" ry="50" fill="mediumseagreen" opacity="0.8" />
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 300 300" width="200" height="200">
+          <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <ellipse id="s-ellipse" cx="150" cy="150" rx="110" ry="50" fill="mediumseagreen" opacity="0.8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- text -->
-<section>
-  <h3>text — rotation: 30 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 400 120" width="300" height="90">
-        <text id="g-text" x="200" y="75" text-anchor="middle" font-size="40" fill="orchid" opacity="0.9">Hello</text>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 400 120" width="300" height="90">
-        <text id="s-text" x="200" y="75" text-anchor="middle" font-size="40" fill="orchid" opacity="0.9">Hello</text>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- text -->
+  <section>
+    <h3>text — rotation: 30 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 400 120" width="300" height="90">
+          <text id="g-text" x="200" y="75" text-anchor="middle" font-size="40" fill="orchid" opacity="0.9">Hello</text>
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 400 120" width="300" height="90">
+          <text id="s-text" x="200" y="75" text-anchor="middle" font-size="40" fill="orchid" opacity="0.9">Hello</text>
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- path -->
-<section>
-  <h3>path — rotation: 180 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 300 300" width="200" height="200">
-        <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <path id="g-path" d="M150,50 L230,200 L70,200 Z" fill="gold" opacity="0.8"/>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 300 300" width="200" height="200">
-        <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <path id="s-path" d="M150,50 L230,200 L70,200 Z" fill="gold" opacity="0.8"/>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- path -->
+  <section>
+    <h3>path — rotation: 180 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 300 300" width="200" height="200">
+          <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <path id="g-path" d="M150,50 L230,200 L70,200 Z" fill="gold" opacity="0.8" />
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 300 300" width="200" height="200">
+          <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <path id="s-path" d="M150,50 L230,200 L70,200 Z" fill="gold" opacity="0.8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- polygon -->
-<section>
-  <h3>polygon — rotation: 60 · transformOrigin: "0% 0%" (top-left corner pivot)</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 400 400" width="200" height="200">
-        <circle cx="100" cy="80" r="5" fill="#f00" opacity="0.6"/>
-        <polygon id="g-polygon" points="100,80 220,80 160,180" fill="tomato" opacity="0.8"/>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 400 400" width="200" height="200">
-        <circle cx="100" cy="80" r="5" fill="#f00" opacity="0.6"/>
-        <polygon id="s-polygon" points="100,80 220,80 160,180" fill="tomato" opacity="0.8"/>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- polygon -->
+  <section>
+    <h3>polygon — rotation: 60 · transformOrigin: "0% 0%" (top-left corner pivot)</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 400 400" width="200" height="200">
+          <circle cx="100" cy="80" r="5" fill="#f00" opacity="0.6" />
+          <polygon id="g-polygon" points="100,80 220,80 160,180" fill="tomato" opacity="0.8" />
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 400 400" width="200" height="200">
+          <circle cx="100" cy="80" r="5" fill="#f00" opacity="0.6" />
+          <polygon id="s-polygon" points="100,80 220,80 160,180" fill="tomato" opacity="0.8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- line -->
-<section>
-  <h3>line — rotation: 90 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 300 300" width="200" height="200">
-        <line id="g-line" x1="75" y1="150" x2="225" y2="150" stroke="cyan" stroke-width="6" opacity="0.8"/>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 300 300" width="200" height="200">
-        <line id="s-line" x1="75" y1="150" x2="225" y2="150" stroke="cyan" stroke-width="6" opacity="0.8"/>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- line -->
+  <section>
+    <h3>line — rotation: 90 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 300 300" width="200" height="200">
+          <line id="g-line" x1="75" y1="150" x2="225" y2="150" stroke="cyan" stroke-width="6" opacity="0.8" />
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 300 300" width="200" height="200">
+          <line id="s-line" x1="75" y1="150" x2="225" y2="150" stroke="cyan" stroke-width="6" opacity="0.8" />
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<!-- g (group) -->
-<section>
-  <h3>g (group) — rotation: 45 · transformOrigin: "50% 50%"</h3>
-  <div class="pair">
-    <figure><figcaption>GSAP</figcaption>
-      <svg viewBox="0 0 300 300" width="200" height="200">
-        <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <g id="g-group">
-          <rect x="90" y="90" width="60" height="60" fill="plum" opacity="0.8"/>
-          <rect x="160" y="90" width="60" height="60" fill="lightblue" opacity="0.8"/>
-        </g>
-      </svg>
-    </figure>
-    <figure class="smil-fig"><figcaption>SMIL</figcaption>
-      <svg viewBox="0 0 300 300" width="200" height="200">
-        <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3"/>
-        <g id="s-group">
-          <rect x="90" y="90" width="60" height="60" fill="plum" opacity="0.8"/>
-          <rect x="160" y="90" width="60" height="60" fill="lightblue" opacity="0.8"/>
-        </g>
-      </svg>
-    </figure>
-  </div>
-</section>
+  <!-- g (group) -->
+  <section>
+    <h3>g (group) — rotation: 45 · transformOrigin: "50% 50%"</h3>
+    <div class="pair">
+      <figure>
+        <figcaption>GSAP</figcaption>
+        <svg viewBox="0 0 300 300" width="200" height="200">
+          <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <g id="g-group">
+            <rect x="90" y="90" width="60" height="60" fill="plum" opacity="0.8" />
+            <rect x="160" y="90" width="60" height="60" fill="lightblue" opacity="0.8" />
+          </g>
+        </svg>
+      </figure>
+      <figure class="smil-fig">
+        <figcaption>SMIL</figcaption>
+        <svg viewBox="0 0 300 300" width="200" height="200">
+          <line x1="150" y1="0" x2="150" y2="300" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <line x1="0" y1="150" x2="300" y2="150" stroke="#f00" stroke-width="1" opacity="0.3" />
+          <g id="s-group">
+            <rect x="90" y="90" width="60" height="60" fill="plum" opacity="0.8" />
+            <rect x="160" y="90" width="60" height="60" fill="lightblue" opacity="0.8" />
+          </g>
+        </svg>
+      </figure>
+    </div>
+  </section>
 
-<script type="module">
-  import gsap from "gsap";
-  import { smil } from "../../../lib/index.js";
+  <script type="module">
+    import gsap from "gsap";
+    import smil from "../../../lib/index.js";
 
-  const opts = { duration: 1.5, repeat: -1, yoyo: true, ease: "power1.inOut" };
+    const opts = { duration: 1.5, repeat: -1, yoyo: true, ease: "power1.inOut" };
 
-  gsap.to("#g-rect",    { rotation: 45,  transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-rect",    { rotation: 45,  transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-rect", { rotation: 45, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-rect", { rotation: 45, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-circle",  { rotation: 90,  transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-circle",  { rotation: 90,  transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-circle", { rotation: 90, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-circle", { rotation: 90, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-ellipse", { rotation: 45,  transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-ellipse", { rotation: 45,  transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-ellipse", { rotation: 45, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-ellipse", { rotation: 45, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-text",    { rotation: 30,  transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-text",    { rotation: 30,  transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-text", { rotation: 30, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-text", { rotation: 30, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-path",    { rotation: 180, transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-path",    { rotation: 180, transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-path", { rotation: 180, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-path", { rotation: 180, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-polygon", { rotation: 60,  transformOrigin: "0% 0%",   ...opts });
-  smil.to("#s-polygon", { rotation: 60,  transformOrigin: "0% 0%",   ...opts });
+    gsap.to("#g-polygon", { rotation: 60, transformOrigin: "0% 0%", ...opts });
+    smil.to("#s-polygon", { rotation: 60, transformOrigin: "0% 0%", ...opts });
 
-  gsap.to("#g-line",    { rotation: 90,  transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-line",    { rotation: 90,  transformOrigin: "50% 50%", ...opts });
+    gsap.to("#g-line", { rotation: 90, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-line", { rotation: 90, transformOrigin: "50% 50%", ...opts });
 
-  gsap.to("#g-group",   { rotation: 45,  transformOrigin: "50% 50%", ...opts });
-  smil.to("#s-group",   { rotation: 45,  transformOrigin: "50% 50%", ...opts });
-</script>
+    gsap.to("#g-group", { rotation: 45, transformOrigin: "50% 50%", ...opts });
+    smil.to("#s-group", { rotation: 45, transformOrigin: "50% 50%", ...opts });
+  </script>
 
 </body>
+
 </html>
