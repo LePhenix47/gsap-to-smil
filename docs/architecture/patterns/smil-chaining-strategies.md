@@ -125,8 +125,84 @@ GSAP segment 2: from {x: 50}  to {x: 150}  → SMIL from="50 0" to="150 0"
 - Compound transforms — each type needs its own element, `replace` can't coordinate across them
 - `additive="sum"` — would double-accumulate because `from` is non-identity
 
+## Strategy 3: `values=` + `repeatCount="indefinite"` (one element per transform type)
+
+**Proof:** `tests/integration/begin-chaining-poc.html` (version B)
+
+One `<animateTransform>` per transform type per target. The full cycle is encoded in `values=`, `keyTimes=`, and `keySplines=`. `repeatCount="indefinite"` handles looping — SMIL resets to the first keyframe each iteration. No begin chaining, no frozen segments, no cross-cycle accumulation.
+
+```xml
+<!-- 5-step cycle, 2.92s, infinite loop — ONE element -->
+<animateTransform type="translate" additive="sum"
+  values="0 0; 42 0; 42 -24; 42 -24; 0 0; 0 0; -22 0; 0 0; 0 0"
+  keyTimes="0; 0.12; 0.229; 0.332; 0.456; 0.558; 0.661; 0.777; 1"
+  keySplines="p1inOut; p1out; 0 0 1 1; sineInOut; 0 0 1 1; p1inOut; p1inOut; 0 0 1 1"
+  calcMode="spline"
+  dur="2.92s"
+  repeatCount="indefinite" />
+```
+
+### How it works
+
+Each `values=` entry is an absolute position (not a delta). The animation interpolates through the full cycle trajectory. `repeatCount="indefinite"` restarts from keyframe 0 each iteration — no frozen state survives across cycles.
+
+Hold periods (waiting for cross-target sync) use duplicate adjacent values with `keySplines="0 0 1 1"` (linear hold). Active animation segments use GSAP-equivalent easing (power1.inOut, sine.inOut, etc.).
+
+### Per-interval easing
+
+`calcMode="spline"` + per-interval `keySplines` preserves GSAP's per-segment easing. Hold intervals use the identity spline `0 0 1 1` (produces no movement). Active intervals use the appropriate cubic-bezier for that step.
+
+### Stagger
+
+Each target gets its own `keyTimes` adjusted by the stagger offset. The values string is identical across targets — only the timing of when values change differs. Target 3 (slowest) anchors cross-target sync points.
+
+### Scale / skew
+
+Same pattern — one element per type per target. Holds at identity (`1 1` / `0`) during non-active periods, animates during the active window, holds peak, returns to identity at cycle restart.
+
+### Validation
+
+Compared frame-by-frame against `additive="replace"` + begin chaining (strategy 2) over 3 full cycles:
+
+```
+cycle 1: max Δ = 0.1px, 0/41 fail frames
+cycle 2: max Δ = 0.1px, 0/41 fail frames
+cycle 3: max Δ = 0.1px, 0/41 fail frames
+```
+
+Zero cross-cycle accumulation. Zero drift. Full data in `tests/debug/begin-chaining-poc/replace-vs-sum-3cycles.log`.
+
+### Works with
+
+- Pivot scaffold (translate on outer `<g>`, scale/skew on inner `<g>`)
+- Compound transforms (one element per type, all with `additive="sum"`)
+- Infinite loops (`repeatCount="indefinite"` — native, no edge cases)
+- Per-segment easing (`calcMode="spline"` + per-interval `keySplines`)
+- Stagger (per-target `keyTimes` offset)
+- No begin chaining, no `<set>`, no freeze accumulation
+
+### Cost
+
+Must know all timeline segments at build time. Dynamic mid-playback additions require rebuilding the `values=` string and restarting the element. Acceptable for Phase 1 (static tweens) and manageable for Phase 2 (timelines collect children before building).
+
+### Why strategies 1 and 2 failed
+
+| Strategy | Compound transforms | Infinite loops | Why it breaks |
+|----------|-------------------|----------------|---------------|
+| 1: `sum` + `freeze` + begin chain | ✓ | ✗ | Frozen instances pile up across cycles, deltas don't cancel perfectly at boundaries |
+| 2: `replace` + `freeze` + begin chain | ✗ | ✓ | `replace` on same element kills all but one transform type |
+| 3: `sum` + `values=` + `repeatCount` | ✓ | ✓ | SMIL handles reset internally, no frozen accumulation |
+
+### `<set>` dead end
+
+Using `<set attributeName="transform">` to snapshot accumulated state between steps was attempted and failed. `<set>` writes a string to `transform` which doesn't compose with `<animateTransform additive="sum">` — the SMIL engine can't mix string-based and matrix-based transform contributions on the same attribute. `tests/integration/begin-chaining-poc.html` version history documents this attempt.
+
 ## Decision
 
-**Strategy 1 (`additive="sum"` + deltas) is the library's path.** It's the only strategy that supports the pivot scaffold, which is mandatory for `scale`/`skew` with custom `transformOrigin`. Strategy 2 proves SMIL timelines are possible but can't handle the library's full transform API.
+**Strategy 3 (`values=` + `repeatCount="indefinite"`) is the library's path.** One element per transform type per target. Full cycle encoded as keyframes. SMIL handles looping natively. Works with pivot scaffold, compound transforms, per-segment easing, stagger, and infinite loops — all proven with frame-level accuracy across multiple cycles.
 
-The delta computation (GSAP absolute → SMIL additive) must live in SMILTimeline, not in TransformComposer. TransformComposer outputs whatever values it receives — the timeline is responsible for computing deltas before calling compose.
+The library's `SMILTimeline` must:
+1. Collect all child tweens before building
+2. Compute per-transform-type `values=`, `keyTimes=`, `keySplines=` for the full timeline duration
+3. Produce one `<animateTransform>` per type per target with `repeatCount` set appropriately
+4. Handle stagger by offsetting per-target `keyTimes`
