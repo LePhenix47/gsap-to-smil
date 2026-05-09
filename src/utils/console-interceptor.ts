@@ -14,8 +14,6 @@ const ALL_CONSOLE_LEVELS: readonly ConsoleLevel[] = [
 ];
 
 export class ConsoleInterceptor {
-  private static consoleOverride() {}
-
   static install(options?: ConsoleInterceptorOptions): void {
     const { levels, serverUrl = "http://localhost:3456" } = options ?? {};
     const activeLevels: readonly ConsoleLevel[] = levels ?? ALL_CONSOLE_LEVELS;
@@ -27,43 +25,24 @@ export class ConsoleInterceptor {
       body: JSON.stringify({ page }),
     }).catch(() => {});
 
-    window.console = new Proxy(console, {
-      get(target, prop) {
-        const original: unknown = Reflect.get(target, prop);
+    for (const level of activeLevels) {
+      const original = console[level].bind(console);
 
-        if (
-          typeof prop !== "string" ||
-          !activeLevels.includes(prop as ConsoleLevel) ||
-          typeof original !== "function"
-        ) {
-          return typeof original === "function"
-            ? original.bind(target)
-            : original;
-        }
+      console[level] = (...callArguments: unknown[]) => {
+        original(...callArguments);
 
-        return (...callArguments: unknown[]) => {
-          (original as (...args: unknown[]) => void).apply(
-            target,
-            callArguments,
-          );
+        const serializedArguments: string[] = callArguments.map((argument) =>
+          typeof argument === "object"
+            ? JSON.stringify(argument)
+            : String(argument),
+        );
 
-          const serializedArguments: string[] = callArguments.map((argument) =>
-            typeof argument === "object"
-              ? JSON.stringify(argument)
-              : String(argument),
-          );
-
-          fetch(`${serverUrl}/console`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              page,
-              level: prop,
-              args: serializedArguments,
-            }),
-          }).catch(() => {});
-        };
-      },
-    });
+        fetch(`${serverUrl}/console`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ page, level, args: serializedArguments }),
+        }).catch(() => {});
+      };
+    }
   }
 }

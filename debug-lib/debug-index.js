@@ -59,23 +59,18 @@ class ConsoleInterceptor {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ page })
     }).catch(() => {});
-    window.console = new Proxy(console, {
-      get(target, prop) {
-        const original = Reflect.get(target, prop);
-        if (typeof prop !== "string" || !activeLevels.includes(prop) || typeof original !== "function") {
-          return typeof original === "function" ? original.bind(target) : original;
-        }
-        return (...callArguments) => {
-          original.apply(target, callArguments);
-          const serializedArguments = callArguments.map((argument) => typeof argument === "object" ? JSON.stringify(argument) : String(argument));
-          fetch(`${serverUrl}/console`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ page, level: prop, args: serializedArguments })
-          }).catch(() => {});
-        };
-      }
-    });
+    for (const level of activeLevels) {
+      const original = console[level].bind(console);
+      console[level] = (...callArguments) => {
+        original(...callArguments);
+        const serializedArguments = callArguments.map((argument) => typeof argument === "object" ? JSON.stringify(argument) : String(argument));
+        fetch(`${serverUrl}/console`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ page, level, args: serializedArguments })
+        }).catch(() => {});
+      };
+    }
   }
 }
 // src/utils/log-writer.ts
