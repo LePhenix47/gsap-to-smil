@@ -1,26 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<title>additive="sum" vs additive="replace"</title>
-<style>
-  :root { color-scheme: dark; }
-  body { background: #111; color: #eee; font-family: monospace; padding: 1.5rem; }
-  h1 { font-size: 0.9rem; margin: 0 0 1rem; }
-  h3 { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.5; margin: 2rem 0 0.2rem; }
-  svg { border: 1px solid #2a2a2a; background: #1a1a1a; display: block; }
-  p { font-size: 0.62rem; opacity: 0.5; margin: 0 0 0.5rem; line-height: 1.5; max-width: 48rem; }
-  pre { background: #1a1a1a; border: 1px solid #2a2a2a; padding: 0.6rem; font-size: 0.62rem;
-        max-height: 35vh; overflow: auto; margin: 1rem 0 0; white-space: pre-wrap; line-height: 1.4; }
-  .pass { color: #34d399; }
-  .fail { color: #f87171; }
-</style>
+  <meta charset="UTF-8" />
+  <title>additive="sum" vs additive="replace"</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    body {
+      background: #111;
+      color: #eee;
+      font-family: monospace;
+      padding: 1.5rem;
+    }
+
+    h1 {
+      font-size: 0.9rem;
+      margin: 0 0 1rem;
+    }
+
+    h3 {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.5;
+      margin: 2rem 0 0.2rem;
+    }
+
+    svg {
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+      display: block;
+    }
+
+    p {
+      font-size: 0.62rem;
+      opacity: 0.5;
+      margin: 0 0 0.5rem;
+      line-height: 1.5;
+      max-width: 48rem;
+    }
+
+    pre {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      padding: 0.6rem;
+      font-size: 0.62rem;
+      max-height: 35vh;
+      overflow: auto;
+      margin: 1rem 0 0;
+      white-space: pre-wrap;
+      line-height: 1.4;
+    }
+
+    .pass {
+      color: #34d399;
+    }
+
+    .fail {
+      color: #f87171;
+    }
+  </style>
 </head>
+
 <body>
 
-<h1>additive="sum" vs additive="replace"</h1>
+  <h1>additive="sum" vs additive="replace"</h1>
 
-<!--
+  <!--
   All rects: x=20 y=15 w=24 h=24. Center = (32, 27).
 
   ---- Case 2/3 scale=2 + translate=80 ----
@@ -37,244 +86,234 @@
   Double-accum (from=60): frozen(60) + 60→120 = 120→180. Δx=180. Center → (212, 27). Top-left → (200, 15).
 -->
 
-<!-- ═══════ 1. replace + single type ✓ ═══════ -->
-<h3>1. replace + single type — ✓ works</h3>
-<p>
-  Three <code>type="translate"</code> on same <code>&lt;rect&gt;</code>.
-  Each replaces previous. <code>from</code> matches frozen state → no jump.
-  Rect returns to origin.
-</p>
-<svg width="300" height="60" xmlns="http://www.w3.org/2000/svg">
-  <!-- gray = start -->
-  <circle cx="32" cy="27" r="3" fill="#6b7280" />
-  <text x="38" y="30" fill="#6b7280" font-size="7">start</text>
-  <!-- green = expected end (same as start) -->
-  <circle cx="32" cy="27" r="3" fill="none" stroke="#34d399" stroke-width="1.5" />
-  <text x="38" y="42" fill="#34d399" font-size="7">expected=start</text>
+  <!-- ═══════ 1. replace + single type ✓ ═══════ -->
+  <h3>1. replace + single type — ✓ works</h3>
+  <p>
+    Three <code>type="translate"</code> on same <code>&lt;rect&gt;</code>.
+    Each replaces previous. <code>from</code> matches frozen state → no jump.
+    Rect returns to origin.
+  </p>
+  <svg width="300" height="60" xmlns="http://www.w3.org/2000/svg">
+    <!-- gray = start -->
+    <circle cx="32" cy="27" r="3" fill="#6b7280" />
+    <text x="38" y="30" fill="#6b7280" font-size="7">start</text>
+    <!-- green = expected end (same as start) -->
+    <circle cx="32" cy="27" r="3" fill="none" stroke="#34d399" stroke-width="1.5" />
+    <text x="38" y="42" fill="#34d399" font-size="7">expected=start</text>
 
-  <rect id="r1" x="20" y="15" width="24" height="24" fill="#34d399" fill-opacity="0.65">
-    <animateTransform attributeName="transform" type="translate"
-      additive="replace" fill="freeze"
-      from="0 0" to="80 0" dur="1s" begin="0s" />
-    <animateTransform attributeName="transform" type="translate"
-      additive="replace" fill="freeze"
-      from="80 0" to="80 -24" dur="0.7s" begin="1s" />
-    <animateTransform attributeName="transform" type="translate"
-      additive="replace" fill="freeze"
-      from="80 -24" to="0 0" dur="0.8s" begin="1.7s" />
-  </rect>
-</svg>
+    <rect id="r1" x="20" y="15" width="24" height="24" fill="#34d399" fill-opacity="0.65">
+      <animateTransform attributeName="transform" type="translate" additive="replace" fill="freeze" from="0 0" to="80 0"
+        dur="1s" begin="0s" />
+      <animateTransform attributeName="transform" type="translate" additive="replace" fill="freeze" from="80 0"
+        to="80 -24" dur="0.7s" begin="1s" />
+      <animateTransform attributeName="transform" type="translate" additive="replace" fill="freeze" from="80 -24"
+        to="0 0" dur="0.8s" begin="1.7s" />
+    </rect>
+  </svg>
 
-<!-- ═══════ 2. replace + two types ✗ ═══════ -->
-<h3>2. replace + two types on same element — ✗ broken</h3>
-<p>
-  <code>translate</code> + <code>scale</code> on same <code>&lt;g&gt;</code>,
-  both <code>replace</code>. Scale (last in DOM) wins — <strong>translate is lost</strong>.
-  Rect scales 2× but stays near origin. Did not translate 80px right.
-</p>
-<svg width="320" height="90" xmlns="http://www.w3.org/2000/svg">
-  <!-- gray = start center (32,27) -->
-  <circle cx="32" cy="27" r="3" fill="#6b7280" />
-  <text x="38" y="30" fill="#6b7280" font-size="7">start</text>
-  <!-- green = expected BOTH: center (144,54) — translate(80) × scale(2) -->
-  <circle cx="144" cy="54" r="4" fill="#34d399" fill-opacity="0.7" />
-  <text x="150" y="57" fill="#34d399" font-size="7">expected (both)</text>
-  <!-- red dashed = actual: only scale, center (64,54), translate lost -->
-  <circle cx="64" cy="54" r="4" fill="none" stroke="#f87171" stroke-width="1.5" stroke-dasharray="2 2" />
-  <text x="70" y="57" fill="#f87171" font-size="7">actual (scale only)</text>
+  <!-- ═══════ 2. replace + two types ✗ ═══════ -->
+  <h3>2. replace + two types on same element — ✗ broken</h3>
+  <p>
+    <code>translate</code> + <code>scale</code> on same <code>&lt;g&gt;</code>,
+    both <code>replace</code>. Scale (last in DOM) wins — <strong>translate is lost</strong>.
+    Rect scales 2× but stays near origin. Did not translate 80px right.
+  </p>
+  <svg width="320" height="90" xmlns="http://www.w3.org/2000/svg">
+    <!-- gray = start center (32,27) -->
+    <circle cx="32" cy="27" r="3" fill="#6b7280" />
+    <text x="38" y="30" fill="#6b7280" font-size="7">start</text>
+    <!-- green = expected BOTH: center (144,54) — translate(80) × scale(2) -->
+    <circle cx="144" cy="54" r="4" fill="#34d399" fill-opacity="0.7" />
+    <text x="150" y="57" fill="#34d399" font-size="7">expected (both)</text>
+    <!-- red dashed = actual: only scale, center (64,54), translate lost -->
+    <circle cx="64" cy="54" r="4" fill="none" stroke="#f87171" stroke-width="1.5" stroke-dasharray="2 2" />
+    <text x="70" y="57" fill="#f87171" font-size="7">actual (scale only)</text>
 
-  <g>
-    <animateTransform attributeName="transform" type="translate"
-      additive="replace" fill="freeze"
-      from="0 0" to="80 0" dur="2s" begin="0s" />
-    <animateTransform attributeName="transform" type="scale"
-      additive="replace" fill="freeze"
-      from="1 1" to="2 2" dur="2s" begin="0s" />
-    <rect id="r2" x="20" y="15" width="24" height="24" fill="#f87171" fill-opacity="0.55" />
-  </g>
-</svg>
+    <g>
+      <animateTransform attributeName="transform" type="translate" additive="replace" fill="freeze" from="0 0" to="80 0"
+        dur="2s" begin="0s" />
+      <animateTransform attributeName="transform" type="scale" additive="replace" fill="freeze" from="1 1" to="2 2"
+        dur="2s" begin="0s" />
+      <rect id="r2" x="20" y="15" width="24" height="24" fill="#f87171" fill-opacity="0.55" />
+    </g>
+  </svg>
 
-<!-- ═══════ 3. sum + two types ✓ ═══════ -->
-<h3>3. sum + two types on same element — ✓ works</h3>
-<p>
-  Same elements, <code>additive="sum"</code>. Both compose: result = translate × scale(2).
-  Rect is 2× larger AND translated.
-</p>
-<svg width="320" height="90" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="32" cy="27" r="3" fill="#6b7280" />
-  <text x="38" y="30" fill="#6b7280" font-size="7">start</text>
-  <!-- green = expected: center (144,54), 48×48 -->
-  <circle cx="144" cy="54" r="4" fill="#34d399" fill-opacity="0.7" />
-  <text x="150" y="57" fill="#34d399" font-size="7">expected ✓</text>
+  <!-- ═══════ 3. sum + two types ✓ ═══════ -->
+  <h3>3. sum + two types on same element — ✓ works</h3>
+  <p>
+    Same elements, <code>additive="sum"</code>. Both compose: result = translate × scale(2).
+    Rect is 2× larger AND translated.
+  </p>
+  <svg width="320" height="90" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="32" cy="27" r="3" fill="#6b7280" />
+    <text x="38" y="30" fill="#6b7280" font-size="7">start</text>
+    <!-- green = expected: center (144,54), 48×48 -->
+    <circle cx="144" cy="54" r="4" fill="#34d399" fill-opacity="0.7" />
+    <text x="150" y="57" fill="#34d399" font-size="7">expected ✓</text>
 
-  <g>
-    <animateTransform attributeName="transform" type="translate"
-      additive="sum" fill="freeze"
-      from="0 0" to="80 0" dur="2s" begin="0s" />
-    <animateTransform attributeName="transform" type="scale"
-      additive="sum" fill="freeze"
-      from="1 1" to="2 2" dur="2s" begin="0s" />
-    <rect id="r3" x="20" y="15" width="24" height="24" fill="#60a5fa" fill-opacity="0.55" />
-  </g>
-</svg>
+    <g>
+      <animateTransform attributeName="transform" type="translate" additive="sum" fill="freeze" from="0 0" to="80 0"
+        dur="2s" begin="0s" />
+      <animateTransform attributeName="transform" type="scale" additive="sum" fill="freeze" from="1 1" to="2 2" dur="2s"
+        begin="0s" />
+      <rect id="r3" x="20" y="15" width="24" height="24" fill="#60a5fa" fill-opacity="0.55" />
+    </g>
+  </svg>
 
-<!-- ═══════ 4. sum + non-identity from ✗ ═══════ -->
-<h3>4. sum + non-identity from — ✗ double-accumulation</h3>
-<p>
-  Segment 1 freezes at x=60. Segment 2: <code>from="60 0" to="120 0"</code>.
-  With <code>sum</code>: frozen(60) + (60→120) = <strong>120→180</strong>.
-  Rect overshoots to x=200 instead of x=140.
-</p>
-<svg width="340" height="60" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="32" cy="27" r="3" fill="#6b7280" />
-  <text x="38" y="30" fill="#6b7280" font-size="7">start</text>
-  <!-- green = expected center (152,27) Δx=120 -->
-  <circle cx="152" cy="27" r="4" fill="#34d399" fill-opacity="0.7" />
-  <text x="158" y="30" fill="#34d399" font-size="7">expected (x=140)</text>
-  <!-- yellow = actual center (212,27) Δx=180 -->
-  <circle cx="212" cy="27" r="4" fill="#fbbf24" fill-opacity="0.7" />
-  <text x="218" y="30" fill="#fbbf24" font-size="7">actual (x=200)</text>
+  <!-- ═══════ 4. sum + non-identity from ✗ ═══════ -->
+  <h3>4. sum + non-identity from — ✗ double-accumulation</h3>
+  <p>
+    Segment 1 freezes at x=60. Segment 2: <code>from="60 0" to="120 0"</code>.
+    With <code>sum</code>: frozen(60) + (60→120) = <strong>120→180</strong>.
+    Rect overshoots to x=200 instead of x=140.
+  </p>
+  <svg width="340" height="60" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="32" cy="27" r="3" fill="#6b7280" />
+    <text x="38" y="30" fill="#6b7280" font-size="7">start</text>
+    <!-- green = expected center (152,27) Δx=120 -->
+    <circle cx="152" cy="27" r="4" fill="#34d399" fill-opacity="0.7" />
+    <text x="158" y="30" fill="#34d399" font-size="7">expected (x=140)</text>
+    <!-- yellow = actual center (212,27) Δx=180 -->
+    <circle cx="212" cy="27" r="4" fill="#fbbf24" fill-opacity="0.7" />
+    <text x="218" y="30" fill="#fbbf24" font-size="7">actual (x=200)</text>
 
-  <rect id="r4" x="20" y="15" width="24" height="24" fill="#f87171" fill-opacity="0.55">
-    <animateTransform attributeName="transform" type="translate"
-      additive="sum" fill="freeze"
-      from="0 0" to="60 0" dur="1s" begin="0s" />
-    <animateTransform attributeName="transform" type="translate"
-      additive="sum" fill="freeze"
-      from="60 0" to="120 0" dur="1.5s" begin="1s" />
-  </rect>
-</svg>
+    <rect id="r4" x="20" y="15" width="24" height="24" fill="#f87171" fill-opacity="0.55">
+      <animateTransform attributeName="transform" type="translate" additive="sum" fill="freeze" from="0 0" to="60 0"
+        dur="1s" begin="0s" />
+      <animateTransform attributeName="transform" type="translate" additive="sum" fill="freeze" from="60 0" to="120 0"
+        dur="1.5s" begin="1s" />
+    </rect>
+  </svg>
 
-<!-- ═══════ 5. sum + identity from ✓ ═══════ -->
-<h3>5. sum + identity from — ✓ correct</h3>
-<p>
-  Same segments, but segment 2: <code>from="0 0" to="60 0"</code> (identity).
-  frozen(60) + (0→60) = <strong>60→120</strong>. Lands on the green dot.
-</p>
-<svg width="340" height="60" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="32" cy="27" r="3" fill="#6b7280" />
-  <text x="38" y="30" fill="#6b7280" font-size="7">start</text>
-  <!-- green = expected center (152,27) Δx=120 -->
-  <circle cx="152" cy="27" r="4" fill="#34d399" fill-opacity="0.7" />
-  <text x="158" y="30" fill="#34d399" font-size="7">expected (x=140) ✓</text>
+  <!-- ═══════ 5. sum + identity from ✓ ═══════ -->
+  <h3>5. sum + identity from — ✓ correct</h3>
+  <p>
+    Same segments, but segment 2: <code>from="0 0" to="60 0"</code> (identity).
+    frozen(60) + (0→60) = <strong>60→120</strong>. Lands on the green dot.
+  </p>
+  <svg width="340" height="60" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="32" cy="27" r="3" fill="#6b7280" />
+    <text x="38" y="30" fill="#6b7280" font-size="7">start</text>
+    <!-- green = expected center (152,27) Δx=120 -->
+    <circle cx="152" cy="27" r="4" fill="#34d399" fill-opacity="0.7" />
+    <text x="158" y="30" fill="#34d399" font-size="7">expected (x=140) ✓</text>
 
-  <rect id="r5" x="20" y="15" width="24" height="24" fill="#34d399" fill-opacity="0.55">
-    <animateTransform attributeName="transform" type="translate"
-      additive="sum" fill="freeze"
-      from="0 0" to="60 0" dur="1s" begin="0s" />
-    <animateTransform attributeName="transform" type="translate"
-      additive="sum" fill="freeze"
-      from="0 0" to="60 0" dur="1.5s" begin="1s" />
-  </rect>
-</svg>
+    <rect id="r5" x="20" y="15" width="24" height="24" fill="#34d399" fill-opacity="0.55">
+      <animateTransform attributeName="transform" type="translate" additive="sum" fill="freeze" from="0 0" to="60 0"
+        dur="1s" begin="0s" />
+      <animateTransform attributeName="transform" type="translate" additive="sum" fill="freeze" from="0 0" to="60 0"
+        dur="1.5s" begin="1s" />
+    </rect>
+  </svg>
 
-<pre id="log">Waiting for animations to finish (4s)...</pre>
+  <pre id="log">Waiting for animations to finish (4s)...</pre>
 
-<script type="module">
-  import { AnimationDebugger, ConsoleInterceptor, writeDebugLog } from "../../lib/debug-index.js";
+  <script type="module">
+    import { AnimationDebugger, ConsoleInterceptor, writeDebugLog } from "../../debug-lib/debug-index.js";
 
-  ConsoleInterceptor.install();
+    ConsoleInterceptor.install();
 
-  console.log("additive-demo: waiting 4s for animations to settle...");
+    console.log("additive-demo: waiting 4s for animations to settle...");
 
-  await new Promise(r => setTimeout(r, 4000));
+    await new Promise(r => setTimeout(r, 4000));
 
-  function pos(id) {
-    const el = document.getElementById(id);
-    const r = el.getBoundingClientRect();
-    const svg = el.closest("svg").getBoundingClientRect();
-    return {
-      left: r.left - svg.left,
-      top: r.top - svg.top,
-      w: r.width,
-      h: r.height,
-      cx: r.left - svg.left + r.width / 2,
-      cy: r.top - svg.top + r.height / 2,
-    };
-  }
+    function pos(id) {
+      const el = document.getElementById(id);
+      const r = el.getBoundingClientRect();
+      const svg = el.closest("svg").getBoundingClientRect();
+      return {
+        left: r.left - svg.left,
+        top: r.top - svg.top,
+        w: r.width,
+        h: r.height,
+        cx: r.left - svg.left + r.width / 2,
+        cy: r.top - svg.top + r.height / 2,
+      };
+    }
 
-  const p1 = pos("r1");   // expected: back at (20,15) size 24
-  const p2 = pos("r2");   // expected: (100,15) size 24 (translate only)
-  const p3 = pos("r3");   // expected: (200,30) size 48 (scale 2× + translate)
-  const p4 = pos("r4");   // expected: (140,15) / actual: (200,15) double-acc
-  const p5 = pos("r5");   // expected: (140,15) — correct
+    const p1 = pos("r1");   // expected: back at (20,15) size 24
+    const p2 = pos("r2");   // expected: (100,15) size 24 (translate only)
+    const p3 = pos("r3");   // expected: (200,30) size 48 (scale 2× + translate)
+    const p4 = pos("r4");   // expected: (140,15) / actual: (200,15) double-acc
+    const p5 = pos("r5");   // expected: (140,15) — correct
 
-  const case1Pass = p1.left < 22;
-  const case2TranslateLost = p2.left < 60;
-  const case3Pass = p3.w > 40;
-  const case4DoubleAccum = p4.left > 160;
-  const case5Pass = p5.left < 160;
+    const case1Pass = p1.left < 22;
+    const case2TranslateLost = p2.left < 60;
+    const case3Pass = p3.w > 40;
+    const case4DoubleAccum = p4.left > 160;
+    const case5Pass = p5.left < 160;
 
-  if (case1Pass) {
-    console.log(`[1] replace single type: PASS — back at origin (left=${p1.left.toFixed(1)})`);
-  } else {
-    console.warn(`[1] replace single type: FAIL — expected left≈20, got left=${p1.left.toFixed(1)}`);
-  }
+    if (case1Pass) {
+      console.log(`[1] replace single type: PASS — back at origin (left=${p1.left.toFixed(1)})`);
+    } else {
+      console.warn(`[1] replace single type: FAIL — expected left≈20, got left=${p1.left.toFixed(1)}`);
+    }
 
-  if (case2TranslateLost) {
-    console.warn(`[2] replace two types: translate lost (left=${p2.left.toFixed(1)}) — scale-only wins, expected both at left≈120`);
-  } else {
-    console.log(`[2] replace two types: translate survived unexpectedly (left=${p2.left.toFixed(1)})`);
-  }
+    if (case2TranslateLost) {
+      console.warn(`[2] replace two types: translate lost (left=${p2.left.toFixed(1)}) — scale-only wins, expected both at left≈120`);
+    } else {
+      console.log(`[2] replace two types: translate survived unexpectedly (left=${p2.left.toFixed(1)})`);
+    }
 
-  if (case3Pass) {
-    console.log(`[3] sum two types: PASS — both transforms composed, size=${p3.w.toFixed(1)}×${p3.h.toFixed(1)} left=${p3.left.toFixed(1)}`);
-  } else {
-    console.warn(`[3] sum two types: FAIL — expected size≈48, got size=${p3.w.toFixed(1)}`);
-  }
+    if (case3Pass) {
+      console.log(`[3] sum two types: PASS — both transforms composed, size=${p3.w.toFixed(1)}×${p3.h.toFixed(1)} left=${p3.left.toFixed(1)}`);
+    } else {
+      console.warn(`[3] sum two types: FAIL — expected size≈48, got size=${p3.w.toFixed(1)}`);
+    }
 
-  if (case4DoubleAccum) {
-    console.warn(`[4] sum non-identity from: double-accumulation detected — left=${p4.left.toFixed(1)}, expected≈140`);
-  } else {
-    console.log(`[4] sum non-identity from: no double-accumulation (left=${p4.left.toFixed(1)})`);
-  }
+    if (case4DoubleAccum) {
+      console.warn(`[4] sum non-identity from: double-accumulation detected — left=${p4.left.toFixed(1)}, expected≈140`);
+    } else {
+      console.log(`[4] sum non-identity from: no double-accumulation (left=${p4.left.toFixed(1)})`);
+    }
 
-  if (case5Pass) {
-    console.log(`[5] sum identity from: PASS — frozen(60) + 0→60 = 120, left=${p5.left.toFixed(1)}`);
-  } else {
-    console.warn(`[5] sum identity from: FAIL — expected left≈140, got left=${p5.left.toFixed(1)}`);
-  }
+    if (case5Pass) {
+      console.log(`[5] sum identity from: PASS — frozen(60) + 0→60 = 120, left=${p5.left.toFixed(1)}`);
+    } else {
+      console.warn(`[5] sum identity from: FAIL — expected left≈140, got left=${p5.left.toFixed(1)}`);
+    }
 
-  const lines = [
-    "─── Final positions ───",
-    `[1] replace single type:   left=${p1.left.toFixed(1)} top=${p1.top.toFixed(1)} size=${p1.w.toFixed(1)}×${p1.h.toFixed(1)}`,
-    `    ${p1.left < 22 ? "✓" : "✗"} back at origin (left≈20)`,
-    "",
-    `[2] replace two types:     left=${p2.left.toFixed(1)} top=${p2.top.toFixed(1)} size=${p2.w.toFixed(1)}×${p2.h.toFixed(1)}`,
-    `    ${p2.left < 60 ? "✗" : "✓"} scale survived but translate lost — left≈${p2.left.toFixed(0)} (scale only, should be ≈120 if translate also applied)`,
-    "",
-    `[3] sum two types:         left=${p3.left.toFixed(1)} top=${p3.top.toFixed(1)} size=${p3.w.toFixed(1)}×${p3.h.toFixed(1)}`,
-    `    ${p3.w > 40 ? "✓" : "✗"} size≈48px (scale=2 composed) — both transforms active`,
-    "",
-    `[4] sum non-identity from: left=${p4.left.toFixed(1)} top=${p4.top.toFixed(1)}`,
-    `    ${p4.left > 160 ? "✗" : "✓"} expected left≈140 (Δx=120), got left≈${p4.left.toFixed(0)} (Δx=180 → double-accumulated)`,
-    "",
-    `[5] sum identity from:     left=${p5.left.toFixed(1)} top=${p5.top.toFixed(1)}`,
-    `    ${p5.left < 160 ? "✓" : "✗"} frozen(60) + 0→60 = 60→120. left≈140 ✓`,
-    "",
-    "─── AnimationDebugger: case 2 (replace) vs case 3 (sum) ───",
-  ];
+    const lines = [
+      "─── Final positions ───",
+      `[1] replace single type:   left=${p1.left.toFixed(1)} top=${p1.top.toFixed(1)} size=${p1.w.toFixed(1)}×${p1.h.toFixed(1)}`,
+      `    ${p1.left < 22 ? "✓" : "✗"} back at origin (left≈20)`,
+      "",
+      `[2] replace two types:     left=${p2.left.toFixed(1)} top=${p2.top.toFixed(1)} size=${p2.w.toFixed(1)}×${p2.h.toFixed(1)}`,
+      `    ${p2.left < 60 ? "✗" : "✓"} scale survived but translate lost — left≈${p2.left.toFixed(0)} (scale only, should be ≈120 if translate also applied)`,
+      "",
+      `[3] sum two types:         left=${p3.left.toFixed(1)} top=${p3.top.toFixed(1)} size=${p3.w.toFixed(1)}×${p3.h.toFixed(1)}`,
+      `    ${p3.w > 40 ? "✓" : "✗"} size≈48px (scale=2 composed) — both transforms active`,
+      "",
+      `[4] sum non-identity from: left=${p4.left.toFixed(1)} top=${p4.top.toFixed(1)}`,
+      `    ${p4.left > 160 ? "✗" : "✓"} expected left≈140 (Δx=120), got left≈${p4.left.toFixed(0)} (Δx=180 → double-accumulated)`,
+      "",
+      `[5] sum identity from:     left=${p5.left.toFixed(1)} top=${p5.top.toFixed(1)}`,
+      `    ${p5.left < 160 ? "✓" : "✗"} frozen(60) + 0→60 = 60→120. left≈140 ✓`,
+      "",
+      "─── AnimationDebugger: case 2 (replace) vs case 3 (sum) ───",
+    ];
 
-  const samples = await AnimationDebugger.sample({
-    pairs: [{ gsapElement: document.getElementById("r3"), smilElement: document.getElementById("r2"), label: "sum vs replace" }],
-    duration: 2.5,
-    fps: 10,
-  });
+    const samples = await AnimationDebugger.sample({
+      pairs: [{ gsapElement: document.getElementById("r3"), smilElement: document.getElementById("r2"), label: "sum vs replace" }],
+      duration: 2.5,
+      fps: 10,
+    });
 
-  let maxDx = 0;
-  for (const frame of samples) {
-    const p = frame.pairs[0];
-    if (p.deltaX > maxDx) maxDx = p.deltaX;
-    lines.push(
-      `t=${frame.elapsed.toFixed(1)}s  sum=(${p.gsapLeft.toFixed(1)},${p.gsapTop.toFixed(1)})  replace=(${p.smilLeft.toFixed(1)},${p.smilTop.toFixed(1)})  Δ=(${p.deltaX.toFixed(1)},${p.deltaY.toFixed(1)})`,
-    );
-  }
-  lines.push(`max Δx: ${maxDx.toFixed(1)}px — replace lost scale, positions diverged`);
-  console.log(`AnimationDebugger sample complete — max Δx between sum vs replace: ${maxDx.toFixed(1)}px`);
+    let maxDx = 0;
+    for (const frame of samples) {
+      const p = frame.pairs[0];
+      if (p.deltaX > maxDx) maxDx = p.deltaX;
+      lines.push(
+        `t=${frame.elapsed.toFixed(1)}s  sum=(${p.gsapLeft.toFixed(1)},${p.gsapTop.toFixed(1)})  replace=(${p.smilLeft.toFixed(1)},${p.smilTop.toFixed(1)})  Δ=(${p.deltaX.toFixed(1)},${p.deltaY.toFixed(1)})`,
+      );
+    }
+    lines.push(`max Δx: ${maxDx.toFixed(1)}px — replace lost scale, positions diverged`);
+    console.log(`AnimationDebugger sample complete — max Δx between sum vs replace: ${maxDx.toFixed(1)}px`);
 
-  log.textContent = lines.join("\n");
-  writeDebugLog("additive-demo", lines);
-</script>
+    log.textContent = lines.join("\n");
+    writeDebugLog("additive-demo", lines);
+  </script>
 
 </body>
+
 </html>

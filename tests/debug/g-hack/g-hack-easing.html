@@ -1,292 +1,237 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<title><g> hack — easing sweep (all 29)</title>
-<style>
-  :root { color-scheme: dark; }
-  body { background: #111; color: #eee; font-family: monospace; padding: 1.5rem; }
-  h1 { font-size: 0.9rem; }
-  h3 { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.45; margin: 0.5rem 0 0.15rem; }
-  svg { border: 1px solid #2a2a2a; background: #1a1a1a; display: block; }
-  pre {
-    background: #1a1a1a; border: 1px solid #2a2a2a; padding: 0.5rem;
-    font-size: 0.65rem; max-height: 70vh; overflow: auto; margin: 0.5rem 0 0;
-    white-space: pre-wrap; line-height: 1.3;
-  }
-  .fail { color: #f87171; }
-  .pass { color: #34d399; }
-  label { cursor: pointer; font-size: 0.65rem; }
-  input[type=checkbox] { margin-right: 0.3rem; cursor: pointer; }
-  input:checked + span { color: #34d399; }
-  input + span { color: #888; }
-</style>
+  <meta charset="UTF-8" />
+  <title>
+    <g> hack — easing sweep (all 29)
+  </title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    body {
+      background: #111;
+      color: #eee;
+      font-family: monospace;
+      padding: 1.5rem;
+    }
+
+    h1 {
+      font-size: 0.9rem;
+    }
+
+    h3 {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.45;
+      margin: 0.5rem 0 0.15rem;
+    }
+
+    svg {
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+      display: block;
+    }
+
+    pre {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      padding: 0.5rem;
+      font-size: 0.65rem;
+      max-height: 70vh;
+      overflow: auto;
+      margin: 0.5rem 0 0;
+      white-space: pre-wrap;
+      line-height: 1.3;
+    }
+
+    .fail {
+      color: #f87171;
+    }
+
+    .pass {
+      color: #34d399;
+    }
+
+    label {
+      cursor: pointer;
+      font-size: 0.65rem;
+    }
+
+    input[type=checkbox] {
+      margin-right: 0.3rem;
+      cursor: pointer;
+    }
+
+    input:checked+span {
+      color: #34d399;
+    }
+
+    input+span {
+      color: #888;
+    }
+  </style>
 </head>
+
 <body>
-<h1>&lt;g&gt; hack — easing sweep</h1>
-<p>All 29 easings from easing.ts. Check which to sample. Logs → g-hack/g-hack-easing/&lt;name&gt;.log</p>
-<div id="tests"></div>
-<pre id="output">Building tests...</pre>
+  <h1>&lt;g&gt; hack — easing sweep</h1>
+  <p>All 29 easings from easing.ts. Check which to sample. Logs → g-hack/g-hack-easing/&lt;name&gt;.log</p>
+  <div id="tests"></div>
+  <pre id="output">Building tests...</pre>
 
-<script type="module">
-  import gsap from "https://cdn.jsdelivr.net/npm/gsap@3/+esm";
-  import { Easing } from "../../../lib/index.js";
-  import { AnimationDebugger, writeDebugLog } from "../../../lib/debug-index.js";
+  <script type="module">
+    import gsap from "https://cdn.jsdelivr.net/npm/gsap@3/+esm";
+    import { Easing } from "../../../lib/index.js";
+    import { AnimationDebugger, writeDebugLog } from "../../../debug-lib/debug-index.js";
 
-  const SVG_NS = "http://www.w3.org/2000/svg";
+    const SVG_NS = "http://www.w3.org/2000/svg";
 
-  // Ordered exactly as in src/utils/easing.ts — names only, values from library
-  const EASINGS = [
-    "linear",
-    "power1-in", "power1-out", "power1-inOut",
-    "power2-in", "power2-out", "power2-inOut",
-    "power3-in", "power3-out", "power3-inOut",
-    "power4-in", "power4-out", "power4-inOut",
-    "sine-in", "sine-out", "sine-inOut",
-    "circ-in", "circ-out", "circ-inOut",
-    "expo-in", "expo-out", "expo-inOut",
-    "back-in", "back-out", "back-inOut",
-  ];
+    // Ordered exactly as in src/utils/easing.ts — names only, values from library
+    const EASINGS = [
+      "linear",
+      "power1-in", "power1-out", "power1-inOut",
+      "power2-in", "power2-out", "power2-inOut",
+      "power3-in", "power3-out", "power3-inOut",
+      "power4-in", "power4-out", "power4-inOut",
+      "sine-in", "sine-out", "sine-inOut",
+      "circ-in", "circ-out", "circ-inOut",
+      "expo-in", "expo-out", "expo-inOut",
+      "back-in", "back-out", "back-inOut",
+    ];
 
-  function resolveEasingAttributes(easeName) {
-    if (easeName === "linear") return {};
+    function resolveEasingAttributes(easeName) {
+      if (easeName === "linear") return {};
 
-    const gsapEaseName = easeName.replace(/-/g, ".");
-    const keySplines = Easing.resolveKeySplines(gsapEaseName, 1);
-    if (keySplines === null) return {};
+      const gsapEaseName = easeName.replace(/-/g, ".");
+      const keySplines = Easing.resolveKeySplines(gsapEaseName, 1);
+      if (keySplines === null) return {};
 
-    const keyTimes = Easing.resolveKeyTimes(1);
-    return { calcMode: "spline", keyTimes, keySplines };
-  }
-
-  function makeAnimTransform(type, from, to, begin, dur, easeName, tweenIndex) {
-    const element = document.createElementNS(SVG_NS, "animateTransform");
-    element.setAttribute("attributeName", "transform");
-    element.setAttribute("attributeType", "XML");
-    element.setAttribute("type", type);
-    element.setAttribute("from", from);
-    element.setAttribute("to", to);
-    element.setAttribute("begin", begin);
-    element.setAttribute("dur", `${dur}s`);
-    element.setAttribute("fill", "freeze");
-    element.setAttribute("additive", "sum");
-    element.dataset.tween = String(tweenIndex);
-
-    const easingAttributes = resolveEasingAttributes(easeName);
-    for (const [attribute, value] of Object.entries(easingAttributes)) {
-      element.setAttribute(attribute, value);
+      const keyTimes = Easing.resolveKeyTimes(1);
+      return { calcMode: "spline", keyTimes, keySplines };
     }
 
-    return element;
-  }
+    function makeAnimTransform(type, from, to, begin, dur, easeName, tweenIndex) {
+      const element = document.createElementNS(SVG_NS, "animateTransform");
+      element.setAttribute("attributeName", "transform");
+      element.setAttribute("attributeType", "XML");
+      element.setAttribute("type", type);
+      element.setAttribute("from", from);
+      element.setAttribute("to", to);
+      element.setAttribute("begin", begin);
+      element.setAttribute("dur", `${dur}s`);
+      element.setAttribute("fill", "freeze");
+      element.setAttribute("additive", "sum");
+      element.dataset.tween = String(tweenIndex);
 
-  function buildTestSVG(easeName) {
-    const svg = document.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("width", "500");
-    svg.setAttribute("height", "80");
-    svg.id = `svg-${easeName}`;
+      const easingAttributes = resolveEasingAttributes(easeName);
+      for (const [attribute, value] of Object.entries(easingAttributes)) {
+        element.setAttribute(attribute, value);
+      }
 
-    const gsapRect = document.createElementNS(SVG_NS, "rect");
-    gsapRect.setAttribute("x", "50");
-    gsapRect.setAttribute("y", "20");
-    gsapRect.setAttribute("width", "40");
-    gsapRect.setAttribute("height", "40");
-    gsapRect.setAttribute("fill", "#34d399");
-    gsapRect.setAttribute("fill-opacity", "0.5");
-    gsapRect.id = `gsap-${easeName}`;
-    svg.appendChild(gsapRect);
-
-    const outerG = document.createElementNS(SVG_NS, "g");
-    const animG = document.createElementNS(SVG_NS, "g");
-
-    animG.appendChild(makeAnimTransform("translate", "0 0", "50 0", "indefinite", 1, easeName, 1));
-    animG.appendChild(makeAnimTransform("translate", "0 0", "100 0", "indefinite", 1, easeName, 2));
-
-    const pivotOuter = document.createElementNS(SVG_NS, "g");
-    pivotOuter.setAttribute("transform", "translate(70,40)");
-
-    const innerG = document.createElementNS(SVG_NS, "g");
-
-    innerG.appendChild(makeAnimTransform("scale", "1 1", "1.5 1.5", "indefinite", 1, easeName, 1));
-    innerG.appendChild(makeAnimTransform("scale", "1 1", "1.333 1.333", "indefinite", 1, easeName, 2));
-    innerG.appendChild(makeAnimTransform("skewX", "0", "10", "indefinite", 1, easeName, 1));
-
-    const pivotInner = document.createElementNS(SVG_NS, "g");
-    pivotInner.setAttribute("transform", "translate(-70,-40)");
-
-    const smilRect = document.createElementNS(SVG_NS, "rect");
-    smilRect.setAttribute("x", "50");
-    smilRect.setAttribute("y", "20");
-    smilRect.setAttribute("width", "40");
-    smilRect.setAttribute("height", "40");
-    smilRect.setAttribute("fill", "#f97316");
-    smilRect.setAttribute("fill-opacity", "0.5");
-    smilRect.id = `smil-${easeName}`;
-
-    pivotInner.appendChild(smilRect);
-    innerG.appendChild(pivotInner);
-    pivotOuter.appendChild(innerG);
-    animG.appendChild(pivotOuter);
-    outerG.appendChild(animG);
-    svg.appendChild(outerG);
-
-    return svg;
-  }
-
-  const LS_KEY = "g-hack-easing-checked";
-
-  function loadCheckedSet() {
-    try {
-      const stored = localStorage.getItem(LS_KEY);
-      return stored ? new Set(JSON.parse(stored)) : null;
-    } catch { return null; }
-  }
-
-  function saveCheckedState() {
-    const checked = [...document.querySelectorAll(".log-toggle:checked")].map(el => el.dataset.ease);
-    localStorage.setItem(LS_KEY, JSON.stringify(checked));
-  }
-
-  // Build DOM
-  const testsContainer = document.getElementById("tests");
-  const savedChecked = loadCheckedSet();
-  for (const easing of EASINGS) {
-    const h3 = document.createElement("h3");
-    const label = document.createElement("label");
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.className = "log-toggle";
-    cb.dataset.ease = easing;
-    cb.checked = savedChecked ? savedChecked.has(easing) : true;
-    cb.addEventListener("change", saveCheckedState);
-    const span = document.createElement("span");
-    span.textContent = easing;
-    label.appendChild(cb);
-    label.appendChild(span);
-    h3.appendChild(label);
-    testsContainer.appendChild(h3);
-    testsContainer.appendChild(buildTestSVG(easing));
-  }
-
-  async function sampleEasing(easing, svg) {
-    const svgRect = svg.getBoundingClientRect();
-    const gsapEl = document.getElementById(`gsap-${easing}`);
-    const smilEl = document.getElementById(`smil-${easing}`);
-
-    const samples = await AnimationDebugger.sample({
-      pairs: [{ gsapElement: gsapEl, smilElement: smilEl, label: easing }],
-      duration: 2.3,
-      fps: 15,
-    });
-
-    const lines = [`easing: ${easing}`];
-    lines.push("time     elapsed  GSAP(x,y)         SMIL(x,y)          Δx      Δy");
-    lines.push("─".repeat(78));
-    let maxDx = 0, maxDy = 0, fails = 0;
-
-    for (const frame of samples) {
-      const p = frame.pairs[0];
-      const gx = p.gsapLeft - svgRect.left;
-      const gy = p.gsapTop - svgRect.top;
-      const sx = p.smilLeft - svgRect.left;
-      const sy = p.smilTop - svgRect.top;
-      const dx = Math.abs(gx - sx);
-      const dy = Math.abs(gy - sy);
-      const tag = (dx > 1 || dy > 1) ? "FAIL" : "ok";
-      if (tag === "FAIL") fails++;
-      if (dx > maxDx) maxDx = dx;
-      if (dy > maxDy) maxDy = dy;
-      lines.push(
-        `${String(Math.round(frame.timestamp)).padStart(5)}  ` +
-        `${frame.elapsed.toFixed(2).padStart(5)}s  ` +
-        `(${gx.toFixed(1).padStart(6)}, ${gy.toFixed(1).padStart(6)})  ` +
-        `(${sx.toFixed(1).padStart(6)}, ${sy.toFixed(1).padStart(6)})  ` +
-        `${dx.toFixed(1).padStart(5)}  ${dy.toFixed(1).padStart(5)}  ${tag}`
-      );
+      return element;
     }
 
-    lines.push("");
-    lines.push(`max Δx: ${maxDx.toFixed(1)}  max Δy: ${maxDy.toFixed(1)}  failing frames: ${fails}/${samples.length}`);
+    function buildTestSVG(easeName) {
+      const svg = document.createElementNS(SVG_NS, "svg");
+      svg.setAttribute("width", "500");
+      svg.setAttribute("height", "80");
+      svg.id = `svg-${easeName}`;
 
-    await new Promise(r => setTimeout(r, 2500));
-    const gsapMatrix = gsapEl.getAttribute("transform") || "(none)";
-    lines.push("");
-    lines.push("─── Rest state ───");
-    lines.push(`GSAP transform: ${gsapMatrix}`);
-    lines.push(`SMIL  BBox: x=${smilEl.getBBox().x.toFixed(1)} y=${smilEl.getBBox().y.toFixed(1)}`);
+      const gsapRect = document.createElementNS(SVG_NS, "rect");
+      gsapRect.setAttribute("x", "50");
+      gsapRect.setAttribute("y", "20");
+      gsapRect.setAttribute("width", "40");
+      gsapRect.setAttribute("height", "40");
+      gsapRect.setAttribute("fill", "#34d399");
+      gsapRect.setAttribute("fill-opacity", "0.5");
+      gsapRect.id = `gsap-${easeName}`;
+      svg.appendChild(gsapRect);
 
-    writeDebugLog(`g-hack/g-hack-easing/${easing}`, lines);
+      const outerG = document.createElementNS(SVG_NS, "g");
+      const animG = document.createElementNS(SVG_NS, "g");
 
-    return { name: easing, maxDx, maxDy, fails, total: samples.length };
-  }
+      animG.appendChild(makeAnimTransform("translate", "0 0", "50 0", "indefinite", 1, easeName, 1));
+      animG.appendChild(makeAnimTransform("translate", "0 0", "100 0", "indefinite", 1, easeName, 2));
 
-  async function run() {
-    const output = document.getElementById("output");
+      const pivotOuter = document.createElementNS(SVG_NS, "g");
+      pivotOuter.setAttribute("transform", "translate(70,40)");
 
-    // Get selected easings
-    const selected = [];
+      const innerG = document.createElementNS(SVG_NS, "g");
+
+      innerG.appendChild(makeAnimTransform("scale", "1 1", "1.5 1.5", "indefinite", 1, easeName, 1));
+      innerG.appendChild(makeAnimTransform("scale", "1 1", "1.333 1.333", "indefinite", 1, easeName, 2));
+      innerG.appendChild(makeAnimTransform("skewX", "0", "10", "indefinite", 1, easeName, 1));
+
+      const pivotInner = document.createElementNS(SVG_NS, "g");
+      pivotInner.setAttribute("transform", "translate(-70,-40)");
+
+      const smilRect = document.createElementNS(SVG_NS, "rect");
+      smilRect.setAttribute("x", "50");
+      smilRect.setAttribute("y", "20");
+      smilRect.setAttribute("width", "40");
+      smilRect.setAttribute("height", "40");
+      smilRect.setAttribute("fill", "#f97316");
+      smilRect.setAttribute("fill-opacity", "0.5");
+      smilRect.id = `smil-${easeName}`;
+
+      pivotInner.appendChild(smilRect);
+      innerG.appendChild(pivotInner);
+      pivotOuter.appendChild(innerG);
+      animG.appendChild(pivotOuter);
+      outerG.appendChild(animG);
+      svg.appendChild(outerG);
+
+      return svg;
+    }
+
+    const LS_KEY = "g-hack-easing-checked";
+
+    function loadCheckedSet() {
+      try {
+        const stored = localStorage.getItem(LS_KEY);
+        return stored ? new Set(JSON.parse(stored)) : null;
+      } catch { return null; }
+    }
+
+    function saveCheckedState() {
+      const checked = [...document.querySelectorAll(".log-toggle:checked")].map(el => el.dataset.ease);
+      localStorage.setItem(LS_KEY, JSON.stringify(checked));
+    }
+
+    // Build DOM
+    const testsContainer = document.getElementById("tests");
+    const savedChecked = loadCheckedSet();
     for (const easing of EASINGS) {
-      const cb = document.querySelector(`[data-ease="${easing}"]`);
-      if (cb && cb.checked) selected.push(easing);
+      const h3 = document.createElement("h3");
+      const label = document.createElement("label");
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "log-toggle";
+      cb.dataset.ease = easing;
+      cb.checked = savedChecked ? savedChecked.has(easing) : true;
+      cb.addEventListener("change", saveCheckedState);
+      const span = document.createElement("span");
+      span.textContent = easing;
+      label.appendChild(cb);
+      label.appendChild(span);
+      h3.appendChild(label);
+      testsContainer.appendChild(h3);
+      testsContainer.appendChild(buildTestSVG(easing));
     }
 
-    if (selected.length === 0) {
-      output.textContent = "No easings selected.";
-      return;
-    }
-
-    output.textContent = `Starting ${selected.length} easings...`;
-
-    // Convert GSAP ease names to dot-notation for GSAP
-    const gsapName = (name) => {
-      if (name === "linear") return "none";
-      return name.replace(/-/g, ".");
-    };
-
-    // Fire all GSAP timelines
-    for (const easing of selected) {
-      const tl = gsap.timeline();
-      tl.to(`#gsap-${easing}`, {
-        x: 50, scale: 1.5, skewX: 10,
-        transformOrigin: "50% 50%",
-        duration: 1, ease: gsapName(easing),
-      });
-      tl.to(`#gsap-${easing}`, {
-        x: 150, scale: 2,
-        transformOrigin: "50% 50%",
-        duration: 1, ease: gsapName(easing),
-      });
-    }
-
-    // Sync SMIL — tween 1 begins now, tween 2 begins after 1s
-    for (const easing of selected) {
-      const svg = document.getElementById(`svg-${easing}`);
-      const t1 = svg.querySelectorAll('animateTransform[data-tween="1"]');
-      const t2 = svg.querySelectorAll('animateTransform[data-tween="2"]');
-      for (const anim of t1) anim.beginElement();
-      setTimeout(() => { for (const anim of t2) anim.beginElement(); }, 1000);
-    }
-
-    await new Promise(r => setTimeout(r, 30));
-
-    // Build pairs for snapshot sampling
-    const pairs = selected.map(easing => {
-      const svg = document.getElementById(`svg-${easing}`);
-      const gsapEl = document.getElementById(`gsap-${easing}`);
-      const smilEl = document.getElementById(`smil-${easing}`);
-      return { gsapElement: gsapEl, smilElement: smilEl, label: easing };
-    });
-
-    const samples = await AnimationDebugger.sample({ pairs, duration: 2.3, fps: 15 });
-
-    // Build per-easing logs from single sample pass
-    const results = [];
-    for (let i = 0; i < selected.length; i++) {
-      const easing = selected[i];
-      const svg = document.getElementById(`svg-${easing}`);
+    async function sampleEasing(easing, svg) {
       const svgRect = svg.getBoundingClientRect();
       const gsapEl = document.getElementById(`gsap-${easing}`);
       const smilEl = document.getElementById(`smil-${easing}`);
+
+      const samples = await AnimationDebugger.sample({
+        pairs: [{ gsapElement: gsapEl, smilElement: smilEl, label: easing }],
+        duration: 2.3,
+        fps: 15,
+      });
 
       const lines = [`easing: ${easing}`];
       lines.push("time     elapsed  GSAP(x,y)         SMIL(x,y)          Δx      Δy");
@@ -294,7 +239,7 @@
       let maxDx = 0, maxDy = 0, fails = 0;
 
       for (const frame of samples) {
-        const p = frame.pairs[i];
+        const p = frame.pairs[0];
         const gx = p.gsapLeft - svgRect.left;
         const gy = p.gsapTop - svgRect.top;
         const sx = p.smilLeft - svgRect.left;
@@ -317,29 +262,139 @@
       lines.push("");
       lines.push(`max Δx: ${maxDx.toFixed(1)}  max Δy: ${maxDy.toFixed(1)}  failing frames: ${fails}/${samples.length}`);
 
+      await new Promise(r => setTimeout(r, 2500));
+      const gsapMatrix = gsapEl.getAttribute("transform") || "(none)";
       lines.push("");
       lines.push("─── Rest state ───");
-      lines.push(`GSAP transform: ${gsapEl.getAttribute("transform") || "(none)"}`);
+      lines.push(`GSAP transform: ${gsapMatrix}`);
       lines.push(`SMIL  BBox: x=${smilEl.getBBox().x.toFixed(1)} y=${smilEl.getBBox().y.toFixed(1)}`);
 
       writeDebugLog(`g-hack/g-hack-easing/${easing}`, lines);
 
-      const status = fails === 0 && maxDx < 1 && maxDy < 1 ? "PASS" : "FAIL";
-      results.push({ name: easing, status, maxDx, maxDy, fails, total: samples.length });
+      return { name: easing, maxDx, maxDy, fails, total: samples.length };
     }
 
-    // Summary
-    const lines = [];
-    for (const r of results) {
-      lines.push(`${r.status}  ${r.name.padEnd(18)}  maxΔx=${r.maxDx.toFixed(1)}  maxΔy=${r.maxDy.toFixed(1)}  fails=${r.fails}/${r.total}`);
-    }
-    const passCount = results.filter(r => r.status === "PASS").length;
-    lines.push("");
-    lines.push(`Total: ${passCount}/${results.length} pass`);
-    output.textContent = lines.join("\n");
-  }
+    async function run() {
+      const output = document.getElementById("output");
 
-  run();
-</script>
+      // Get selected easings
+      const selected = [];
+      for (const easing of EASINGS) {
+        const cb = document.querySelector(`[data-ease="${easing}"]`);
+        if (cb && cb.checked) selected.push(easing);
+      }
+
+      if (selected.length === 0) {
+        output.textContent = "No easings selected.";
+        return;
+      }
+
+      output.textContent = `Starting ${selected.length} easings...`;
+
+      // Convert GSAP ease names to dot-notation for GSAP
+      const gsapName = (name) => {
+        if (name === "linear") return "none";
+        return name.replace(/-/g, ".");
+      };
+
+      // Fire all GSAP timelines
+      for (const easing of selected) {
+        const tl = gsap.timeline();
+        tl.to(`#gsap-${easing}`, {
+          x: 50, scale: 1.5, skewX: 10,
+          transformOrigin: "50% 50%",
+          duration: 1, ease: gsapName(easing),
+        });
+        tl.to(`#gsap-${easing}`, {
+          x: 150, scale: 2,
+          transformOrigin: "50% 50%",
+          duration: 1, ease: gsapName(easing),
+        });
+      }
+
+      // Sync SMIL — tween 1 begins now, tween 2 begins after 1s
+      for (const easing of selected) {
+        const svg = document.getElementById(`svg-${easing}`);
+        const t1 = svg.querySelectorAll('animateTransform[data-tween="1"]');
+        const t2 = svg.querySelectorAll('animateTransform[data-tween="2"]');
+        for (const anim of t1) anim.beginElement();
+        setTimeout(() => { for (const anim of t2) anim.beginElement(); }, 1000);
+      }
+
+      await new Promise(r => setTimeout(r, 30));
+
+      // Build pairs for snapshot sampling
+      const pairs = selected.map(easing => {
+        const svg = document.getElementById(`svg-${easing}`);
+        const gsapEl = document.getElementById(`gsap-${easing}`);
+        const smilEl = document.getElementById(`smil-${easing}`);
+        return { gsapElement: gsapEl, smilElement: smilEl, label: easing };
+      });
+
+      const samples = await AnimationDebugger.sample({ pairs, duration: 2.3, fps: 15 });
+
+      // Build per-easing logs from single sample pass
+      const results = [];
+      for (let i = 0; i < selected.length; i++) {
+        const easing = selected[i];
+        const svg = document.getElementById(`svg-${easing}`);
+        const svgRect = svg.getBoundingClientRect();
+        const gsapEl = document.getElementById(`gsap-${easing}`);
+        const smilEl = document.getElementById(`smil-${easing}`);
+
+        const lines = [`easing: ${easing}`];
+        lines.push("time     elapsed  GSAP(x,y)         SMIL(x,y)          Δx      Δy");
+        lines.push("─".repeat(78));
+        let maxDx = 0, maxDy = 0, fails = 0;
+
+        for (const frame of samples) {
+          const p = frame.pairs[i];
+          const gx = p.gsapLeft - svgRect.left;
+          const gy = p.gsapTop - svgRect.top;
+          const sx = p.smilLeft - svgRect.left;
+          const sy = p.smilTop - svgRect.top;
+          const dx = Math.abs(gx - sx);
+          const dy = Math.abs(gy - sy);
+          const tag = (dx > 1 || dy > 1) ? "FAIL" : "ok";
+          if (tag === "FAIL") fails++;
+          if (dx > maxDx) maxDx = dx;
+          if (dy > maxDy) maxDy = dy;
+          lines.push(
+            `${String(Math.round(frame.timestamp)).padStart(5)}  ` +
+            `${frame.elapsed.toFixed(2).padStart(5)}s  ` +
+            `(${gx.toFixed(1).padStart(6)}, ${gy.toFixed(1).padStart(6)})  ` +
+            `(${sx.toFixed(1).padStart(6)}, ${sy.toFixed(1).padStart(6)})  ` +
+            `${dx.toFixed(1).padStart(5)}  ${dy.toFixed(1).padStart(5)}  ${tag}`
+          );
+        }
+
+        lines.push("");
+        lines.push(`max Δx: ${maxDx.toFixed(1)}  max Δy: ${maxDy.toFixed(1)}  failing frames: ${fails}/${samples.length}`);
+
+        lines.push("");
+        lines.push("─── Rest state ───");
+        lines.push(`GSAP transform: ${gsapEl.getAttribute("transform") || "(none)"}`);
+        lines.push(`SMIL  BBox: x=${smilEl.getBBox().x.toFixed(1)} y=${smilEl.getBBox().y.toFixed(1)}`);
+
+        writeDebugLog(`g-hack/g-hack-easing/${easing}`, lines);
+
+        const status = fails === 0 && maxDx < 1 && maxDy < 1 ? "PASS" : "FAIL";
+        results.push({ name: easing, status, maxDx, maxDy, fails, total: samples.length });
+      }
+
+      // Summary
+      const lines = [];
+      for (const r of results) {
+        lines.push(`${r.status}  ${r.name.padEnd(18)}  maxΔx=${r.maxDx.toFixed(1)}  maxΔy=${r.maxDy.toFixed(1)}  fails=${r.fails}/${r.total}`);
+      }
+      const passCount = results.filter(r => r.status === "PASS").length;
+      lines.push("");
+      lines.push(`Total: ${passCount}/${results.length} pass`);
+      output.textContent = lines.join("\n");
+    }
+
+    run();
+  </script>
 </body>
+
 </html>

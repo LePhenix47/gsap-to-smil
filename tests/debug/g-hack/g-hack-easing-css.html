@@ -1,176 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<title><g> hack — CSS easing sweep (4)</title>
-<style>
-  :root { color-scheme: dark; }
-  body { background: #111; color: #eee; font-family: monospace; padding: 1.5rem; }
-  h1 { font-size: 0.9rem; }
-  h3 { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.45; margin: 0.5rem 0 0.15rem; }
-  svg { border: 1px solid #2a2a2a; background: #1a1a1a; display: block; }
-  pre {
-    background: #1a1a1a; border: 1px solid #2a2a2a; padding: 0.5rem;
-    font-size: 0.65rem; max-height: 70vh; overflow: auto; margin: 0.5rem 0 0;
-    white-space: pre-wrap; line-height: 1.3;
-  }
-  .fail { color: #f87171; }
-  .pass { color: #34d399; }
-  label { cursor: pointer; font-size: 0.65rem; }
-  input[type=checkbox] { margin-right: 0.3rem; cursor: pointer; }
-  input:checked + span { color: #34d399; }
-  input + span { color: #888; }
-</style>
+  <meta charset="UTF-8" />
+  <title>
+    <g> hack — CSS easing sweep (4)
+  </title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    body {
+      background: #111;
+      color: #eee;
+      font-family: monospace;
+      padding: 1.5rem;
+    }
+
+    h1 {
+      font-size: 0.9rem;
+    }
+
+    h3 {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.45;
+      margin: 0.5rem 0 0.15rem;
+    }
+
+    svg {
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+      display: block;
+    }
+
+    pre {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      padding: 0.5rem;
+      font-size: 0.65rem;
+      max-height: 70vh;
+      overflow: auto;
+      margin: 0.5rem 0 0;
+      white-space: pre-wrap;
+      line-height: 1.3;
+    }
+
+    .fail {
+      color: #f87171;
+    }
+
+    .pass {
+      color: #34d399;
+    }
+
+    label {
+      cursor: pointer;
+      font-size: 0.65rem;
+    }
+
+    input[type=checkbox] {
+      margin-right: 0.3rem;
+      cursor: pointer;
+    }
+
+    input:checked+span {
+      color: #34d399;
+    }
+
+    input+span {
+      color: #888;
+    }
+  </style>
 </head>
+
 <body>
-<h1>&lt;g&gt; hack — CSS easing sweep</h1>
-<p>4 CSS-native easings. Reference = CSS @keyframes. GSAP easings → g-hack-easing.html. Logs → g-hack/g-hack-easing-css/&lt;name&gt;.log</p>
-<div id="tests"></div>
-<pre id="output">Building tests...</pre>
+  <h1>&lt;g&gt; hack — CSS easing sweep</h1>
+  <p>4 CSS-native easings. Reference = CSS @keyframes. GSAP easings → g-hack-easing.html. Logs →
+    g-hack/g-hack-easing-css/&lt;name&gt;.log</p>
+  <div id="tests"></div>
+  <pre id="output">Building tests...</pre>
 
-<script type="module">
-  import { AnimationDebugger, writeDebugLog } from "../../../lib/debug-index.js";
+  <script type="module">
+    import { AnimationDebugger, writeDebugLog } from "../../../debug-lib/debug-index.js";
 
-  const SVG_NS = "http://www.w3.org/2000/svg";
+    const SVG_NS = "http://www.w3.org/2000/svg";
 
-  const EASINGS = [
-    { name: "ease",        keySplines: "0.25 0.1 0.25 1" },
-    { name: "ease-in",     keySplines: "0.42 0 1 1" },
-    { name: "ease-out",    keySplines: "0 0 0.58 1" },
-    { name: "ease-in-out", keySplines: "0.42 0 0.58 1" },
-  ];
+    const EASINGS = [
+      { name: "ease", keySplines: "0.25 0.1 0.25 1" },
+      { name: "ease-in", keySplines: "0.42 0 1 1" },
+      { name: "ease-out", keySplines: "0 0 0.58 1" },
+      { name: "ease-in-out", keySplines: "0.42 0 0.58 1" },
+    ];
 
-  function makeAnimTransform(type, from, to, begin, dur, keySplines, tweenIndex) {
-    const el = document.createElementNS(SVG_NS, "animateTransform");
-    el.setAttribute("attributeName", "transform");
-    el.setAttribute("attributeType", "XML");
-    el.setAttribute("type", type);
-    el.setAttribute("from", from);
-    el.setAttribute("to", to);
-    el.setAttribute("begin", begin);
-    el.setAttribute("dur", `${dur}s`);
-    el.setAttribute("fill", "freeze");
-    el.setAttribute("additive", "sum");
-    el.dataset.tween = String(tweenIndex);
-    if (keySplines) {
-      el.setAttribute("calcMode", "spline");
-      el.setAttribute("keyTimes", "0; 1");
-      el.setAttribute("keySplines", keySplines);
+    function makeAnimTransform(type, from, to, begin, dur, keySplines, tweenIndex) {
+      const el = document.createElementNS(SVG_NS, "animateTransform");
+      el.setAttribute("attributeName", "transform");
+      el.setAttribute("attributeType", "XML");
+      el.setAttribute("type", type);
+      el.setAttribute("from", from);
+      el.setAttribute("to", to);
+      el.setAttribute("begin", begin);
+      el.setAttribute("dur", `${dur}s`);
+      el.setAttribute("fill", "freeze");
+      el.setAttribute("additive", "sum");
+      el.dataset.tween = String(tweenIndex);
+      if (keySplines) {
+        el.setAttribute("calcMode", "spline");
+        el.setAttribute("keyTimes", "0; 1");
+        el.setAttribute("keySplines", keySplines);
+      }
+      return el;
     }
-    return el;
-  }
 
-  function buildTestSVG(easing) {
-    const svg = document.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("width", "500");
-    svg.setAttribute("height", "80");
-    svg.id = `svg-${easing.name}`;
+    function buildTestSVG(easing) {
+      const svg = document.createElementNS(SVG_NS, "svg");
+      svg.setAttribute("width", "500");
+      svg.setAttribute("height", "80");
+      svg.id = `svg-${easing.name}`;
 
-    const cssRect = document.createElementNS(SVG_NS, "rect");
-    cssRect.setAttribute("x", "50");
-    cssRect.setAttribute("y", "20");
-    cssRect.setAttribute("width", "40");
-    cssRect.setAttribute("height", "40");
-    cssRect.setAttribute("fill", "#34d399");
-    cssRect.setAttribute("fill-opacity", "0.5");
-    cssRect.id = `css-${easing.name}`;
-    svg.appendChild(cssRect);
+      const cssRect = document.createElementNS(SVG_NS, "rect");
+      cssRect.setAttribute("x", "50");
+      cssRect.setAttribute("y", "20");
+      cssRect.setAttribute("width", "40");
+      cssRect.setAttribute("height", "40");
+      cssRect.setAttribute("fill", "#34d399");
+      cssRect.setAttribute("fill-opacity", "0.5");
+      cssRect.id = `css-${easing.name}`;
+      svg.appendChild(cssRect);
 
-    const { keySplines } = easing;
+      const { keySplines } = easing;
 
-    const outerG = document.createElementNS(SVG_NS, "g");
-    const animG = document.createElementNS(SVG_NS, "g");
+      const outerG = document.createElementNS(SVG_NS, "g");
+      const animG = document.createElementNS(SVG_NS, "g");
 
-    animG.appendChild(makeAnimTransform("translate", "0 0", "50 0", "indefinite", 1, keySplines, 1));
-    animG.appendChild(makeAnimTransform("translate", "0 0", "100 0", "indefinite", 1, keySplines, 2));
+      animG.appendChild(makeAnimTransform("translate", "0 0", "50 0", "indefinite", 1, keySplines, 1));
+      animG.appendChild(makeAnimTransform("translate", "0 0", "100 0", "indefinite", 1, keySplines, 2));
 
-    const pivotOuter = document.createElementNS(SVG_NS, "g");
-    pivotOuter.setAttribute("transform", "translate(70,40)");
+      const pivotOuter = document.createElementNS(SVG_NS, "g");
+      pivotOuter.setAttribute("transform", "translate(70,40)");
 
-    const innerG = document.createElementNS(SVG_NS, "g");
+      const innerG = document.createElementNS(SVG_NS, "g");
 
-    innerG.appendChild(makeAnimTransform("scale", "1 1", "1.5 1.5", "indefinite", 1, keySplines, 1));
-    innerG.appendChild(makeAnimTransform("scale", "1 1", "1.333 1.333", "indefinite", 1, keySplines, 2));
-    innerG.appendChild(makeAnimTransform("skewX", "0", "10", "indefinite", 1, keySplines, 1));
+      innerG.appendChild(makeAnimTransform("scale", "1 1", "1.5 1.5", "indefinite", 1, keySplines, 1));
+      innerG.appendChild(makeAnimTransform("scale", "1 1", "1.333 1.333", "indefinite", 1, keySplines, 2));
+      innerG.appendChild(makeAnimTransform("skewX", "0", "10", "indefinite", 1, keySplines, 1));
 
-    const pivotInner = document.createElementNS(SVG_NS, "g");
-    pivotInner.setAttribute("transform", "translate(-70,-40)");
+      const pivotInner = document.createElementNS(SVG_NS, "g");
+      pivotInner.setAttribute("transform", "translate(-70,-40)");
 
-    const smilRect = document.createElementNS(SVG_NS, "rect");
-    smilRect.setAttribute("x", "50");
-    smilRect.setAttribute("y", "20");
-    smilRect.setAttribute("width", "40");
-    smilRect.setAttribute("height", "40");
-    smilRect.setAttribute("fill", "#f97316");
-    smilRect.setAttribute("fill-opacity", "0.5");
-    smilRect.id = `smil-${easing.name}`;
+      const smilRect = document.createElementNS(SVG_NS, "rect");
+      smilRect.setAttribute("x", "50");
+      smilRect.setAttribute("y", "20");
+      smilRect.setAttribute("width", "40");
+      smilRect.setAttribute("height", "40");
+      smilRect.setAttribute("fill", "#f97316");
+      smilRect.setAttribute("fill-opacity", "0.5");
+      smilRect.id = `smil-${easing.name}`;
 
-    pivotInner.appendChild(smilRect);
-    innerG.appendChild(pivotInner);
-    pivotOuter.appendChild(innerG);
-    animG.appendChild(pivotOuter);
-    outerG.appendChild(animG);
-    svg.appendChild(outerG);
+      pivotInner.appendChild(smilRect);
+      innerG.appendChild(pivotInner);
+      pivotOuter.appendChild(innerG);
+      animG.appendChild(pivotOuter);
+      outerG.appendChild(animG);
+      svg.appendChild(outerG);
 
-    return svg;
-  }
+      return svg;
+    }
 
-  const LS_KEY = "g-hack-easing-css-checked";
+    const LS_KEY = "g-hack-easing-css-checked";
 
-  function loadCheckedSet() {
-    try {
-      const stored = localStorage.getItem(LS_KEY);
-      return stored ? new Set(JSON.parse(stored)) : null;
-    } catch { return null; }
-  }
+    function loadCheckedSet() {
+      try {
+        const stored = localStorage.getItem(LS_KEY);
+        return stored ? new Set(JSON.parse(stored)) : null;
+      } catch { return null; }
+    }
 
-  function saveCheckedState() {
-    const checked = [...document.querySelectorAll(".log-toggle:checked")].map(el => el.dataset.ease);
-    localStorage.setItem(LS_KEY, JSON.stringify(checked));
-  }
+    function saveCheckedState() {
+      const checked = [...document.querySelectorAll(".log-toggle:checked")].map(el => el.dataset.ease);
+      localStorage.setItem(LS_KEY, JSON.stringify(checked));
+    }
 
-  // Build DOM
-  const testsContainer = document.getElementById("tests");
-  const savedChecked = loadCheckedSet();
-  for (const easing of EASINGS) {
-    const h3 = document.createElement("h3");
-    const label = document.createElement("label");
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.className = "log-toggle";
-    cb.dataset.ease = easing.name;
-    cb.checked = savedChecked ? savedChecked.has(easing.name) : true;
-    cb.addEventListener("change", saveCheckedState);
-    const span = document.createElement("span");
-    span.textContent = easing.name;
-    label.appendChild(cb);
-    label.appendChild(span);
-    h3.appendChild(label);
-    testsContainer.appendChild(h3);
-    testsContainer.appendChild(buildTestSVG(easing));
-  }
-
-  async function run() {
-    const output = document.getElementById("output");
-
-    const selected = [];
+    // Build DOM
+    const testsContainer = document.getElementById("tests");
+    const savedChecked = loadCheckedSet();
     for (const easing of EASINGS) {
-      const cb = document.querySelector(`[data-ease="${easing.name}"]`);
-      if (cb && cb.checked) selected.push(easing);
+      const h3 = document.createElement("h3");
+      const label = document.createElement("label");
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "log-toggle";
+      cb.dataset.ease = easing.name;
+      cb.checked = savedChecked ? savedChecked.has(easing.name) : true;
+      cb.addEventListener("change", saveCheckedState);
+      const span = document.createElement("span");
+      span.textContent = easing.name;
+      label.appendChild(cb);
+      label.appendChild(span);
+      h3.appendChild(label);
+      testsContainer.appendChild(h3);
+      testsContainer.appendChild(buildTestSVG(easing));
     }
 
-    if (selected.length === 0) {
-      output.textContent = "No easings selected.";
-      return;
-    }
+    async function run() {
+      const output = document.getElementById("output");
 
-    output.textContent = `Starting ${selected.length} easings...`;
+      const selected = [];
+      for (const easing of EASINGS) {
+        const cb = document.querySelector(`[data-ease="${easing.name}"]`);
+        if (cb && cb.checked) selected.push(easing);
+      }
 
-    // Inject CSS @keyframes — timing function applied per-segment to match 2 separate SMIL tweens
-    let cssRules = "";
-    for (const easing of selected) {
-      const cb = `cubic-bezier(${easing.keySplines.split(" ").join(", ")})`;
-      cssRules += `
+      if (selected.length === 0) {
+        output.textContent = "No easings selected.";
+        return;
+      }
+
+      output.textContent = `Starting ${selected.length} easings...`;
+
+      // Inject CSS @keyframes — timing function applied per-segment to match 2 separate SMIL tweens
+      let cssRules = "";
+      for (const easing of selected) {
+        const cb = `cubic-bezier(${easing.keySplines.split(" ").join(", ")})`;
+        cssRules += `
         #css-${easing.name} {
           transform-box: fill-box;
           transform-origin: 50% 50%;
@@ -182,95 +237,96 @@
           100% { transform: translate(150px,0px) scale(2) skewX(10deg); }
         }
       `;
-    }
-    const cssStyle = document.createElement("style");
-    cssStyle.textContent = cssRules;
-    document.head.appendChild(cssStyle);
+      }
+      const cssStyle = document.createElement("style");
+      cssStyle.textContent = cssRules;
+      document.head.appendChild(cssStyle);
 
-    // Start CSS reference animations
-    for (const easing of selected) {
-      document.getElementById(`css-${easing.name}`).style.animationPlayState = "running";
-    }
-
-    // Sync SMIL — tween 1 begins now, tween 2 begins after 1s
-    for (const easing of selected) {
-      const svg = document.getElementById(`svg-${easing.name}`);
-      const t1 = svg.querySelectorAll('animateTransform[data-tween="1"]');
-      const t2 = svg.querySelectorAll('animateTransform[data-tween="2"]');
-      for (const anim of t1) anim.beginElement();
-      setTimeout(() => { for (const anim of t2) anim.beginElement(); }, 1000);
-    }
-
-    await new Promise(r => setTimeout(r, 30));
-
-    // Build pairs for snapshot sampling (CSS ref = gsapElement slot)
-    const pairs = selected.map(easing => {
-      const gsapEl = document.getElementById(`css-${easing.name}`);
-      const smilEl = document.getElementById(`smil-${easing.name}`);
-      return { gsapElement: gsapEl, smilElement: smilEl, label: easing.name };
-    });
-
-    const samples = await AnimationDebugger.sample({ pairs, duration: 2.3, fps: 15 });
-
-    const results = [];
-    for (let i = 0; i < selected.length; i++) {
-      const easing = selected[i];
-      const svg = document.getElementById(`svg-${easing.name}`);
-      const svgRect = svg.getBoundingClientRect();
-      const cssEl = document.getElementById(`css-${easing.name}`);
-      const smilEl = document.getElementById(`smil-${easing.name}`);
-
-      const lines = [`easing: ${easing.name}`];
-      lines.push("time     elapsed  CSS(x,y)          SMIL(x,y)          Δx      Δy");
-      lines.push("─".repeat(78));
-      let maxDx = 0, maxDy = 0, fails = 0;
-
-      for (const frame of samples) {
-        const p = frame.pairs[i];
-        const gx = p.gsapLeft - svgRect.left;
-        const gy = p.gsapTop - svgRect.top;
-        const sx = p.smilLeft - svgRect.left;
-        const sy = p.smilTop - svgRect.top;
-        const dx = Math.abs(gx - sx);
-        const dy = Math.abs(gy - sy);
-        const tag = (dx > 1 || dy > 1) ? "FAIL" : "ok";
-        if (tag === "FAIL") fails++;
-        if (dx > maxDx) maxDx = dx;
-        if (dy > maxDy) maxDy = dy;
-        lines.push(
-          `${String(Math.round(frame.timestamp)).padStart(5)}  ` +
-          `${frame.elapsed.toFixed(2).padStart(5)}s  ` +
-          `(${gx.toFixed(1).padStart(6)}, ${gy.toFixed(1).padStart(6)})  ` +
-          `(${sx.toFixed(1).padStart(6)}, ${sy.toFixed(1).padStart(6)})  ` +
-          `${dx.toFixed(1).padStart(5)}  ${dy.toFixed(1).padStart(5)}  ${tag}`
-        );
+      // Start CSS reference animations
+      for (const easing of selected) {
+        document.getElementById(`css-${easing.name}`).style.animationPlayState = "running";
       }
 
+      // Sync SMIL — tween 1 begins now, tween 2 begins after 1s
+      for (const easing of selected) {
+        const svg = document.getElementById(`svg-${easing.name}`);
+        const t1 = svg.querySelectorAll('animateTransform[data-tween="1"]');
+        const t2 = svg.querySelectorAll('animateTransform[data-tween="2"]');
+        for (const anim of t1) anim.beginElement();
+        setTimeout(() => { for (const anim of t2) anim.beginElement(); }, 1000);
+      }
+
+      await new Promise(r => setTimeout(r, 30));
+
+      // Build pairs for snapshot sampling (CSS ref = gsapElement slot)
+      const pairs = selected.map(easing => {
+        const gsapEl = document.getElementById(`css-${easing.name}`);
+        const smilEl = document.getElementById(`smil-${easing.name}`);
+        return { gsapElement: gsapEl, smilElement: smilEl, label: easing.name };
+      });
+
+      const samples = await AnimationDebugger.sample({ pairs, duration: 2.3, fps: 15 });
+
+      const results = [];
+      for (let i = 0; i < selected.length; i++) {
+        const easing = selected[i];
+        const svg = document.getElementById(`svg-${easing.name}`);
+        const svgRect = svg.getBoundingClientRect();
+        const cssEl = document.getElementById(`css-${easing.name}`);
+        const smilEl = document.getElementById(`smil-${easing.name}`);
+
+        const lines = [`easing: ${easing.name}`];
+        lines.push("time     elapsed  CSS(x,y)          SMIL(x,y)          Δx      Δy");
+        lines.push("─".repeat(78));
+        let maxDx = 0, maxDy = 0, fails = 0;
+
+        for (const frame of samples) {
+          const p = frame.pairs[i];
+          const gx = p.gsapLeft - svgRect.left;
+          const gy = p.gsapTop - svgRect.top;
+          const sx = p.smilLeft - svgRect.left;
+          const sy = p.smilTop - svgRect.top;
+          const dx = Math.abs(gx - sx);
+          const dy = Math.abs(gy - sy);
+          const tag = (dx > 1 || dy > 1) ? "FAIL" : "ok";
+          if (tag === "FAIL") fails++;
+          if (dx > maxDx) maxDx = dx;
+          if (dy > maxDy) maxDy = dy;
+          lines.push(
+            `${String(Math.round(frame.timestamp)).padStart(5)}  ` +
+            `${frame.elapsed.toFixed(2).padStart(5)}s  ` +
+            `(${gx.toFixed(1).padStart(6)}, ${gy.toFixed(1).padStart(6)})  ` +
+            `(${sx.toFixed(1).padStart(6)}, ${sy.toFixed(1).padStart(6)})  ` +
+            `${dx.toFixed(1).padStart(5)}  ${dy.toFixed(1).padStart(5)}  ${tag}`
+          );
+        }
+
+        lines.push("");
+        lines.push(`max Δx: ${maxDx.toFixed(1)}  max Δy: ${maxDy.toFixed(1)}  failing frames: ${fails}/${samples.length}`);
+
+        lines.push("");
+        lines.push("─── Rest state ───");
+        lines.push(`CSS  transform: ${cssEl.style.transform || getComputedStyle(cssEl).transform}`);
+        lines.push(`SMIL BBox: x=${smilEl.getBBox().x.toFixed(1)} y=${smilEl.getBBox().y.toFixed(1)}`);
+
+        writeDebugLog(`g-hack/g-hack-easing-css/${easing.name}`, lines);
+
+        const status = fails === 0 && maxDx < 1 && maxDy < 1 ? "PASS" : "FAIL";
+        results.push({ ...easing, status, maxDx, maxDy, fails, total: samples.length });
+      }
+
+      const lines = [];
+      for (const r of results) {
+        lines.push(`${r.status}  ${r.name.padEnd(18)}  maxΔx=${r.maxDx.toFixed(1)}  maxΔy=${r.maxDy.toFixed(1)}  fails=${r.fails}/${r.total}`);
+      }
+      const passCount = results.filter(r => r.status === "PASS").length;
       lines.push("");
-      lines.push(`max Δx: ${maxDx.toFixed(1)}  max Δy: ${maxDy.toFixed(1)}  failing frames: ${fails}/${samples.length}`);
-
-      lines.push("");
-      lines.push("─── Rest state ───");
-      lines.push(`CSS  transform: ${cssEl.style.transform || getComputedStyle(cssEl).transform}`);
-      lines.push(`SMIL BBox: x=${smilEl.getBBox().x.toFixed(1)} y=${smilEl.getBBox().y.toFixed(1)}`);
-
-      writeDebugLog(`g-hack/g-hack-easing-css/${easing.name}`, lines);
-
-      const status = fails === 0 && maxDx < 1 && maxDy < 1 ? "PASS" : "FAIL";
-      results.push({ ...easing, status, maxDx, maxDy, fails, total: samples.length });
+      lines.push(`Total: ${passCount}/${results.length} pass`);
+      output.textContent = lines.join("\n");
     }
 
-    const lines = [];
-    for (const r of results) {
-      lines.push(`${r.status}  ${r.name.padEnd(18)}  maxΔx=${r.maxDx.toFixed(1)}  maxΔy=${r.maxDy.toFixed(1)}  fails=${r.fails}/${r.total}`);
-    }
-    const passCount = results.filter(r => r.status === "PASS").length;
-    lines.push("");
-    lines.push(`Total: ${passCount}/${results.length} pass`);
-    output.textContent = lines.join("\n");
-  }
-
-  run();
-</script>
+    run();
+  </script>
 </body>
+
 </html>
