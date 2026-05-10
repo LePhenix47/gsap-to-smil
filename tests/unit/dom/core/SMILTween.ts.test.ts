@@ -10,13 +10,13 @@ describe("SMILTween", () => {
   describe("target resolution", () => {
     // ===== HAPPY PATHS =====
 
-    it("HAPPY PATH: single Element → _targets has one entry", () => {
+    it("HAPPY PATH: single Element → targetElements has one entry", () => {
       const target = makeEl();
 
       const tween = new SMILTween(target, { opacity: 1, duration: 1 });
 
-      expect(tween._targets).toHaveLength(1);
-      expect(tween._targets[0]).toBe(target);
+      expect(tween.targetElements).toHaveLength(1);
+      expect(tween.targetElements[0]).toBe(target);
     });
 
     it("HAPPY PATH: CSS selector string → queries document and resolves targets", () => {
@@ -26,8 +26,8 @@ describe("SMILTween", () => {
 
       const tween = new SMILTween(".smil-test-target", { opacity: 1, duration: 1 });
 
-      expect(tween._targets).toHaveLength(1);
-      expect(tween._targets[0]).toBe(el);
+      expect(tween.targetElements).toHaveLength(1);
+      expect(tween.targetElements[0]).toBe(el);
 
       el.remove();
     });
@@ -38,10 +38,10 @@ describe("SMILTween", () => {
 
       const tween = new SMILTween([el1, el2], { opacity: 1, duration: 1 });
 
-      expect(tween._targets).toHaveLength(2);
+      expect(tween.targetElements).toHaveLength(2);
     });
 
-    it("HAPPY PATH: NodeList → flattened into _targets", () => {
+    it("HAPPY PATH: NodeList → flattened into targetElements", () => {
       const el1 = makeEl("circle");
       const el2 = makeEl("circle");
       el1.setAttribute("class", "smil-nodelist-test");
@@ -52,7 +52,7 @@ describe("SMILTween", () => {
       const nodeList = document.querySelectorAll(".smil-nodelist-test");
       const tween = new SMILTween(nodeList, { opacity: 1, duration: 1 });
 
-      expect(tween._targets).toHaveLength(2);
+      expect(tween.targetElements).toHaveLength(2);
 
       el1.remove();
       el2.remove();
@@ -154,13 +154,13 @@ describe("SMILTween", () => {
       expect(tween.hasBuilt).toBe(true);
     });
 
-    it("HAPPY PATH: _elements contains all injected animation elements", () => {
+    it("HAPPY PATH: animationElements contains all injected animation elements", () => {
       const target = makeEl();
 
       const tween = new SMILTween(target, { x: 10, opacity: 0.5, duration: 1 });
 
-      expect(tween._elements.length).toBeGreaterThan(0);
-      expect(target.childElementCount).toBe(tween._elements.length);
+      expect(tween.animationElements.length).toBeGreaterThan(0);
+      expect(target.childElementCount).toBe(tween.animationElements.length);
     });
 
     it("HAPPY PATH: multiple targets → each gets its own injected elements", () => {
@@ -186,13 +186,13 @@ describe("SMILTween", () => {
       expect(target.childElementCount).toBe(0);
     });
 
-    it("HAPPY PATH: empties _elements array", () => {
+    it("HAPPY PATH: empties animationElements array", () => {
       const target = makeEl();
       const tween = new SMILTween(target, { opacity: 0, duration: 1 });
 
       tween.kill();
 
-      expect(tween._elements).toHaveLength(0);
+      expect(tween.animationElements).toHaveLength(0);
     });
 
     it("HAPPY PATH: sets hasBuilt to false", () => {

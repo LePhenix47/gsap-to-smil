@@ -161,7 +161,7 @@ describe("SMILTween (smoke)", () => {
 
     expect(el1.childElementCount).toBe(0);
     expect(el2.childElementCount).toBe(0);
-    expect(tween._elements).toHaveLength(0);
+    expect(tween.animationElements).toHaveLength(0);
     expect(tween.hasBuilt).toBe(false);
   });
 
