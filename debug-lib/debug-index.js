@@ -235,7 +235,7 @@ class AnimationDebugger {
       const isClean = mismatchFrames.length === 0;
       const heading = cycleLabel ? `${cycleLabel} — ${label} — ${isClean ? "all clean" : mismatchFrames.length + " mismatched"}` : `${label} — ${isClean ? "all clean" : mismatchFrames.length + " mismatched"}`;
       lines.push("");
-      const extraHeader = extraColumns.length > 0 ? "  " + extraColumns.map((k) => `GSAP_${k}`.padEnd(25) + `SMIL_${k}`.padEnd(25)).join("") : "";
+      const extraHeader = extraColumns.length > 0 ? "  " + extraColumns.map((k) => `${k} (GSAP) | ${k} (SMIL)`).join("  ") : "";
       lines.push(`─── ${heading} ───`);
       lines.push("time     GSAP(x,y,w×h)     opacity     SMIL(x,y,w×h)     opacity     Δx   Δy   Δw   Δh  Δopac" + extraHeader);
       lines.push("─".repeat(110 + extraColumns.length * 50));
@@ -245,9 +245,10 @@ class AnimationDebugger {
         const pair = frame.pairs[pairIndex];
         shownRows++;
         const extraValues = extraColumns.map((key) => {
-          const gsapValue = pair.extraGSAP[key]?.substring(0, 22) ?? "";
-          const smilValue = pair.extraSMIL[key]?.substring(0, 22) ?? "";
-          return `  ${gsapValue.padEnd(23)} ${smilValue.padEnd(23)}`;
+          const gsapValue = pair.extraGSAP[key] ?? "";
+          const smilValue = pair.extraSMIL[key] ?? "";
+          const colWidth = Math.max(gsapValue.length, smilValue.length) + 2;
+          return `  ${gsapValue.padEnd(colWidth)} ${smilValue}`;
         }).join("");
         lines.push(`${frame.elapsed.toFixed(2).padStart(6)}s  ` + `(${pair.gsapLeft.toFixed(1).padStart(5)},${pair.gsapTop.toFixed(1).padStart(5)} ` + `${pair.gsapWidth.toFixed(0).padStart(3)}×${pair.gsapHeight.toFixed(0).padStart(3)}) ` + `${pair.gsapOpacity.padStart(5)}  ` + `(${pair.smilLeft.toFixed(1).padStart(5)},${pair.smilTop.toFixed(1).padStart(5)} ` + `${pair.smilWidth.toFixed(0).padStart(3)}×${pair.smilHeight.toFixed(0).padStart(3)}) ` + `${pair.smilOpacity.padStart(5)}  ` + `${pair.deltaX.toFixed(1).padStart(4)} ${pair.deltaY.toFixed(1).padStart(4)} ` + `${pair.deltaWidth.toFixed(1).padStart(4)} ${pair.deltaHeight.toFixed(1).padStart(4)} ` + `${pair.deltaOpacity.toFixed(3).padStart(5)}` + extraValues);
       }

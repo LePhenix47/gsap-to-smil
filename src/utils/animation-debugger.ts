@@ -395,7 +395,7 @@ export class AnimationDebugger {
 
       lines.push("");
       const extraHeader = extraColumns.length > 0
-        ? "  " + extraColumns.map(k => `GSAP_${k}`.padEnd(25) + `SMIL_${k}`.padEnd(25)).join("")
+        ? "  " + extraColumns.map(k => `${k} (GSAP) | ${k} (SMIL)`).join("  ")
         : "";
 
       lines.push(`─── ${heading} ───`);
@@ -409,9 +409,10 @@ export class AnimationDebugger {
 
         shownRows++;
         const extraValues = extraColumns.map((key) => {
-          const gsapValue = pair.extraGSAP[key]?.substring(0, 22) ?? "";
-          const smilValue = pair.extraSMIL[key]?.substring(0, 22) ?? "";
-          return `  ${gsapValue.padEnd(23)} ${smilValue.padEnd(23)}`;
+          const gsapValue = pair.extraGSAP[key] ?? "";
+          const smilValue = pair.extraSMIL[key] ?? "";
+          const colWidth = Math.max(gsapValue.length, smilValue.length) + 2;
+          return `  ${gsapValue.padEnd(colWidth)} ${smilValue}`;
         }).join("");
 
         lines.push(
