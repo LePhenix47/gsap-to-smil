@@ -46,11 +46,11 @@ export class TriggerResolver {
   ): TriggerConfig[] => {
     if (Array.isArray(trigger)) {
       return trigger.map((entry) =>
-        typeof entry === "string" ? { event: entry } : entry,
+        typeof entry === "string" ? { event: entry } as TriggerConfig : entry,
       );
     }
 
-    return [typeof trigger === "string" ? { event: trigger } : trigger];
+    return [typeof trigger === "string" ? { event: trigger } as TriggerConfig : trigger];
   };
 
   /** Resolves a single TriggerConfig to `"elementId.eventName"`. */
