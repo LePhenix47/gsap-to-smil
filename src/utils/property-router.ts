@@ -49,6 +49,7 @@ export class PropertyRouter {
     "onRepeat",
     "onRepeatParams",
     "onReverseComplete",
+    "trigger",
     "onReverseCompleteParams",
   ]);
 

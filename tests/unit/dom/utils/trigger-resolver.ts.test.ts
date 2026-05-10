@@ -23,7 +23,7 @@ describe("TriggerResolver", () => {
 
       const result = TriggerResolver.resolve(el, { event: "click", target: "#card" });
 
-      expect(result).toBe("#card.click");
+      expect(result).toBe("card.click");
     });
 
     it("HAPPY PATH: TriggerConfig without target → uses firstTarget id", () => {
@@ -44,7 +44,7 @@ describe("TriggerResolver", () => {
         { event: "click", target: "#btn" },
       ]);
 
-      expect(result).toBe("el.mouseover; #btn.click");
+      expect(result).toBe("el.mouseover; btn.click");
     });
 
     it("HAPPY PATH: 'unhover' maps to mouseout", () => {
@@ -81,7 +81,7 @@ describe("TriggerResolver", () => {
 
       const id = TriggerResolver.resolveId(el);
 
-      expect(id).toMatch(/^smil-tg-\d+$/);
+      expect(id).toMatch(/^smilTg\d+$/);
       expect(el.id).toBe(id);
     });
 
@@ -93,6 +93,22 @@ describe("TriggerResolver", () => {
       const id2 = TriggerResolver.resolveId(el2);
 
       expect(id1).not.toBe(id2);
+    });
+
+    it("EDGE CASE: hyphenated id → converted to camelCase + element renamed + warning", () => {
+      const el = document.createElement("div");
+      el.id = "card-smil";
+
+      let warned = false;
+      const originalWarn = console.warn;
+      console.warn = (msg: string) => { if (msg.includes("renamed")) warned = true; };
+
+      const result = TriggerResolver.resolve(el, "hover");
+      console.warn = originalWarn;
+
+      expect(result).toBe("cardSmil.mouseover");
+      expect(el.id).toBe("cardSmil");
+      expect(warned).toBe(true);
     });
   });
 
