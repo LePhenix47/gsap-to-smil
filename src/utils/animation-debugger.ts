@@ -23,6 +23,7 @@ type FramePairSample = {
   // Visual properties
   gsapOpacity: string;
   smilOpacity: string;
+  deltaOpacity: number;
   gsapFill: string;
   smilFill: string;
 };
@@ -123,6 +124,7 @@ export class AnimationDebugger {
               deltaHeight: Math.abs(gsapRect.height - smilRect.height),
               gsapOpacity: gsapStyle.opacity,
               smilOpacity: smilStyle.opacity,
+              deltaOpacity: Math.abs(parseFloat(gsapStyle.opacity) - parseFloat(smilStyle.opacity)),
               gsapFill: gsapStyle.fill,
               smilFill: smilStyle.fill,
             };
@@ -218,7 +220,7 @@ export class AnimationDebugger {
     for (let pairIndex = 0; pairIndex < pairCount; pairIndex++) {
       const label = samples[0].pairs[pairIndex].label;
 
-      let maxDx = 0, maxDy = 0, maxDw = 0, maxDh = 0;
+      let maxDx = 0, maxDy = 0, maxDw = 0, maxDh = 0, maxDopacity = 0;
       let failFrames = 0;
 
       for (const frame of samples) {
@@ -227,6 +229,7 @@ export class AnimationDebugger {
         if (pair.deltaY > maxDy) maxDy = pair.deltaY;
         if (pair.deltaWidth > maxDw) maxDw = pair.deltaWidth;
         if (pair.deltaHeight > maxDh) maxDh = pair.deltaHeight;
+        if (pair.deltaOpacity > maxDopacity) maxDopacity = pair.deltaOpacity;
         if (
           pair.deltaX > threshold
           || pair.deltaY > threshold
@@ -243,6 +246,7 @@ export class AnimationDebugger {
       lines.push(
         `${icon} ${label}: max Δpos=(${maxDx.toFixed(1)}, ${maxDy.toFixed(1)})  ` +
         `Δsize=(${maxDw.toFixed(1)}, ${maxDh.toFixed(1)})  ` +
+        `Δopacity=${maxDopacity.toFixed(3)}  ` +
         `fail frames=${failFrames}/${samples.length}  ${pass ? "PASS" : "FAIL"}`,
       );
 
@@ -300,7 +304,8 @@ export class AnimationDebugger {
       const mismatchFrames = windowSamples.filter((frame) => {
         const pair = frame.pairs[pairIndex];
         return pair.deltaX > threshold || pair.deltaY > threshold
-          || pair.deltaWidth > threshold || pair.deltaHeight > threshold;
+          || pair.deltaWidth > threshold || pair.deltaHeight > threshold
+          || pair.deltaOpacity > 0.05;
       });
 
       // When always=false, skip pairs with no mismatches. When always=true, show all (compact sample if clean).
@@ -317,8 +322,8 @@ export class AnimationDebugger {
 
       lines.push("");
       lines.push(`─── ${heading} ───`);
-      lines.push("time     GSAP(x,y,w×h)         SMIL(x,y,w×h)         Δx   Δy   Δw   Δh");
-      lines.push("─".repeat(85));
+      lines.push("time     GSAP(x,y,w×h)     opacity     SMIL(x,y,w×h)     opacity     Δx   Δy   Δw   Δh  Δopac");
+      lines.push("─".repeat(110));
 
       for (const frame of framesToShow) {
         if (shownRows >= maxRows) break;
@@ -329,11 +334,14 @@ export class AnimationDebugger {
         lines.push(
           `${frame.elapsed.toFixed(2).padStart(6)}s  ` +
           `(${pair.gsapLeft.toFixed(1).padStart(5)},${pair.gsapTop.toFixed(1).padStart(5)} ` +
-          `${pair.gsapWidth.toFixed(0).padStart(3)}×${pair.gsapHeight.toFixed(0).padStart(3)})  ` +
+          `${pair.gsapWidth.toFixed(0).padStart(3)}×${pair.gsapHeight.toFixed(0).padStart(3)}) ` +
+          `${pair.gsapOpacity.padStart(5)}  ` +
           `(${pair.smilLeft.toFixed(1).padStart(5)},${pair.smilTop.toFixed(1).padStart(5)} ` +
-          `${pair.smilWidth.toFixed(0).padStart(3)}×${pair.smilHeight.toFixed(0).padStart(3)})  ` +
+          `${pair.smilWidth.toFixed(0).padStart(3)}×${pair.smilHeight.toFixed(0).padStart(3)}) ` +
+          `${pair.smilOpacity.padStart(5)}  ` +
           `${pair.deltaX.toFixed(1).padStart(4)} ${pair.deltaY.toFixed(1).padStart(4)} ` +
-          `${pair.deltaWidth.toFixed(1).padStart(4)} ${pair.deltaHeight.toFixed(1).padStart(4)}`,
+          `${pair.deltaWidth.toFixed(1).padStart(4)} ${pair.deltaHeight.toFixed(1).padStart(4)} ` +
+          `${pair.deltaOpacity.toFixed(3).padStart(5)}`,
         );
       }
 
