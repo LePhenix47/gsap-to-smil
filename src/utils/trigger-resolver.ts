@@ -88,10 +88,18 @@ export class TriggerResolver {
   ): Element => {
     if (!target) return firstTarget;
 
-    // Try element ID directly (strip # if CSS selector syntax)
     const id = target.startsWith("#") ? target.slice(1) : target;
+
+    // Try original ID
     const byId = document.getElementById(id);
     if (byId) return byId;
+
+    // Try camelCase version (element may have been renamed by a previous trigger)
+    const camelId = id.replace(/-([a-z])/g, (_: string, letter: string) => letter.toUpperCase());
+    if (camelId !== id) {
+      const byCamel = document.getElementById(camelId);
+      if (byCamel) return byCamel;
+    }
 
     // Try as CSS selector
     const bySelector = document.querySelector(target);
