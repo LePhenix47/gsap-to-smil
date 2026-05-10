@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>trigger demo — GSAP (JS listeners) vs SMIL (declarative)</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    body {
+      background: #111;
+      color: #eee;
+      font-family: monospace;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 0.9rem;
+      margin: 0 0 0.5rem;
+    }
+
+    h3 {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.5;
+      margin: 1.5rem 0 0.3rem;
+    }
+
+    p {
+      font-size: 0.6rem;
+      opacity: 0.5;
+      margin: 0 0 0.5rem;
+    }
+
+    .row {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .card {
+      position: relative;
+      width: 260px;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: filter 0.1s;
+    }
+
+    .card img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .card-id {
+      position: absolute;
+      bottom: 6px;
+      left: 8px;
+      font-size: 0.55rem;
+      opacity: 0.4;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .label {
+      font-size: 0.55rem;
+      opacity: 0.4;
+    }
+
+    pre {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      padding: 0.5rem;
+      font-size: 0.6rem;
+      max-height: 30vh;
+      overflow: auto;
+      white-space: pre-wrap;
+      line-height: 1.3;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>trigger demo — hover → glitch effect</h1>
+
+  <!-- SVG filters (shared by both cards) -->
+  <svg width="0" height="0">
+    <defs>
+      <!-- GSAP filter: animated via GSAP + JS listeners -->
+      <filter id="noise-gsap">
+        <feTurbulence id="feTurb-gsap" baseFrequency="0.7,0.8" seed="0" type="fractalNoise" result="static" />
+        <feDisplacementMap id="feDisp-gsap" in="SourceGraphic" in2="static" scale="0" />
+      </filter>
+      <!-- SMIL filter: animated via smil.to() with trigger:"hover" — zero JS -->
+      <filter id="noise-smil">
+        <feTurbulence id="feTurb-smil" baseFrequency="0.7,0.8" seed="0" type="fractalNoise" result="static" />
+        <feDisplacementMap id="feDisp-smil" in="SourceGraphic" in2="static" scale="0" />
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="row">
+    <div class="col">
+      <span class="label">GSAP — manual JS listeners</span>
+      <div id="card-gsap" class="card" style="filter:url(#noise-gsap)">
+        <img
+          src="https://images.unsplash.com/photo-1679626951853-60e909d288ac?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"
+          alt="Neon sign" />
+        <span class="card-id">#card-gsap</span>
+      </div>
+    </div>
+    <div class="col">
+      <span class="label">SMIL — declarative trigger (zero JS listeners)</span>
+      <div id="card-smil" class="card" style="filter:url(#noise-smil)">
+        <img
+          src="https://images.unsplash.com/photo-1679626951853-60e909d288ac?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"
+          alt="Neon sign" />
+        <span class="card-id">#card-smil</span>
+      </div>
+    </div>
+  </div>
+
+  <pre id="log">Setting up...</pre>
+
+  <script type="module">
+    import gsap from "https://cdn.jsdelivr.net/npm/gsap@3/+esm";
+    import smil from "../../lib/index.js";
+    import { ConsoleInterceptor, writeDebugLog } from "../../debug-lib/debug-index.js";
+
+    ConsoleInterceptor.install();
+
+    // === GSAP: manual JS event listeners ===
+    const cardGsap = document.getElementById("card-gsap");
+    const feTurbGsap = document.getElementById("feTurb-gsap");
+    const feDispGsap = document.getElementById("feDisp-gsap");
+
+    const gsapTimeline = gsap.timeline({ paused: true });
+    gsapTimeline.to(feTurbGsap, { attr: { seed: 100 }, duration: 0.8, ease: "none" }, 0);
+    gsapTimeline.to(feDispGsap, { attr: { scale: 40 }, duration: 0.34, ease: "power1.inOut" }, 0);
+    gsapTimeline.to(feDispGsap, { attr: { scale: 0 }, duration: 0.46, ease: "power1.out" }, 0.34);
+
+    cardGsap.addEventListener("mouseenter", () => gsapTimeline.restart());
+    console.log("GSAP: manual mouseenter listener on #card-gsap");
+
+    // === SMIL: declarative trigger — zero JS listeners ===
+    const feTurbSmil = document.getElementById("feTurb-smil");
+    const feDispSmil = document.getElementById("feDisp-smil");
+
+    // Animate feTurbulence seed on #card-smil hover
+    smil.to(feTurbSmil, {
+      attr: { seed: 100 },
+      duration: 0.8,
+      ease: "none",
+      trigger: { event: "hover", target: "#card-smil" },
+    });
+
+    // Animate feDisplacementMap scale on #card-smil hover
+    smil.to(feDispSmil, {
+      attr: { scale: 40 },
+      duration: 0.34,
+      ease: "power1.inOut",
+      trigger: { event: "hover", target: "#card-smil" },
+    });
+    smil.to(feDispSmil, {
+      attr: { scale: 0 },
+      duration: 0.46,
+      delay: 0.34,
+      ease: "power1.out",
+      trigger: { event: "hover", target: "#card-smil" },
+    });
+
+    console.log("SMIL: declarative trigger — zero JS listeners, begin= generated by library");
+
+    // Verify injected SMIL elements
+    setTimeout(() => {
+      const turbAnim = feTurbSmil.querySelector("animate");
+      const dispAnims = feDispSmil.querySelectorAll("animate");
+
+      const lines = [
+        "─── trigger demo ───",
+        "",
+        `[GSAP] Manual JS event listener → gsap.timeline.restart() on mouseenter`,
+        `[SMIL] Zero JS listeners:`,
+        `  feTurbulence: ${turbAnim ? "✓ " + turbAnim.getAttribute("begin") : "✗ no animate"}`,
+        `  feDisplacementMap: ${dispAnims.length} animate elements`,
+        ...Array.from(dispAnims).map(a => `    begin="${a.getAttribute("begin")}"`),
+        "",
+        "Hover the cards → both should glitch identically.",
+      ];
+
+      log.textContent = lines.join("\n");
+      writeDebugLog("trigger-demo", lines);
+    }, 500);
+  </script>
+
+</body>
+
+</html>
