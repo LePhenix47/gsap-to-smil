@@ -114,6 +114,7 @@
     })),
     duration: 3.5,
     fps: 15,
+    extraProperties: ["transform"],
   });
 
   const report = AnimationDebugger.formatReport(samples, {
@@ -131,6 +132,7 @@
     }],
     duration: 6.5,
     fps: 20,
+    extraProperties: ["transform"],
   });
 
   const yoyoReport = AnimationDebugger.formatReport(yoyoSamples, {

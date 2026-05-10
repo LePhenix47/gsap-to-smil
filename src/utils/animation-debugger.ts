@@ -26,6 +26,9 @@ type FramePairSample = {
   deltaOpacity: number;
   gsapFill: string;
   smilFill: string;
+  // Extensible: caller-specified CSS/SVG properties
+  extraGSAP: Record<string, string>;
+  extraSMIL: Record<string, string>;
 };
 
 export type FrameSample = {
@@ -38,6 +41,8 @@ export type SampleOptions = {
   pairs: ElementPair[];
   duration: number;
   fps?: number;
+  /** Optional CSS/SVG property names to track per frame. "transform"→rotation/skew matrix, "stroke-dasharray", "r", etc. */
+  extraProperties?: string[];
 };
 
 type CycleDefinition = {
@@ -108,6 +113,22 @@ export class AnimationDebugger {
             const gsapStyle = window.getComputedStyle(meta.gsapElement);
             const smilStyle = window.getComputedStyle(meta.smilElement);
 
+            // Extra caller-specified properties
+            const extraProperties = options.extraProperties ?? [];
+            const extraGSAP: Record<string, string> = {};
+            const extraSMIL: Record<string, string> = {};
+
+            for (const propertyName of extraProperties) {
+              const gsapValue = gsapStyle.getPropertyValue(propertyName)
+                || meta.gsapElement.getAttribute(propertyName)
+                || "";
+              const smilValue = smilStyle.getPropertyValue(propertyName)
+                || meta.smilElement.getAttribute(propertyName)
+                || "";
+              extraGSAP[propertyName] = gsapValue;
+              extraSMIL[propertyName] = smilValue;
+            }
+
             return {
               label: meta.label,
               gsapLeft,
@@ -127,6 +148,8 @@ export class AnimationDebugger {
               deltaOpacity: Math.abs(parseFloat(gsapStyle.opacity) - parseFloat(smilStyle.opacity)),
               gsapFill: gsapStyle.fill,
               smilFill: smilStyle.fill,
+              extraGSAP,
+              extraSMIL,
             };
           });
 
@@ -263,6 +286,35 @@ export class AnimationDebugger {
       // Fill check
       if (lastFrame.gsapFill !== lastFrame.smilFill) {
         lines.push(`  fill: GSAP="${lastFrame.gsapFill}" SMIL="${lastFrame.smilFill}"`);
+      }
+
+      // Extra property check across all frames (not just last)
+      const extraKeys = Object.keys(firstFrame.extraGSAP);
+      if (extraKeys.length > 0) {
+        const mismatchedExtras: string[] = [];
+        for (const key of extraKeys) {
+          let maxDiffCount = 0;
+          const differingValues = new Set<string>();
+          for (const frame of samples) {
+            const pair = frame.pairs[pairIndex];
+            if (pair.extraGSAP[key] !== pair.extraSMIL[key]) {
+              maxDiffCount++;
+              differingValues.add(
+                `${key}: GSAP="${pair.extraGSAP[key]}" SMIL="${pair.extraSMIL[key]}"`,
+              );
+            }
+          }
+          if (maxDiffCount > 0) {
+            mismatchedExtras.push(
+              `${key}: ${maxDiffCount}/${samples.length} frames differ — ` +
+              `start GSAP="${firstFrame.extraGSAP[key]}" SMIL="${firstFrame.extraSMIL[key]}" ` +
+              `end GSAP="${lastFrame.extraGSAP[key]}" SMIL="${lastFrame.extraSMIL[key]}"`,
+            );
+          }
+        }
+        if (mismatchedExtras.length > 0) {
+          lines.push(`  extras: ${mismatchedExtras.join(" | ")}`);
+        }
       }
     }
 

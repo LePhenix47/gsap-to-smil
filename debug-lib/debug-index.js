@@ -35,6 +35,15 @@ class AnimationDebugger {
             const smilTop = smilRect.top - smilSvgRect.top;
             const gsapStyle = window.getComputedStyle(meta.gsapElement);
             const smilStyle = window.getComputedStyle(meta.smilElement);
+            const extraProperties = options.extraProperties ?? [];
+            const extraGSAP = {};
+            const extraSMIL = {};
+            for (const propertyName of extraProperties) {
+              const gsapValue = gsapStyle.getPropertyValue(propertyName) || meta.gsapElement.getAttribute(propertyName) || "";
+              const smilValue = smilStyle.getPropertyValue(propertyName) || meta.smilElement.getAttribute(propertyName) || "";
+              extraGSAP[propertyName] = gsapValue;
+              extraSMIL[propertyName] = smilValue;
+            }
             return {
               label: meta.label,
               gsapLeft,
@@ -53,7 +62,9 @@ class AnimationDebugger {
               smilOpacity: smilStyle.opacity,
               deltaOpacity: Math.abs(parseFloat(gsapStyle.opacity) - parseFloat(smilStyle.opacity)),
               gsapFill: gsapStyle.fill,
-              smilFill: smilStyle.fill
+              smilFill: smilStyle.fill,
+              extraGSAP,
+              extraSMIL
             };
           });
           samples.push({
@@ -150,6 +161,27 @@ class AnimationDebugger {
       }
       if (lastFrame.gsapFill !== lastFrame.smilFill) {
         lines.push(`  fill: GSAP="${lastFrame.gsapFill}" SMIL="${lastFrame.smilFill}"`);
+      }
+      const extraKeys = Object.keys(firstFrame.extraGSAP);
+      if (extraKeys.length > 0) {
+        const mismatchedExtras = [];
+        for (const key of extraKeys) {
+          let maxDiffCount = 0;
+          const differingValues = new Set;
+          for (const frame of samples) {
+            const pair = frame.pairs[pairIndex];
+            if (pair.extraGSAP[key] !== pair.extraSMIL[key]) {
+              maxDiffCount++;
+              differingValues.add(`${key}: GSAP="${pair.extraGSAP[key]}" SMIL="${pair.extraSMIL[key]}"`);
+            }
+          }
+          if (maxDiffCount > 0) {
+            mismatchedExtras.push(`${key}: ${maxDiffCount}/${samples.length} frames differ — ` + `start GSAP="${firstFrame.extraGSAP[key]}" SMIL="${firstFrame.extraSMIL[key]}" ` + `end GSAP="${lastFrame.extraGSAP[key]}" SMIL="${lastFrame.extraSMIL[key]}"`);
+          }
+        }
+        if (mismatchedExtras.length > 0) {
+          lines.push(`  extras: ${mismatchedExtras.join(" | ")}`);
+        }
       }
     }
     if (showFrameTable) {
