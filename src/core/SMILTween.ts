@@ -10,6 +10,7 @@ import type { PivotScaffold } from "@/utils/transform-composer.ts";
 import { SMILBuilder } from "@/utils/builders.ts";
 import type { AnimateOptions } from "@/types/builders.type.ts";
 import { Easing } from "@/utils/easing.ts";
+import { TriggerResolver } from "@/utils/trigger-resolver.ts";
 
 type ScaffoldRecord = PivotScaffold & {
   parent: ParentNode;
@@ -120,17 +121,22 @@ export class SMILTween extends Animation {
       ease,
       yoyo,
       transformOrigin,
+      trigger,
     } = toVars;
 
     const fromBuckets: PropertyBuckets | null = this.fromVarsRecord
       ? PropertyRouter.route(this.fromVarsRecord)
       : null;
 
+    const triggerBegin = this.targetElements.length > 0
+      ? TriggerResolver.resolve(this.targetElements[0], trigger)
+      : null;
+
     const hasYoyo = yoyo === true
       && this.repeatCount !== 0;
 
     if (hasYoyo) {
-      this.buildYoyoElements(toVars, buckets, fromBuckets);
+      this.buildYoyoElements(toVars, buckets, fromBuckets, triggerBegin);
       return;
     }
 
@@ -158,7 +164,12 @@ export class SMILTween extends Animation {
       const totalDelay = delay + staggerDelay;
 
       this.buildDirectProperties(
-        target, buckets, fromBuckets, totalDelay, { ease },
+        target, buckets, fromBuckets, totalDelay, { ease }, triggerBegin,
+      );
+
+      // attr: {} — SVG presentation attributes (Phase 2, minimal support for demo)
+      this.buildAttrElements(
+        target, buckets.attrs, fromBuckets?.attrs, totalDelay, { ease }, triggerBegin,
       );
 
       if (hasTransforms) {
@@ -170,6 +181,7 @@ export class SMILTween extends Animation {
           transformOrigin,
           { ease },
           this.isFromTween,
+          triggerBegin,
         );
       }
     }
@@ -181,6 +193,7 @@ export class SMILTween extends Animation {
     toVars: TweenVars,
     buckets: PropertyBuckets,
     fromBuckets: PropertyBuckets | null,
+    triggerBegin: string | null,
   ): void => {
     const { delay = 0, ease, transformOrigin } = toVars;
 
@@ -220,6 +233,11 @@ export class SMILTween extends Animation {
 
         // Yoyo easing: alternating forward/reversed keySplines
         SMILTween.applyYoyoEasing(element, ease, values);
+
+        if (triggerBegin) {
+          const existingBegin = element.getAttribute("begin");
+          element.setAttribute("begin", existingBegin ? `${triggerBegin}; ${existingBegin}` : triggerBegin);
+        }
 
         SMILBuilder.injectInto(target, element);
         this.animationElements.push(element);
@@ -261,6 +279,11 @@ export class SMILTween extends Animation {
         element.setAttribute("keyTimes", Easing.resolveKeyTimes(yoyoIntervalCount));
 
         SMILTween.applyYoyoEasing(element, ease, values);
+
+        if (triggerBegin) {
+          const existingBegin = element.getAttribute("begin");
+          element.setAttribute("begin", existingBegin ? `${triggerBegin}; ${existingBegin}` : triggerBegin);
+        }
       }
 
       // Inject into target (no pivot scaffold for yoyo yet)
@@ -338,6 +361,49 @@ export class SMILTween extends Animation {
     element.setAttribute("keySplines", splines.join("; "));
   };
 
+  // ===== attr: {} Properties =====
+
+  private buildAttrElements = (
+    target: Element,
+    attrs: PropertyBuckets["attrs"],
+    fromAttrs: PropertyBuckets["attrs"] | undefined,
+    delay: number,
+    timing: { ease?: TweenVars["ease"] },
+    triggerBegin: string | null,
+  ): void => {
+    const { ease } = timing;
+
+    for (const [attributeName, value] of Object.entries(attrs)) {
+      if (value === undefined || value === null) continue;
+
+      const animationOptions: AnimateOptions = {
+        attributeName,
+        dur: this.durationSeconds,
+        delay,
+        repeat: this.repeatCount,
+        ease,
+      };
+
+      if (fromAttrs) {
+        const fromValue = fromAttrs[attributeName];
+        if (fromValue !== undefined && fromValue !== null) {
+          animationOptions.from = String(fromValue);
+        }
+      }
+
+      animationOptions.to = String(value);
+      const element = SMILBuilder.animate(animationOptions);
+
+      if (triggerBegin) {
+        const existingBegin = element.getAttribute("begin");
+        element.setAttribute("begin", existingBegin ? `${existingBegin}; ${triggerBegin}` : triggerBegin);
+      }
+
+      SMILBuilder.injectInto(target, element);
+      this.animationElements.push(element);
+    }
+  };
+
   // ===== Direct Properties =====
 
   private buildDirectProperties = (
@@ -346,6 +412,7 @@ export class SMILTween extends Animation {
     fromBuckets: PropertyBuckets | null,
     delay: number,
     timing: { ease?: TweenVars["ease"] },
+    triggerBegin: string | null,
   ): void => {
     const { ease } = timing;
 
@@ -373,6 +440,10 @@ export class SMILTween extends Animation {
       }
 
       const element = SMILBuilder.animate(animationOptions);
+      if (triggerBegin) {
+        const existingBegin = element.getAttribute("begin");
+        element.setAttribute("begin", existingBegin ? `${triggerBegin}; ${existingBegin}` : triggerBegin);
+      }
       SMILBuilder.injectInto(target, element);
       this.animationElements.push(element);
     }
@@ -388,6 +459,7 @@ export class SMILTween extends Animation {
     transformOrigin: string | undefined,
     timing: { ease?: TweenVars["ease"] },
     invertDirection = false,
+    triggerBegin: string | null = null,
   ): void => {
     const { ease } = timing;
 
@@ -419,6 +491,14 @@ export class SMILTween extends Animation {
     }
 
     const allAnims = [...result.outerAnims, ...result.innerAnims];
+
+    // Apply trigger begin to all transform elements
+    if (triggerBegin) {
+      for (const element of allAnims) {
+        const existingBegin = element.getAttribute("begin");
+        element.setAttribute("begin", existingBegin ? `${triggerBegin}; ${existingBegin}` : triggerBegin);
+      }
+    }
 
     if (result.needsWrapper) {
       const scaffold = TransformComposer.buildPivotScaffold(

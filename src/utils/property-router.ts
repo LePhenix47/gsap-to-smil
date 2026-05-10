@@ -170,9 +170,7 @@ export class PropertyRouter {
 
     for (const [key, value] of Object.entries(vars)) {
       if (key === "attr") {
-        console.warn(
-          "[gsap-to-smil] The `attr` key has not been implemented yet and will be ignored.",
-        );
+        // Already cloned via structuredClone(vars.attr) above — skip routing.
         continue;
       }
 

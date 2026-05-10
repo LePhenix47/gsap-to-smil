@@ -17,6 +17,28 @@ import type { DrawSVGValue, MotionPathVars, MorphSVGVars } from "./plugins.type.
 export type PositionParam = number | string;
 
 /**
+ * SMIL-compatible event name — any standard DOM event plus `"hover"` / `"unhover"`
+ * aliases that map to `mouseover` / `mouseout` (Firefox compat).
+ *
+ * Not all DOM events work in SMIL `begin` — only mouse/focus events are
+ * supported cross-browser. The resolver maps unsupported events to the
+ * closest SMIL equivalent with a console warning.
+ */
+export type TriggerEvent = keyof HTMLElementEventMap | "hover" | "unhover";
+
+/**
+ * Config for a SMIL event-driven trigger.
+ *
+ * Mirrors SMIL's native `begin="elementId.eventName"` syntax. Triggers fire
+ * on the compositor thread — no JavaScript event listeners needed.
+ */
+export type TriggerConfig = {
+  event: TriggerEvent;
+  /** CSS selector or element ID. Defaults to the first tween target. */
+  target?: string;
+};
+
+/**
  * The vars object passed to `smil.to()`, `smil.from()`, `smil.fromTo()`, and `smil.set()`.
  *
  * Special properties (duration, ease, repeat…) control the tween itself.
@@ -39,6 +61,8 @@ export type TweenVars = {
   yoyoEase?: EaseString | boolean;
   /** Offset between each target's start time. Number = seconds per target. */
   stagger?: number | StaggerObject;
+  /** SMIL event trigger(s). `"hover"` → `begin="elementId.mouseover"`. */
+  trigger?: string | TriggerConfig | (string | TriggerConfig)[];
   /** Start paused — call `.play()` manually to begin. */
   paused?: boolean;
   /** Start in reverse direction. */
