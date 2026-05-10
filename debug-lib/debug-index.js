@@ -154,18 +154,18 @@ class AnimationDebugger {
       const pass = failFrames === 0;
       const icon = pass ? "✓" : "✗";
       lines.push(`${icon} ${label}: max Δpos=(${maxDx.toFixed(1)}, ${maxDy.toFixed(1)})  ` + `Δsize=(${maxDw.toFixed(1)}, ${maxDh.toFixed(1)})  ` + `Δopacity=${maxDopacity.toFixed(3)}  ` + `fail frames=${failFrames}/${samples.length}  ${pass ? "PASS" : "FAIL"}`);
-      const firstFrame = samples[0].pairs[pairIndex];
+      const firstFrame2 = samples[0].pairs[pairIndex];
       const lastFrame = samples[samples.length - 1].pairs[pairIndex];
-      if (firstFrame.gsapOpacity !== firstFrame.smilOpacity || lastFrame.gsapOpacity !== lastFrame.smilOpacity) {
-        lines.push(`  opacity: start GSAP=${firstFrame.gsapOpacity} SMIL=${firstFrame.smilOpacity}  ` + `end GSAP=${lastFrame.gsapOpacity} SMIL=${lastFrame.smilOpacity}`);
+      if (firstFrame2.gsapOpacity !== firstFrame2.smilOpacity || lastFrame.gsapOpacity !== lastFrame.smilOpacity) {
+        lines.push(`  opacity: start GSAP=${firstFrame2.gsapOpacity} SMIL=${firstFrame2.smilOpacity}  ` + `end GSAP=${lastFrame.gsapOpacity} SMIL=${lastFrame.smilOpacity}`);
       }
       if (lastFrame.gsapFill !== lastFrame.smilFill) {
         lines.push(`  fill: GSAP="${lastFrame.gsapFill}" SMIL="${lastFrame.smilFill}"`);
       }
-      const extraKeys = Object.keys(firstFrame.extraGSAP);
-      if (extraKeys.length > 0) {
+      const extraKeys2 = Object.keys(firstFrame2.extraGSAP);
+      if (extraKeys2.length > 0) {
         const mismatchedExtras = [];
-        for (const key of extraKeys) {
+        for (const key of extraKeys2) {
           let maxDiffCount = 0;
           const differingValues = new Set;
           for (const frame of samples) {
@@ -176,12 +176,32 @@ class AnimationDebugger {
             }
           }
           if (maxDiffCount > 0) {
-            mismatchedExtras.push(`${key}: ${maxDiffCount}/${samples.length} frames differ — ` + `start GSAP="${firstFrame.extraGSAP[key]}" SMIL="${firstFrame.extraSMIL[key]}" ` + `end GSAP="${lastFrame.extraGSAP[key]}" SMIL="${lastFrame.extraSMIL[key]}"`);
+            mismatchedExtras.push(`${key}: ${maxDiffCount}/${samples.length} frames differ — ` + `start GSAP="${firstFrame2.extraGSAP[key]}" SMIL="${firstFrame2.extraSMIL[key]}" ` + `end GSAP="${lastFrame.extraGSAP[key]}" SMIL="${lastFrame.extraSMIL[key]}"`);
           }
         }
         if (mismatchedExtras.length > 0) {
           lines.push(`  extras: ${mismatchedExtras.join(" | ")}`);
         }
+      }
+    }
+    let extraMismatchedKeys = [];
+    const firstFrame = samples[0];
+    const extraKeys = firstFrame.pairs[0] ? Object.keys(firstFrame.pairs[0].extraGSAP) : [];
+    if (extraKeys.length > 0) {
+      for (const key of extraKeys) {
+        let hasMismatch = false;
+        for (const frame of samples) {
+          for (const pair of frame.pairs) {
+            if (pair.extraGSAP[key] !== pair.extraSMIL[key]) {
+              hasMismatch = true;
+              break;
+            }
+          }
+          if (hasMismatch)
+            break;
+        }
+        if (hasMismatch)
+          extraMismatchedKeys.push(key);
       }
     }
     if (showFrameTable) {
@@ -193,12 +213,12 @@ class AnimationDebugger {
       for (const { name, window: window2 } of frameWindows) {
         if (window2.length === 0)
           continue;
-        this.appendFrameTable(lines, window2, threshold, maxRows, name, frameTableAlways);
+        this.appendFrameTable(lines, window2, threshold, maxRows, name, frameTableAlways, extraMismatchedKeys);
       }
     }
     return lines;
   };
-  static appendFrameTable = (lines, windowSamples, threshold, maxRows, cycleLabel, always = false) => {
+  static appendFrameTable = (lines, windowSamples, threshold, maxRows, cycleLabel, always = false, extraColumns = []) => {
     if (windowSamples.length === 0)
       return;
     let shownRows = 0;
@@ -215,15 +235,21 @@ class AnimationDebugger {
       const isClean = mismatchFrames.length === 0;
       const heading = cycleLabel ? `${cycleLabel} — ${label} — ${isClean ? "all clean" : mismatchFrames.length + " mismatched"}` : `${label} — ${isClean ? "all clean" : mismatchFrames.length + " mismatched"}`;
       lines.push("");
+      const extraHeader = extraColumns.length > 0 ? "  " + extraColumns.map((k) => `GSAP_${k}`.padEnd(25) + `SMIL_${k}`.padEnd(25)).join("") : "";
       lines.push(`─── ${heading} ───`);
-      lines.push("time     GSAP(x,y,w×h)     opacity     SMIL(x,y,w×h)     opacity     Δx   Δy   Δw   Δh  Δopac");
-      lines.push("─".repeat(110));
+      lines.push("time     GSAP(x,y,w×h)     opacity     SMIL(x,y,w×h)     opacity     Δx   Δy   Δw   Δh  Δopac" + extraHeader);
+      lines.push("─".repeat(110 + extraColumns.length * 50));
       for (const frame of framesToShow) {
         if (shownRows >= maxRows)
           break;
         const pair = frame.pairs[pairIndex];
         shownRows++;
-        lines.push(`${frame.elapsed.toFixed(2).padStart(6)}s  ` + `(${pair.gsapLeft.toFixed(1).padStart(5)},${pair.gsapTop.toFixed(1).padStart(5)} ` + `${pair.gsapWidth.toFixed(0).padStart(3)}×${pair.gsapHeight.toFixed(0).padStart(3)}) ` + `${pair.gsapOpacity.padStart(5)}  ` + `(${pair.smilLeft.toFixed(1).padStart(5)},${pair.smilTop.toFixed(1).padStart(5)} ` + `${pair.smilWidth.toFixed(0).padStart(3)}×${pair.smilHeight.toFixed(0).padStart(3)}) ` + `${pair.smilOpacity.padStart(5)}  ` + `${pair.deltaX.toFixed(1).padStart(4)} ${pair.deltaY.toFixed(1).padStart(4)} ` + `${pair.deltaWidth.toFixed(1).padStart(4)} ${pair.deltaHeight.toFixed(1).padStart(4)} ` + `${pair.deltaOpacity.toFixed(3).padStart(5)}`);
+        const extraValues = extraColumns.map((key) => {
+          const gsapValue = pair.extraGSAP[key]?.substring(0, 22) ?? "";
+          const smilValue = pair.extraSMIL[key]?.substring(0, 22) ?? "";
+          return `  ${gsapValue.padEnd(23)} ${smilValue.padEnd(23)}`;
+        }).join("");
+        lines.push(`${frame.elapsed.toFixed(2).padStart(6)}s  ` + `(${pair.gsapLeft.toFixed(1).padStart(5)},${pair.gsapTop.toFixed(1).padStart(5)} ` + `${pair.gsapWidth.toFixed(0).padStart(3)}×${pair.gsapHeight.toFixed(0).padStart(3)}) ` + `${pair.gsapOpacity.padStart(5)}  ` + `(${pair.smilLeft.toFixed(1).padStart(5)},${pair.smilTop.toFixed(1).padStart(5)} ` + `${pair.smilWidth.toFixed(0).padStart(3)}×${pair.smilHeight.toFixed(0).padStart(3)}) ` + `${pair.smilOpacity.padStart(5)}  ` + `${pair.deltaX.toFixed(1).padStart(4)} ${pair.deltaY.toFixed(1).padStart(4)} ` + `${pair.deltaWidth.toFixed(1).padStart(4)} ${pair.deltaHeight.toFixed(1).padStart(4)} ` + `${pair.deltaOpacity.toFixed(3).padStart(5)}` + extraValues);
       }
       if (shownRows >= maxRows)
         break;

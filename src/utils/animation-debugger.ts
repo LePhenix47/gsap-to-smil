@@ -318,6 +318,26 @@ export class AnimationDebugger {
       }
     }
 
+    // Detect extra properties with mismatches across all pairs
+    let extraMismatchedKeys: string[] = [];
+    const firstFrame = samples[0];
+    const extraKeys = firstFrame.pairs[0] ? Object.keys(firstFrame.pairs[0].extraGSAP) : [];
+    if (extraKeys.length > 0) {
+      for (const key of extraKeys) {
+        let hasMismatch = false;
+        for (const frame of samples) {
+          for (const pair of frame.pairs) {
+            if (pair.extraGSAP[key] !== pair.extraSMIL[key]) {
+              hasMismatch = true;
+              break;
+            }
+          }
+          if (hasMismatch) break;
+        }
+        if (hasMismatch) extraMismatchedKeys.push(key);
+      }
+    }
+
     // Frame-by-frame table (per cycle when cycles defined, otherwise flat)
     if (showFrameTable) {
       const frameTableAlways = reportOptions.frameTableAlways === true;
@@ -330,7 +350,7 @@ export class AnimationDebugger {
 
       for (const { name, window } of frameWindows) {
         if (window.length === 0) continue;
-        this.appendFrameTable(lines, window, threshold, maxRows, name, frameTableAlways);
+        this.appendFrameTable(lines, window, threshold, maxRows, name, frameTableAlways, extraMismatchedKeys);
       }
     }
 
@@ -344,6 +364,7 @@ export class AnimationDebugger {
     maxRows: number,
     cycleLabel: string,
     always = false,
+    extraColumns: string[] = [],
   ): void => {
     if (windowSamples.length === 0) return;
 
@@ -373,9 +394,13 @@ export class AnimationDebugger {
         : `${label} — ${isClean ? "all clean" : mismatchFrames.length + " mismatched"}`;
 
       lines.push("");
+      const extraHeader = extraColumns.length > 0
+        ? "  " + extraColumns.map(k => `GSAP_${k}`.padEnd(25) + `SMIL_${k}`.padEnd(25)).join("")
+        : "";
+
       lines.push(`─── ${heading} ───`);
-      lines.push("time     GSAP(x,y,w×h)     opacity     SMIL(x,y,w×h)     opacity     Δx   Δy   Δw   Δh  Δopac");
-      lines.push("─".repeat(110));
+      lines.push("time     GSAP(x,y,w×h)     opacity     SMIL(x,y,w×h)     opacity     Δx   Δy   Δw   Δh  Δopac" + extraHeader);
+      lines.push("─".repeat(110 + (extraColumns.length * 50)));
 
       for (const frame of framesToShow) {
         if (shownRows >= maxRows) break;
@@ -383,6 +408,12 @@ export class AnimationDebugger {
         const pair = frame.pairs[pairIndex];
 
         shownRows++;
+        const extraValues = extraColumns.map((key) => {
+          const gsapValue = pair.extraGSAP[key]?.substring(0, 22) ?? "";
+          const smilValue = pair.extraSMIL[key]?.substring(0, 22) ?? "";
+          return `  ${gsapValue.padEnd(23)} ${smilValue.padEnd(23)}`;
+        }).join("");
+
         lines.push(
           `${frame.elapsed.toFixed(2).padStart(6)}s  ` +
           `(${pair.gsapLeft.toFixed(1).padStart(5)},${pair.gsapTop.toFixed(1).padStart(5)} ` +
@@ -393,7 +424,8 @@ export class AnimationDebugger {
           `${pair.smilOpacity.padStart(5)}  ` +
           `${pair.deltaX.toFixed(1).padStart(4)} ${pair.deltaY.toFixed(1).padStart(4)} ` +
           `${pair.deltaWidth.toFixed(1).padStart(4)} ${pair.deltaHeight.toFixed(1).padStart(4)} ` +
-          `${pair.deltaOpacity.toFixed(3).padStart(5)}`,
+          `${pair.deltaOpacity.toFixed(3).padStart(5)}` +
+          extraValues,
         );
       }
 
