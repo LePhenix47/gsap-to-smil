@@ -70,7 +70,7 @@
   gsap.to("#g1", { opacity: 0.3, x: 100, duration: 2, ease: "power1.inOut" });
 
   // 2. from()
-  gsap.from("#g2", { rotation: 360, duration: 2, ease: "power2.out" });
+  gsap.from("#g2", { rotation: 360, duration: 2, ease: "power2.out", transformOrigin: "50% 50%" });
 
   // 3. fromTo()
   gsap.fromTo("#g3", { x: 0, opacity: 1 }, { x: 80, opacity: 0.2, duration: 2, ease: "sine.inOut" });
