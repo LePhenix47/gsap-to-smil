@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>SMILTween Demo — GSAP vs SMIL</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background: #111; color: #eee; font-family: monospace; padding: 1.5rem; }
+  h1 { font-size: 0.9rem; margin: 0 0 0.5rem; }
+  h3 { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.5; margin: 1.5rem 0 0.3rem; }
+  svg { border: 1px solid #2a2a2a; background: #1a1a1a; display: block; margin-bottom: 0.3rem; }
+  p { font-size: 0.6rem; opacity: 0.5; margin: 0 0 0.5rem; }
+  pre { background: #1a1a1a; border: 1px solid #2a2a2a; padding: 0.5rem; font-size: 0.6rem;
+        max-height: 40vh; overflow: auto; white-space: pre-wrap; line-height: 1.3; }
+</style>
+</head>
+<body>
+
+<h1>SMILTween Demo — GSAP vs SMIL</h1>
+<p>Each case has a GSAP rect (green) and a SMIL rect (blue). Both should overlap.</p>
+
+<h3>1. to() — opacity → 0.3, x → 100</h3>
+<svg width="220" height="50" xmlns="http://www.w3.org/2000/svg">
+  <rect id="g1" x="20" y="10" width="24" height="24" fill="#34d399" fill-opacity="0.6" />
+  <rect id="s1" x="20" y="10" width="24" height="24" fill="#60a5fa" fill-opacity="0.6" />
+</svg>
+
+<h3>2. from() — rotation 360 → 0</h3>
+<svg width="200" height="60" xmlns="http://www.w3.org/2000/svg">
+  <rect id="g2" x="20" y="15" width="24" height="24" fill="#34d399" fill-opacity="0.6" />
+  <rect id="s2" x="20" y="15" width="24" height="24" fill="#f97316" fill-opacity="0.6" />
+</svg>
+
+<h3>3. fromTo() — x: 0→80, opacity: 1→0.2</h3>
+<svg width="220" height="50" xmlns="http://www.w3.org/2000/svg">
+  <rect id="g3" x="20" y="10" width="24" height="24" fill="#34d399" fill-opacity="0.6" />
+  <rect id="s3" x="20" y="10" width="24" height="24" fill="#60a5fa" fill-opacity="0.6" />
+</svg>
+
+<h3>4. compound — x→60 + scale→1.5 + skewX→15</h3>
+<svg width="250" height="80" xmlns="http://www.w3.org/2000/svg">
+  <rect id="g4" x="20" y="25" width="24" height="24" fill="#34d399" fill-opacity="0.5" />
+  <rect id="s4" x="20" y="25" width="24" height="24" fill="#a78bfa" fill-opacity="0.5" />
+</svg>
+
+<h3>5. yoyo infinite — x→80 ping-pong</h3>
+<svg width="220" height="50" xmlns="http://www.w3.org/2000/svg">
+  <rect id="g5" x="20" y="10" width="24" height="24" fill="#34d399" fill-opacity="0.6" />
+  <rect id="s5" x="20" y="10" width="24" height="24" fill="#fbbf24" fill-opacity="0.6" />
+</svg>
+
+<h3>6. ease + delay — 0.5s delay, power2.out, x→150</h3>
+<svg width="280" height="50" xmlns="http://www.w3.org/2000/svg">
+  <rect id="g6" x="20" y="10" width="24" height="24" fill="#34d399" fill-opacity="0.6" />
+  <rect id="s6" x="20" y="10" width="24" height="24" fill="#f472b6" fill-opacity="0.6" />
+</svg>
+
+<pre id="log">Sampling...</pre>
+
+<script type="module">
+  import gsap from "https://cdn.jsdelivr.net/npm/gsap@3/+esm";
+  import smil from "../../lib/index.js";
+  import { AnimationDebugger, ConsoleInterceptor, writeDebugLog } from "../../debug-lib/debug-index.js";
+
+  ConsoleInterceptor.install();
+
+  // === GSAP (reference) ===
+
+  // 1. to()
+  gsap.to("#g1", { opacity: 0.3, x: 100, duration: 2, ease: "power1.inOut" });
+
+  // 2. from()
+  gsap.from("#g2", { rotation: 360, duration: 2, ease: "power2.out" });
+
+  // 3. fromTo()
+  gsap.fromTo("#g3", { x: 0, opacity: 1 }, { x: 80, opacity: 0.2, duration: 2, ease: "sine.inOut" });
+
+  // 4. compound
+  gsap.to("#g4", { x: 60, scale: 1.5, skewX: 15, duration: 2, ease: "power1.inOut", transformOrigin: "50% 50%" });
+
+  // 5. yoyo
+  gsap.to("#g5", { x: 80, duration: 1, repeat: -1, yoyo: true, ease: "power2.inOut" });
+
+  // 6. delay
+  gsap.to("#g6", { x: 150, duration: 1.5, delay: 0.5, ease: "power2.out" });
+
+  // === SMIL (library) ===
+
+  smil.to("#s1", { opacity: 0.3, x: 100, duration: 2, ease: "power1.inOut" });
+  smil.from("#s2", { rotation: 360, duration: 2, ease: "power2.out" });
+  smil.fromTo("#s3", { x: 0, opacity: 1 }, { x: 80, opacity: 0.2, duration: 2, ease: "sine.inOut" });
+  smil.to("#s4", { x: 60, scale: 1.5, skewX: 15, duration: 2, ease: "power1.inOut", transformOrigin: "50% 50%" });
+  smil.to("#s5", { x: 80, duration: 1, repeat: -1, yoyo: true, ease: "power2.inOut" });
+  smil.to("#s6", { x: 150, duration: 1.5, delay: 0.5, ease: "power2.out" });
+
+  console.log("SMILTween demo: 6 cases, GSAP vs SMIL. Sampling...");
+
+  await new Promise(r => setTimeout(r, 300));
+
+  // Sample all cases in one batch
+  const samples = await AnimationDebugger.sample({
+    pairs: [
+      { gsapElement: document.getElementById("g1"), smilElement: document.getElementById("s1"), label: "[1] to()" },
+      { gsapElement: document.getElementById("g2"), smilElement: document.getElementById("s2"), label: "[2] from()" },
+      { gsapElement: document.getElementById("g3"), smilElement: document.getElementById("s3"), label: "[3] fromTo()" },
+      { gsapElement: document.getElementById("g4"), smilElement: document.getElementById("s4"), label: "[4] compound" },
+      { gsapElement: document.getElementById("g5"), smilElement: document.getElementById("s5"), label: "[5] yoyo" },
+      { gsapElement: document.getElementById("g6"), smilElement: document.getElementById("s6"), label: "[6] delay" },
+    ],
+    duration: 3.5,
+    fps: 15,
+  });
+
+  const report = AnimationDebugger.formatReport(samples, { threshold: 2, frameTable: true });
+
+  // Append injected element counts
+  report.push("");
+  report.push("─── Injected element counts ───");
+  for (let i = 1; i <= 6; i++) {
+    const count = document.getElementById(`s${i}`).childElementCount;
+    report.push(`  [${i}] ${count} SMIL children`);
+  }
+
+  for (const line of report) {
+    if (line.startsWith("✓")) console.log(line);
+    else if (line.startsWith("✗")) console.warn(line);
+  }
+
+  log.textContent = report.join("\n");
+  writeDebugLog("smil-tween-demo", report);
+</script>
+
+</body>
+</html>

@@ -299,16 +299,9 @@
       fps: 10,
     });
 
-    let maxDx = 0;
-    for (const frame of samples) {
-      const p = frame.pairs[0];
-      if (p.deltaX > maxDx) maxDx = p.deltaX;
-      lines.push(
-        `t=${frame.elapsed.toFixed(1)}s  sum=(${p.gsapLeft.toFixed(1)},${p.gsapTop.toFixed(1)})  replace=(${p.smilLeft.toFixed(1)},${p.smilTop.toFixed(1)})  Δ=(${p.deltaX.toFixed(1)},${p.deltaY.toFixed(1)})`,
-      );
-    }
-    lines.push(`max Δx: ${maxDx.toFixed(1)}px — replace lost scale, positions diverged`);
-    console.log(`AnimationDebugger sample complete — max Δx between sum vs replace: ${maxDx.toFixed(1)}px`);
+    const report = AnimationDebugger.formatReport(samples, { threshold: 2, frameTable: true });
+    lines.push(...report);
+    console.log(`AnimationDebugger: sum vs replace — see report for details`);
 
     log.textContent = lines.join("\n");
     writeDebugLog("additive-demo", lines);
