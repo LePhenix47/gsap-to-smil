@@ -97,23 +97,57 @@
 
   await new Promise(r => setTimeout(r, 300));
 
-  // Sample all cases in one batch
+  const allPairs = [
+    { gsapId: "g1", smilId: "s1", label: "[1] to()" },
+    { gsapId: "g2", smilId: "s2", label: "[2] from()" },
+    { gsapId: "g3", smilId: "s3", label: "[3] fromTo()" },
+    { gsapId: "g4", smilId: "s4", label: "[4] compound" },
+    { gsapId: "g6", smilId: "s6", label: "[6] delay" },
+  ];
+
+  // Sample cases 1-4 + 6 in one batch
   const samples = await AnimationDebugger.sample({
-    pairs: [
-      { gsapElement: document.getElementById("g1"), smilElement: document.getElementById("s1"), label: "[1] to()" },
-      { gsapElement: document.getElementById("g2"), smilElement: document.getElementById("s2"), label: "[2] from()" },
-      { gsapElement: document.getElementById("g3"), smilElement: document.getElementById("s3"), label: "[3] fromTo()" },
-      { gsapElement: document.getElementById("g4"), smilElement: document.getElementById("s4"), label: "[4] compound" },
-      { gsapElement: document.getElementById("g5"), smilElement: document.getElementById("s5"), label: "[5] yoyo" },
-      { gsapElement: document.getElementById("g6"), smilElement: document.getElementById("s6"), label: "[6] delay" },
-    ],
+    pairs: allPairs.map(p => ({
+      gsapElement: document.getElementById(p.gsapId),
+      smilElement: document.getElementById(p.smilId),
+      label: p.label,
+    })),
     duration: 3.5,
     fps: 15,
   });
 
-  const report = AnimationDebugger.formatReport(samples, { threshold: 2, frameTable: true });
+  const report = AnimationDebugger.formatReport(samples, {
+    threshold: 2,
+    frameTable: true,
+    frameTableAlways: true,
+  });
 
-  // Append injected element counts
+  // Sample yoyo separately with per-cycle analysis (yoyo period = dur*2 = 2s)
+  const yoyoSamples = await AnimationDebugger.sample({
+    pairs: [{
+      gsapElement: document.getElementById("g5"),
+      smilElement: document.getElementById("s5"),
+      label: "[5] yoyo",
+    }],
+    duration: 6.5,
+    fps: 20,
+  });
+
+  const yoyoReport = AnimationDebugger.formatReport(yoyoSamples, {
+    threshold: 2,
+    frameTable: true,
+    frameTableAlways: true,
+    cycles: [
+      { name: "iteration 1", start: 0, end: 2 },
+      { name: "iteration 2", start: 2, end: 4 },
+      { name: "iteration 3", start: 4, end: 6 },
+    ],
+  });
+
+  report.push("");
+  report.push(...yoyoReport);
+
+  // Injected element counts
   report.push("");
   report.push("─── Injected element counts ───");
   for (let i = 1; i <= 6; i++) {
@@ -121,9 +155,10 @@
     report.push(`  [${i}] ${count} SMIL children`);
   }
 
+  // Log all report lines to console
   for (const line of report) {
-    if (line.startsWith("✓")) console.log(line);
-    else if (line.startsWith("✗")) console.warn(line);
+    if (line.startsWith("✗") || line.includes("FAIL")) console.warn(line);
+    else if (line.startsWith("✓") || line.startsWith("───") || line.includes("all clean") || line.includes("mismatched")) console.log(line);
   }
 
   log.textContent = report.join("\n");
