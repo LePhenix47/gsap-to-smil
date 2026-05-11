@@ -170,28 +170,24 @@
     cardGsap.addEventListener("mouseenter", () => gsapTimeline.restart());
     console.log("GSAP: manual mouseenter listener on #card-gsap");
 
-    // === SMIL: hand-crafted + library trigger demo ===
+    // === SMIL: smil.timeline() — zero JS listeners, mirrors GSAP side exactly ===
     const feTurbSmil = document.getElementById("feTurb-smil");
     const feDispSmil = document.getElementById("feDisp-smil");
-
-    // Rename card element to SMIL-safe ID (no hyphen — SMIL parses '-' as minus)
     const cardSmilEl = document.getElementById("card-smil");
-    if (cardSmilEl) cardSmilEl.id = "cardSmil";
-    const smilSafeId = cardSmilEl?.id ?? "cardSmil";
 
-    // SMIL via library: trigger on hover — zero JS listeners
-    smil.to(feTurbSmil, {
+    const smilTimeline = smil.timeline();
+    smilTimeline.to(feTurbSmil, {
       attr: { seed: 100 },
       duration: 0.8,
       ease: "none",
       trigger: { event: "hover", target: "#card-smil" },
-    });
-    // Scale chaining needs values= (not yet in lib) — hand-crafted for now
-    feDispSmil.innerHTML = `<animate attributeName="scale" values="0;40;0" dur="0.8s" begin="${smilSafeId}.mouseover" calcMode="spline" keyTimes="0;0.425;1" keySplines="0.455 0.03 0.515 0.955; 0.25 0.46 0.45 0.94" fill="freeze" />`;
+    }, 0);
+    smilTimeline.to(feDispSmil, { attr: { scale: 40 }, duration: 0.34, ease: "power1.inOut" }, 0);
+    smilTimeline.to(feDispSmil, { attr: { scale: 0 }, duration: 0.46, ease: "power1.out" }, 0.34);
 
-    console.log(`SMIL: smil.to() + trigger → begin="${smilSafeId}.mouseover" — zero JS listeners`);
+    console.log("SMIL: smil.timeline() — TriggerResolver auto-renames card-smil → cardSmil, zero JS listeners");
 
-    // Hover SMIL card → native SMIL trigger fires + bridge dispatches to GSAP
+    // Bridge: SMIL card hover → dispatch to GSAP card for synchronized visual comparison
     cardSmilEl?.addEventListener("mouseenter", () => {
       cardGsap.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
     });
