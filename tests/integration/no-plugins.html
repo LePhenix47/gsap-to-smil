@@ -18,6 +18,9 @@
     console.log("No plugins");
     import gsap from "gsap";
     import smil from "../../lib/index.js";
+    import { AnimationDebugger, ConsoleInterceptor, writeDebugLog } from "../../debug-lib/debug-index.js";
+
+    ConsoleInterceptor.install();
 
     // TODO: Pause GSAP tween on document visibility change, SMIL animations do that automatically
     // TODO: Add a combined stagger + timeline + keyframes example once all three interact correctly
@@ -62,6 +65,22 @@
     sTl.to("#s-tl-b", { opacity: 1, duration: 0.6, ease: "power2.out" });
     sTl.to("#s-tl-c", { opacity: 1, duration: 0.6, ease: "power2.out" });
 
+    AnimationDebugger.sample({
+      pairs: [
+        { gsapElement: document.getElementById("g-tl-a"), smilElement: document.getElementById("s-tl-a"), label: "tl7-a" },
+        { gsapElement: document.getElementById("g-tl-b"), smilElement: document.getElementById("s-tl-b"), label: "tl7-b" },
+        { gsapElement: document.getElementById("g-tl-c"), smilElement: document.getElementById("s-tl-c"), label: "tl7-c" },
+      ],
+      duration: 2,
+      fps: 15,
+    }).then(samples => {
+      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      writeDebugLog("no-plugins/tl7", report);
+      console.group("[7] timeline() — sequential fade-in");
+      for (const line of report) console.log(line);
+      console.groupEnd();
+    });
+
     // 7b. timeline() + stagger — staged lift, fade, and slide
     const gTlStagger = gsap.timeline();
     gTlStagger.to(".g-tl-stagger", {
@@ -102,6 +121,26 @@
       duration: 0.45,
       ease: "power1.inOut",
     }, ">");
+
+    {
+      const gStaggerEls = Array.from(document.querySelectorAll(".g-tl-stagger"));
+      const sStaggerEls = Array.from(document.querySelectorAll(".s-tl-stagger"));
+      AnimationDebugger.sample({
+        pairs: gStaggerEls.map((el, index) => ({
+          gsapElement: el,
+          smilElement: sStaggerEls[index],
+          label: `tl7b-${index}`,
+        })),
+        duration: 3.5,
+        fps: 15,
+      }).then(samples => {
+        const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+        writeDebugLog("no-plugins/tl7b", report);
+        console.group("[7b] timeline() + stagger — staged lift, fade, slide");
+        for (const line of report) console.log(line);
+        console.groupEnd();
+      });
+    }
 
     // 7c. timeline() + alternating stagger / non-stagger steps
     const gTlAlt = gsap.timeline({ repeatDelay: 0.35 });
@@ -176,27 +215,24 @@
       ease: "power1.inOut",
     }, ">");
 
-    // Debug: dump scaffold DOM structure for .s-tl-alt after timeline build
     {
-      const dump = document.getElementById("tl-alt-dump");
-      if (dump) {
-        const lines = [];
-        const dumpNode = (node, indent = "") => {
-          const attrs = Array.from(node.attributes)
-            .map(a => `${a.name}="${a.value}"`)
-            .join(" ");
-          lines.push(`${indent}<${node.tagName}${attrs ? " " + attrs : ""}>`);
-          for (const child of node.children) dumpNode(child, indent + "  ");
-        };
-        document.querySelectorAll(".s-tl-alt").forEach((el, i) => {
-          lines.push(`\n=== target[${i}] x=${el.getAttribute("x")} ===`);
-          // Walk up to the direct SVG child (scaffold outer or element itself)
-          let root = el;
-          while (root.parentElement && root.parentElement.tagName !== "svg") root = root.parentElement;
-          dumpNode(root);
-        });
-        dump.textContent = lines.join("\n");
-      }
+      const gAltEls = Array.from(document.querySelectorAll(".g-tl-alt"));
+      const sAltEls = Array.from(document.querySelectorAll(".s-tl-alt"));
+      AnimationDebugger.sample({
+        pairs: gAltEls.map((el, index) => ({
+          gsapElement: el,
+          smilElement: sAltEls[index],
+          label: `tl7c-${index}`,
+        })),
+        duration: 2.7,
+        fps: 15,
+      }).then(samples => {
+        const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+        writeDebugLog("no-plugins/tl7c", report);
+        console.group("[7c] timeline() — alternating stagger / non-stagger");
+        for (const line of report) console.log(line);
+        console.groupEnd();
+      });
     }
 
     // 8. keyframes (% form) + stagger + yoyo — ripple wave
@@ -230,6 +266,21 @@
     sTl2.to("#s-tlkf-b", { x: 105, scale: 0.75, opacity: 0.35, fill: "#fb7185", duration: 0.55, ease: "power1.inOut" }, "cross+=0.15");
     sTl2.to("#s-tlkf-a", { opacity: 1, fill: "#a3e635", duration: 0.35, ease: "sine.inOut" }, ">-0.2");
     sTl2.to("#s-tlkf-b", { opacity: 1, fill: "#f97316", duration: 0.35, ease: "sine.inOut" }, "<");
+
+    AnimationDebugger.sample({
+      pairs: [
+        { gsapElement: document.getElementById("g-tlkf-a"), smilElement: document.getElementById("s-tlkf-a"), label: "tl9-a" },
+        { gsapElement: document.getElementById("g-tlkf-b"), smilElement: document.getElementById("s-tlkf-b"), label: "tl9-b" },
+      ],
+      duration: 2,
+      fps: 15,
+    }).then(samples => {
+      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      writeDebugLog("no-plugins/tl9", report);
+      console.group("[9] timeline() — labels, sequencing, overlaps");
+      for (const line of report) console.log(line);
+      console.groupEnd();
+    });
 
     // 10. to() — scale + skewX with transformOrigin
     gsap.to("#g-scale-skew", {
