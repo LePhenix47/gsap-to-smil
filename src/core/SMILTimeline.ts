@@ -25,12 +25,22 @@ type ChildEntry = {
  * jump back to the element's static base value mid-sequence.
  */
 export class SMILTimeline extends Animation {
+  /** All child entries in insertion order, each pairing a tween with its absolute start time. */
   children: ChildEntry[] = [];
+
+  /** Default `TweenVars` merged into every child created via `to()`. */
   defaults: Partial<TweenVars>;
+
+  /** Named time markers. Stored as `{ name: absoluteTimeSeconds }`. */
   labels: Record<string, number> = {};
 
+  /** Resolved SMIL `begin=` base string from the first child that carries a `trigger`. Shared by all children. */
   private timelineTrigger: string | null = null;
+
+  /** Absolute start time of the most recently added child, used to resolve `"<"` position. */
   private lastChildStart: number = 0;
+
+  /** Absolute end time of the most recently added child, used to resolve `">"` and sequential positions. */
   private lastChildEnd: number = 0;
 
   constructor(timelineVars?: TimelineVars) {
@@ -42,6 +52,15 @@ export class SMILTimeline extends Animation {
 
   // ===== Public API =====
 
+  /**
+   * Animates `targetParam` to `toVars`, appending a new {@link SMILTween} to the timeline.
+   *
+   * - `defaults` are merged under `toVars` (child vars win).
+   * - `delay` is always forced to `0` — the timeline owns all timing via `begin=`.
+   * - The first `trigger` found in any entry becomes the shared `begin=` base for the whole timeline.
+   * - Sequential entries on the same `(element, attributeName)` are automatically chained:
+   *   the second `<animate>` gets an explicit `from=` equal to the first's `to=`.
+   */
   to = (targetParam: TweenTarget, toVars: TweenVars, position?: PositionParam): this => {
     const mergedVars: TweenVars = { ...this.defaults, ...toVars, delay: 0 };
     const { trigger } = mergedVars;
@@ -76,6 +95,12 @@ export class SMILTimeline extends Animation {
     return this;
   };
 
+  /**
+   * Adds a pre-built `SMILTween` at an exact absolute `position` in seconds.
+   *
+   * Unlike `to()`, no `defaults` merging or trigger capture occurs — the caller owns those.
+   * Prefer `to()` when constructing tweens from scratch.
+   */
   add = (tween: SMILTween, position: number): this => {
     const absoluteStart = position;
     const childEnd = absoluteStart + tween.durationSeconds;
@@ -96,18 +121,36 @@ export class SMILTimeline extends Animation {
     return this;
   };
 
+  /**
+   * Marks the current timeline end (`durationSeconds`) with `name`.
+   *
+   * Use the label as a `position` param in subsequent `to()` calls, e.g. `"label"`,
+   * `"label+=0.5"`, or `"label-=0.3"`.
+   */
   addLabel = (name: string): this => {
     this.labels[name] = this.durationSeconds;
     return this;
   };
 
+  /** Deletes `name` from `labels`. Silently no-ops if the label does not exist. */
   removeLabel = (name: string): this => {
     delete this.labels[name];
     return this;
   };
 
+  /**
+   * Returns the flat `SMILTween` array without position metadata.
+   *
+   * Read-only view — mutating the returned array has no effect on the timeline.
+   */
   getChildren = (): SMILTween[] => this.children.map(entry => entry.tween);
 
+  /**
+   * Kills all child tweens (removes injected SMIL elements) and resets all timing state.
+   *
+   * Equivalent to a fresh timeline. Use `kill()` when you only want to remove DOM elements
+   * without resetting `durationSeconds` or `hasBuilt`.
+   */
   clear = (): this => {
     for (const entry of this.children) {
       entry.tween.kill();
@@ -121,6 +164,11 @@ export class SMILTimeline extends Animation {
     return this;
   };
 
+  /**
+   * Removes all injected SMIL elements from the DOM and empties `children`.
+   *
+   * Does not reset `durationSeconds` or `hasBuilt`. Use `clear()` for a full state reset.
+   */
   kill = (): this => {
     for (const entry of this.children) {
       entry.tween.kill();
@@ -129,6 +177,7 @@ export class SMILTimeline extends Animation {
     return this;
   };
 
+  /** Restores every target's attributes to their pre-animation values and removes injected SMIL elements. */
   revert = (): this => {
     for (const entry of this.children) {
       entry.tween.revert();
@@ -139,12 +188,24 @@ export class SMILTimeline extends Animation {
 
   // ===== Position Resolution =====
 
+  /**
+   * Maps a raw `PositionParam` (undefined, number, or string) to an absolute time in seconds.
+   *
+   * Absent/undefined → sequential (appends after the last child ends).
+   * Negative results are clamped to `0`.
+   */
   private resolvePosition = (position: PositionParam | undefined): number => {
     if (this.isAbsent(position)) return this.lastChildEnd;
     if (typeof position === "number") return Math.max(0, position);
     return this.resolveStringPosition(position);
   };
 
+  /**
+   * Handles the full GSAP string-position syntax:
+   * `">"` / `"<"`, `">±N"` / `"<±N"`, `"+=N"` / `"-=N"`, `"label"`, `"label+=N"` / `"label-=N"`.
+   *
+   * Unknown strings fall back to `0`.
+   */
   private resolveStringPosition = (position: string): number => {
     if (position === ">") return this.lastChildEnd;
     if (position === "<") return this.lastChildStart;
@@ -190,6 +251,13 @@ export class SMILTimeline extends Animation {
 
   // ===== Begin Rewriting =====
 
+  /**
+   * Returns the SMIL `begin=` string for `effectiveBegin` seconds, incorporating
+   * `timelineTrigger` when present.
+   *
+   * Returns `null` when `effectiveBegin` is `0` and there is no trigger, which causes
+   * the `begin=` attribute to be removed entirely (SMIL default: begin immediately).
+   */
   private computeBeginValue = (effectiveBegin: number): string | null => {
     if (this.timelineTrigger && effectiveBegin === 0) return this.timelineTrigger;
     if (this.timelineTrigger) return `${this.timelineTrigger} + ${effectiveBegin}s`;
@@ -197,6 +265,12 @@ export class SMILTimeline extends Animation {
     return `${effectiveBegin}s`;
   };
 
+  /**
+   * Rewrites the `begin=` attribute on every `<animate>` element owned by `entry.tween`.
+   *
+   * Adds `delaySeconds` to `absoluteStart` before computing the SMIL begin value so the
+   * timeline-level delay is honoured uniformly across all children.
+   */
   private rewriteBegin = (entry: ChildEntry): void => {
     const { tween, absoluteStart } = entry;
     const effectiveBegin: number = absoluteStart + this.delaySeconds;
@@ -235,6 +309,12 @@ export class SMILTimeline extends Animation {
     }
   };
 
+  /**
+   * Scans `children` in reverse (excluding the last entry) for the most recent `<animate>`
+   * on `(targetElement, attributeName)` and returns its `to=` value.
+   *
+   * Returns `null` when no preceding entry animates that attribute on that element.
+   */
   private findPrecedingToValue = (
     targetElement: Element,
     attributeName: string,
@@ -252,6 +332,7 @@ export class SMILTimeline extends Animation {
 
   // ===== Target Resolution =====
 
+  /** Normalizes a `TweenTarget` (CSS selector, `NodeList`, `Element[]`, or single `Element`) to `Element[]`. */
   private static resolveTargets = (targetParam: TweenTarget): Element[] => {
     if (typeof targetParam === "string") {
       return Array.from(document.querySelectorAll(targetParam));
