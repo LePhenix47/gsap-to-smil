@@ -25,9 +25,9 @@ type ChildEntry = {
  * jump back to the element's static base value mid-sequence.
  */
 export class SMILTimeline extends Animation {
-  _children: ChildEntry[] = [];
-  _defaults: Partial<TweenVars>;
-  _labels: Record<string, number> = {};
+  children: ChildEntry[] = [];
+  defaults: Partial<TweenVars>;
+  labels: Record<string, number> = {};
 
   private timelineTrigger: string | null = null;
   private lastChildStart: number = 0;
@@ -37,19 +37,20 @@ export class SMILTimeline extends Animation {
     super(timelineVars ?? {});
     this.durationSeconds = 0;
     this.totalDurationSeconds = 0;
-    this._defaults = timelineVars?.defaults ?? {};
+    this.defaults = timelineVars?.defaults ?? {};
   }
 
   // ===== Public API =====
 
   to = (targetParam: TweenTarget, toVars: TweenVars, position?: PositionParam): this => {
-    const mergedVars: TweenVars = { ...this._defaults, ...toVars, delay: 0 };
+    const mergedVars: TweenVars = { ...this.defaults, ...toVars, delay: 0 };
     const { trigger } = mergedVars;
 
     if (trigger && !this.timelineTrigger) {
       const targets = SMILTimeline.resolveTargets(targetParam);
       if (targets.length > 0) {
-        this.timelineTrigger = TriggerResolver.resolve(targets[0], trigger);
+        const firstTarget = targets[0]!;
+        this.timelineTrigger = TriggerResolver.resolve(firstTarget, trigger);
       }
     }
 
@@ -58,7 +59,7 @@ export class SMILTimeline extends Animation {
     const childEnd = absoluteStart + tween.durationSeconds;
 
     const entry: ChildEntry = { tween, absoluteStart };
-    this._children.push(entry);
+    this.children.push(entry);
 
     this.wireSequentialChains(entry);
     this.rewriteBegin(entry);
@@ -80,7 +81,7 @@ export class SMILTimeline extends Animation {
     const childEnd = absoluteStart + tween.durationSeconds;
     const entry: ChildEntry = { tween, absoluteStart };
 
-    this._children.push(entry);
+    this.children.push(entry);
     this.wireSequentialChains(entry);
     this.rewriteBegin(entry);
 
@@ -96,22 +97,22 @@ export class SMILTimeline extends Animation {
   };
 
   addLabel = (name: string): this => {
-    this._labels[name] = this.durationSeconds;
+    this.labels[name] = this.durationSeconds;
     return this;
   };
 
   removeLabel = (name: string): this => {
-    delete this._labels[name];
+    delete this.labels[name];
     return this;
   };
 
-  getChildren = (): SMILTween[] => this._children.map(entry => entry.tween);
+  getChildren = (): SMILTween[] => this.children.map(entry => entry.tween);
 
   clear = (): this => {
-    for (const entry of this._children) {
+    for (const entry of this.children) {
       entry.tween.kill();
     }
-    this._children = [];
+    this.children = [];
     this.durationSeconds = 0;
     this.totalDurationSeconds = 0;
     this.lastChildStart = 0;
@@ -121,18 +122,18 @@ export class SMILTimeline extends Animation {
   };
 
   kill = (): this => {
-    for (const entry of this._children) {
+    for (const entry of this.children) {
       entry.tween.kill();
     }
-    this._children = [];
+    this.children = [];
     return this;
   };
 
   revert = (): this => {
-    for (const entry of this._children) {
+    for (const entry of this.children) {
       entry.tween.revert();
     }
-    this._children = [];
+    this.children = [];
     return this;
   };
 
@@ -170,36 +171,42 @@ export class SMILTimeline extends Animation {
 
     const plusMatch = /^(.+)\+=(\d+\.?\d*)$/.exec(position);
     if (plusMatch) {
-      const labelTime = this._labels[plusMatch[1]!] ?? 0;
-      return Math.max(0, labelTime + parseFloat(plusMatch[2]!));
+      const labelName: string = plusMatch[1]!;
+      const labelOffset: number = parseFloat(plusMatch[2]!);
+      const labelTime: number = this.labels[labelName] ?? 0;
+      return Math.max(0, labelTime + labelOffset);
     }
 
     const minusMatch = /^(.+)-=(\d+\.?\d*)$/.exec(position);
     if (minusMatch) {
-      const labelTime = this._labels[minusMatch[1]!] ?? 0;
-      return Math.max(0, labelTime - parseFloat(minusMatch[2]!));
+      const labelName: string = minusMatch[1]!;
+      const labelOffset: number = parseFloat(minusMatch[2]!);
+      const labelTime: number = this.labels[labelName] ?? 0;
+      return Math.max(0, labelTime - labelOffset);
     }
 
-    return this._labels[position] ?? 0;
+    return this.labels[position] ?? 0;
   };
 
   // ===== Begin Rewriting =====
 
+  private computeBeginValue = (effectiveBegin: number): string | null => {
+    if (this.timelineTrigger && effectiveBegin === 0) return this.timelineTrigger;
+    if (this.timelineTrigger) return `${this.timelineTrigger} + ${effectiveBegin}s`;
+    if (effectiveBegin === 0) return null;
+    return `${effectiveBegin}s`;
+  };
+
   private rewriteBegin = (entry: ChildEntry): void => {
     const { tween, absoluteStart } = entry;
-    const effectiveBegin = absoluteStart + this.delaySeconds;
+    const effectiveBegin: number = absoluteStart + this.delaySeconds;
+    const beginValue = this.computeBeginValue(effectiveBegin);
 
     for (const animationElement of tween.animationElements) {
-      if (this.timelineTrigger) {
-        if (effectiveBegin === 0) {
-          animationElement.setAttribute("begin", this.timelineTrigger);
-        } else {
-          animationElement.setAttribute("begin", `${this.timelineTrigger} + ${effectiveBegin}s`);
-        }
-      } else if (effectiveBegin === 0) {
+      if (beginValue === null) {
         animationElement.removeAttribute("begin");
       } else {
-        animationElement.setAttribute("begin", `${effectiveBegin}s`);
+        animationElement.setAttribute("begin", beginValue);
       }
     }
   };
@@ -213,7 +220,8 @@ export class SMILTimeline extends Animation {
    * the second element fixes this.
    */
   private wireSequentialChains = (newEntry: ChildEntry): void => {
-    for (const newAnimElement of newEntry.tween.animationElements) {
+    const { tween } = newEntry;
+    for (const newAnimElement of tween.animationElements) {
       const targetElement = newAnimElement.parentElement;
       if (!targetElement) continue;
 
@@ -231,8 +239,8 @@ export class SMILTimeline extends Animation {
     targetElement: Element,
     attributeName: string,
   ): string | null => {
-    for (let index = this._children.length - 2; index >= 0; index--) {
-      const previousEntry = this._children[index]!;
+    for (let index = this.children.length - 2; index >= 0; index--) {
+      const previousEntry = this.children[index]!;
       for (const previousAnimElement of previousEntry.tween.animationElements) {
         if (previousAnimElement.parentElement !== targetElement) continue;
         if (previousAnimElement.getAttribute("attributeName") !== attributeName) continue;

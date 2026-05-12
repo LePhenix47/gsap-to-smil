@@ -24,10 +24,10 @@ describe("SMILTimeline", () => {
       expect(tl.hasBuilt).toBe(false);
     });
 
-    it("HAPPY PATH: defaults from vars are stored in _defaults", () => {
+    it("HAPPY PATH: defaults from vars are stored in defaults", () => {
       const tl = makeTl({ defaults: { ease: "linear", duration: 2 } });
 
-      expect(tl._defaults).toEqual({ ease: "linear", duration: 2 });
+      expect(tl.defaults).toEqual({ ease: "linear", duration: 2 });
     });
 
     it("HAPPY PATH: delay and repeat from vars are passed to the Animation base", () => {
@@ -39,12 +39,12 @@ describe("SMILTimeline", () => {
   });
 
   describe("to() — child insertion", () => {
-    it("HAPPY PATH: adds one entry to _children", () => {
+    it("HAPPY PATH: adds one entry to children", () => {
       const tl = makeTl();
 
       tl.to(makeEl(), { opacity: 0, duration: 0.5 });
 
-      expect(tl._children).toHaveLength(1);
+      expect(tl.children).toHaveLength(1);
     });
 
     it("HAPPY PATH: hasBuilt becomes true after the first child", () => {
@@ -68,10 +68,10 @@ describe("SMILTimeline", () => {
 
       tl.to(makeEl(), { opacity: 0, duration: 0.5 });
 
-      expect(tl._children[0]!.absoluteStart).toBe(0);
+      expect(tl.children[0]!.absoluteStart).toBe(0);
     });
 
-    it("HAPPY PATH: _defaults are merged into the child tween vars", () => {
+    it("HAPPY PATH: defaults are merged into the child tween vars", () => {
       const tl = makeTl({ defaults: { ease: "linear" } });
       const target = makeEl();
 
@@ -97,7 +97,7 @@ describe("SMILTimeline", () => {
       tl.to(makeEl(), { opacity: 0, duration: 0.5 });
       tl.to(makeEl(), { opacity: 1, duration: 0.5 });
 
-      expect(tl._children[1]!.absoluteStart).toBe(0.5);
+      expect(tl.children[1]!.absoluteStart).toBe(0.5);
     });
 
     it("HAPPY PATH: '>' is identical to undefined", () => {
@@ -105,7 +105,7 @@ describe("SMILTimeline", () => {
       tl.to(makeEl(), { opacity: 0, duration: 0.5 });
       tl.to(makeEl(), { opacity: 1, duration: 0.5 }, ">");
 
-      expect(tl._children[1]!.absoluteStart).toBe(0.5);
+      expect(tl.children[1]!.absoluteStart).toBe(0.5);
     });
 
     it("HAPPY PATH: '<' → same absoluteStart as the previous child", () => {
@@ -113,7 +113,7 @@ describe("SMILTimeline", () => {
       tl.to(makeEl(), { opacity: 0, duration: 0.5 });
       tl.to(makeEl(), { opacity: 1, duration: 0.5 }, "<");
 
-      expect(tl._children[1]!.absoluteStart).toBe(0);
+      expect(tl.children[1]!.absoluteStart).toBe(0);
     });
 
     it("HAPPY PATH: number → exact absolute time", () => {
@@ -121,7 +121,7 @@ describe("SMILTimeline", () => {
       tl.to(makeEl(), { opacity: 0, duration: 0.5 });
       tl.to(makeEl(), { opacity: 1, duration: 0.5 }, 2);
 
-      expect(tl._children[1]!.absoluteStart).toBe(2);
+      expect(tl.children[1]!.absoluteStart).toBe(2);
     });
 
     it("HAPPY PATH: '<0.5' → prev start + 0.5", () => {
@@ -129,7 +129,7 @@ describe("SMILTimeline", () => {
       tl.to(makeEl(), { opacity: 0, duration: 1 });
       tl.to(makeEl(), { opacity: 1, duration: 0.5 }, "<0.5");
 
-      expect(tl._children[1]!.absoluteStart).toBe(0.5);
+      expect(tl.children[1]!.absoluteStart).toBe(0.5);
     });
 
     it("HAPPY PATH: '>-0.5' → prev end - 0.5 (overlap by 0.5s)", () => {
@@ -137,7 +137,7 @@ describe("SMILTimeline", () => {
       tl.to(makeEl(), { opacity: 0, duration: 1 });
       tl.to(makeEl(), { opacity: 1, duration: 0.5 }, ">-0.5");
 
-      expect(tl._children[1]!.absoluteStart).toBe(0.5);
+      expect(tl.children[1]!.absoluteStart).toBe(0.5);
     });
 
     it("HAPPY PATH: '+=0.5' → timeline end + 0.5", () => {
@@ -145,7 +145,7 @@ describe("SMILTimeline", () => {
       tl.to(makeEl(), { opacity: 0, duration: 1 });
       tl.to(makeEl(), { opacity: 1, duration: 0.5 }, "+=0.5");
 
-      expect(tl._children[1]!.absoluteStart).toBe(1.5);
+      expect(tl.children[1]!.absoluteStart).toBe(1.5);
     });
 
     it("HAPPY PATH: '-=0.5' → timeline end - 0.5", () => {
@@ -153,7 +153,7 @@ describe("SMILTimeline", () => {
       tl.to(makeEl(), { opacity: 0, duration: 1 });
       tl.to(makeEl(), { opacity: 1, duration: 0.5 }, "-=0.5");
 
-      expect(tl._children[1]!.absoluteStart).toBe(0.5);
+      expect(tl.children[1]!.absoluteStart).toBe(0.5);
     });
 
     it("EDGE CASE: position that would go negative is clamped to 0", () => {
@@ -161,7 +161,7 @@ describe("SMILTimeline", () => {
       tl.to(makeEl(), { opacity: 0, duration: 1 });
       tl.to(makeEl(), { opacity: 1, duration: 0.5 }, ">-9999");
 
-      expect(tl._children[1]!.absoluteStart).toBe(0);
+      expect(tl.children[1]!.absoluteStart).toBe(0);
     });
   });
 
@@ -171,7 +171,7 @@ describe("SMILTimeline", () => {
       tl.to(makeEl(), { opacity: 0, duration: 1 });
       tl.addLabel("myLabel");
 
-      expect(tl._labels["myLabel"]).toBe(1);
+      expect(tl.labels["myLabel"]).toBe(1);
     });
 
     it("HAPPY PATH: label string as position resolves to the label's time", () => {
@@ -181,7 +181,7 @@ describe("SMILTimeline", () => {
       tl.to(makeEl(), { opacity: 0, duration: 0.5 }); // advances prevEnd
       tl.to(makeEl(), { opacity: 1, duration: 0.5 }, "myLabel");
 
-      expect(tl._children[2]!.absoluteStart).toBe(1);
+      expect(tl.children[2]!.absoluteStart).toBe(1);
     });
 
     it("HAPPY PATH: 'label+=N' → label time + N", () => {
@@ -190,7 +190,7 @@ describe("SMILTimeline", () => {
       tl.addLabel("mark");
       tl.to(makeEl(), { opacity: 1, duration: 0.5 }, "mark+=0.3");
 
-      expect(tl._children[1]!.absoluteStart).toBe(1.3);
+      expect(tl.children[1]!.absoluteStart).toBe(1.3);
     });
 
     it("HAPPY PATH: 'label-=N' → label time - N", () => {
@@ -199,7 +199,7 @@ describe("SMILTimeline", () => {
       tl.addLabel("mark");
       tl.to(makeEl(), { opacity: 1, duration: 0.5 }, "mark-=0.4");
 
-      expect(tl._children[1]!.absoluteStart).toBe(0.6);
+      expect(tl.children[1]!.absoluteStart).toBe(0.6);
     });
 
     it("HAPPY PATH: removeLabel deletes the label", () => {
@@ -207,7 +207,7 @@ describe("SMILTimeline", () => {
       tl.addLabel("gone");
       tl.removeLabel("gone");
 
-      expect("gone" in tl._labels).toBe(false);
+      expect("gone" in tl.labels).toBe(false);
     });
   });
 
@@ -264,19 +264,19 @@ describe("SMILTimeline", () => {
 
       tl.add(tween, 1);
 
-      expect(tl._children).toHaveLength(1);
-      expect(tl._children[0]!.absoluteStart).toBe(1);
+      expect(tl.children).toHaveLength(1);
+      expect(tl.children[0]!.absoluteStart).toBe(1);
     });
   });
 
   describe("clear()", () => {
-    it("HAPPY PATH: empties _children", () => {
+    it("HAPPY PATH: empties children", () => {
       const tl = makeTl();
       tl.to(makeEl(), { opacity: 0, duration: 0.5 });
 
       tl.clear();
 
-      expect(tl._children).toHaveLength(0);
+      expect(tl.children).toHaveLength(0);
     });
 
     it("HAPPY PATH: resets durationSeconds to 0", () => {
@@ -325,13 +325,13 @@ describe("SMILTimeline", () => {
       expect(target.childElementCount).toBe(0);
     });
 
-    it("HAPPY PATH: empties _children", () => {
+    it("HAPPY PATH: empties children", () => {
       const tl = makeTl();
       tl.to(makeEl(), { opacity: 0, duration: 0.5 });
 
       tl.kill();
 
-      expect(tl._children).toHaveLength(0);
+      expect(tl.children).toHaveLength(0);
     });
 
     it("HAPPY PATH: returns this for chaining", () => {

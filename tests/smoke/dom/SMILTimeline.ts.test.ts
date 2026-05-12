@@ -58,7 +58,7 @@ describe("SMILTimeline (smoke)", () => {
       .to(makeEl(), { opacity: 0.5, duration: 0.3 });
 
     expect(result).toBe(tl);
-    expect(tl._children).toHaveLength(3);
+    expect(tl.children).toHaveLength(3);
   });
 
   it("SMOKE TEST: label-based position — tween lands at the labeled time", () => {
@@ -96,7 +96,7 @@ describe("SMILTimeline (smoke)", () => {
 
     expect(a.childElementCount).toBe(0);
     expect(b.childElementCount).toBe(0);
-    expect(tl._children).toHaveLength(0);
+    expect(tl.children).toHaveLength(0);
     expect(tl.durationSeconds).toBe(0);
     expect(tl.hasBuilt).toBe(false);
   });
@@ -112,7 +112,7 @@ describe("SMILTimeline (smoke)", () => {
 
     expect(a.childElementCount).toBe(0);
     expect(b.childElementCount).toBe(0);
-    expect(tl._children).toHaveLength(0);
+    expect(tl.children).toHaveLength(0);
   });
 
   it("SMOKE TEST: revert() restores original attribute values on all child targets", () => {
