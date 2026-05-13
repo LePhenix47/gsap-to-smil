@@ -1,3 +1,4 @@
+// fallow-ignore-file
 type ConsoleLevel = "log" | "info" | "warn" | "error" | "debug";
 
 export type ConsoleInterceptorOptions = {

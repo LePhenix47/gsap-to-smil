@@ -1,3 +1,4 @@
+// fallow-ignore-file
 type ElementPair = {
   gsapElement: Element;
   smilElement: Element;

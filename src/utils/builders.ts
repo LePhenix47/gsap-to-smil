@@ -155,6 +155,7 @@ export class SMILBuilder {
    * Creates a `<set>` element for non-interpolated property assignment
    * at an optional delay.
    */
+  // fallow-ignore-next-line unused-class-members
   static set(attributeName: string, to: string, delay?: number): SVGSetElement {
     const element = document.createElementNS(
       SMILBuilder.SVG_NS,

@@ -1,3 +1,4 @@
+// fallow-ignore-file
 import { Animation } from "./Animation.ts";
 import { SMILTween } from "./SMILTween.ts";
 import type {

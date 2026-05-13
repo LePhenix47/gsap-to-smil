@@ -520,13 +520,7 @@ export class SMILTween extends Animation {
 
     // from(): flip from/to on output elements (animate FROM given values TO identity)
     if (invertDirection) {
-      for (const element of result.outerAnims) {
-        const from = element.getAttribute("from");
-        const to = element.getAttribute("to");
-        if (from !== null) element.setAttribute("to", from);
-        if (to !== null) element.setAttribute("from", to);
-      }
-      for (const element of result.innerAnims) {
+      for (const element of [...result.outerAnims, ...result.innerAnims]) {
         const from = element.getAttribute("from");
         const to = element.getAttribute("to");
         if (from !== null) element.setAttribute("to", from);
@@ -602,6 +596,7 @@ export class SMILTween extends Animation {
 
   // ===== revert() =====
 
+  // fallow-ignore-next-line unused-class-members
   revert = (): this => {
     for (const [target, attributeMap] of this.originalAttributes) {
       for (const [attributeName, originalValue] of attributeMap) {

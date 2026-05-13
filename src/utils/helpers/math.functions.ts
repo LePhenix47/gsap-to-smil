@@ -10,7 +10,6 @@
  * @returns {number} The nth root of the value.
  * @throws {Error} If the root is null or if the root of the value is invalid.
  */
-// fallow-ignore-next-line unused-export
 export function nthRoot(value: number, root: number = 2): number {
   const rootIsInvalid: boolean = root === 0;
   if (rootIsInvalid) {
@@ -51,7 +50,6 @@ export function nthRoot(value: number, root: number = 2): number {
  *
  *  @returns {number | NaN} The logarithm of the value or Not A Number `NaN` if the arguments passed are invalid
  */
-// fallow-ignore-next-line unused-export
 export function logarithm(value: number, base: number = Math.E): number {
   /*
     We check that the base is positive but also different than 1

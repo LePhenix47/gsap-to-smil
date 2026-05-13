@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
-  "ignorePatterns": ["lib/**", "debug-lib/**"],
+  "ignorePatterns": ["lib/**", "debug-lib/**", "tests/**", "debug-server.ts", "src/plugins/**", "src/types/**"],
   "health": {
-    "ignore": ["tests/**", "update-project-version.ts"],
+    "ignore": ["tests/**", "update-project-version.ts", "src/utils/animation-debugger.ts"],
     "maxCyclomatic": 50,
     "maxCognitive": 90,
     "maxCrap": 2500

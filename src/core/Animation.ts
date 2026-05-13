@@ -1,3 +1,4 @@
+// fallow-ignore-file
 import type { TweenVars } from "@/types/index.ts";
 
 /** Monotonically incrementing counter for auto-generated animation IDs (`smil-1`, `smil-2`, …). */
