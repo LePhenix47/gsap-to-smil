@@ -152,7 +152,11 @@ export class Easing {
       keyTimesArray.push(previousValue + increment);
     }
 
-    return keyTimesArray.join("; ");
+    keyTimesArray[keyTimesArray.length - 1] = 1;
+
+    return keyTimesArray
+      .map(value => parseFloat(value.toFixed(6)).toString())
+      .join("; ");
   }
 
   /**

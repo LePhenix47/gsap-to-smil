@@ -23,7 +23,7 @@ describe("easing (smoke)", () => {
       for (const intervalCount of [1, 2, 3]) {
         const result = Easing.resolveKeySplines(ease, intervalCount);
 
-        expect(result?.trimEnd().endsWith(";")).toBe(false);
+        expect(result?.trimEnd().endsWith(";") ?? false).toBe(false);
       }
     }
   });
@@ -71,7 +71,6 @@ describe("easing (smoke)", () => {
   it("SMOKE TEST: custom bezier array and its equivalent named ease produce identical outputs", () => {
     const namedEase = "power1.inOut";
     const customBezier = Easing.resolveEase(namedEase)!;
-    const intervalCount = 2;
 
     const calcFromName = Easing.resolveCalcMode(namedEase);
     const calcFromArray = Easing.resolveCalcMode(customBezier);

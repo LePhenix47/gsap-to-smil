@@ -74,7 +74,8 @@ export class SMILTimeline extends Animation {
     }
 
     const absoluteStart = this.resolvePosition(position);
-    const tween = new SMILTween(targetParam, mergedVars);
+    const tweenVars: TweenVars = { ...mergedVars, trigger: undefined };
+    const tween = new SMILTween(targetParam, tweenVars);
     const childEnd = absoluteStart + tween.durationSeconds;
 
     const entry: ChildEntry = { tween, absoluteStart };
@@ -268,21 +269,38 @@ export class SMILTimeline extends Animation {
   /**
    * Rewrites the `begin=` attribute on every `<animate>` element owned by `entry.tween`.
    *
-   * Adds `delaySeconds` to `absoluteStart` before computing the SMIL begin value so the
-   * timeline-level delay is honoured uniformly across all children.
+   * Reads each element's existing `begin=` (which encodes its per-element stagger offset
+   * set by `SMILTween`) and adds it to `absoluteStart + delaySeconds` so stagger timing
+   * is preserved after the timeline's position rewrite.
    */
   private rewriteBegin = (entry: ChildEntry): void => {
     const { tween, absoluteStart } = entry;
-    const effectiveBegin: number = absoluteStart + this.delaySeconds;
-    const beginValue = this.computeBeginValue(effectiveBegin);
 
     for (const animationElement of tween.animationElements) {
+      const perElementOffset: number = this.parseBeginOffset(animationElement);
+      const effectiveBegin: number = absoluteStart + this.delaySeconds + perElementOffset;
+      const beginValue = this.computeBeginValue(effectiveBegin);
+
       if (beginValue === null) {
         animationElement.removeAttribute("begin");
       } else {
         animationElement.setAttribute("begin", beginValue);
       }
     }
+  };
+
+  /**
+   * Parses a plain `"Ns"` `begin=` attribute and returns the offset in seconds.
+   *
+   * Returns `0` for absent or non-plain-seconds values (e.g. event-based strings
+   * like `"card.mouseover"`). Used to extract stagger delays baked in by `SMILTween`.
+   */
+  private parseBeginOffset = (element: SVGAnimationElement): number => {
+    const begin = element.getAttribute("begin");
+    if (!begin) return 0;
+    const match = /^([\d.]+)s$/.exec(begin);
+    if (!match) return 0;
+    return parseFloat(match[1]!);
   };
 
   // ===== Sequential Chain Wiring =====

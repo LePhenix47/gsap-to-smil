@@ -63,7 +63,10 @@ export class TriggerResolver {
   ): string => {
     const smilEvent = TriggerResolver.resolveEvent(config.event);
     const element = TriggerResolver.resolveTarget(config.target, firstTarget);
-    const elementId = TriggerResolver.resolveId(element);
+
+    const elementId = element !== null
+      ? TriggerResolver.resolveId(element)
+      : TriggerResolver.extractIdFromSelector(config.target!);
 
     if (!TriggerResolver.SAFE_ID.test(elementId)) {
       console.warn(
@@ -77,20 +80,19 @@ export class TriggerResolver {
   };
 
   /**
-   * Resolves a target string to an Element.
+   * Resolves a target string to an Element, or `null` when no match is found.
    *
-   * Tries `getElementById` first (strip `#` prefix), then `querySelector`.
-   * Falls back to `firstTarget` if no match, with a console warning.
+   * Tries `getElementById` first (strip `#` prefix), then camelCase variant, then `querySelector`.
+   * Returns `null` when nothing matches — caller extracts the id directly from the selector string.
    */
   private static resolveTarget = (
     target: string | undefined,
     firstTarget: Element,
-  ): Element => {
+  ): Element | null => {
     if (!target) return firstTarget;
 
     const id = target.startsWith("#") ? target.slice(1) : target;
 
-    // Try original ID
     const byId = document.getElementById(id);
     if (byId) return byId;
 
@@ -101,15 +103,18 @@ export class TriggerResolver {
       if (byCamel) return byCamel;
     }
 
-    // Try as CSS selector
     const bySelector = document.querySelector(target);
     if (bySelector) return bySelector;
 
     console.warn(
-      `[gsap-to-smil] Trigger target "${target}" not found in DOM. Falling back to first tween target.`,
+      `[gsap-to-smil] Trigger target "${target}" not found in DOM. Using id from selector string.`,
     );
-    return firstTarget;
+    return null;
   };
+
+  /** Strips `#` prefix from a CSS id selector to get a bare id string. */
+  private static extractIdFromSelector = (selector: string): string =>
+    selector.startsWith("#") ? selector.slice(1) : selector;
 
   /** Maps user-friendly event names to SMIL-compatible names. */
   static resolveEvent = (event: string): string => {

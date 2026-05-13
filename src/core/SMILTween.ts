@@ -11,6 +11,7 @@ import { SMILBuilder } from "@/utils/builders.ts";
 import type { AnimateOptions } from "@/types/builders.type.ts";
 import { Easing } from "@/utils/easing.ts";
 import { TriggerResolver } from "@/utils/trigger-resolver.ts";
+import { StaggerResolver } from "@/utils/stagger-resolver.ts";
 
 type ScaffoldRecord = PivotScaffold & {
   parent: ParentNode;
@@ -122,6 +123,7 @@ export class SMILTween extends Animation {
       yoyo,
       transformOrigin,
       trigger,
+      stagger,
     } = toVars;
 
     const fromBuckets: PropertyBuckets | null = this.fromVarsRecord
@@ -140,13 +142,10 @@ export class SMILTween extends Animation {
       return;
     }
 
-    // Resolve transform direction
     let fromTransforms: PropertyBuckets["transforms"] | undefined;
     let toTransforms: PropertyBuckets["transforms"];
 
     if (this.isFromTween) {
-      // from(): animate FROM given values TO identity
-      // Pass from values as toTransforms, set fromTransforms to identity
       toTransforms = buckets.transforms;
       fromTransforms = {};
     } else {
@@ -157,17 +156,18 @@ export class SMILTween extends Animation {
     const hasTransforms = Object.keys(toTransforms).length > 0
       || Object.keys(fromTransforms ?? {}).length > 0;
 
-    for (const target of this.targetElements) {
-      // TODO: StaggerResolver (Step 6)
-      const staggerDelay = 0;
+    const staggerDelays: number[] = this.isAbsent(stagger)
+      ? this.targetElements.map(() => 0)
+      : StaggerResolver.resolveDelays(this.targetElements.length, stagger);
 
-      const totalDelay = delay + staggerDelay;
+    for (const [index, target] of this.targetElements.entries()) {
+      const staggerDelay: number = staggerDelays[index] ?? 0;
+      const totalDelay: number = delay + staggerDelay;
 
       this.buildDirectProperties(
         target, buckets, fromBuckets, totalDelay, { ease }, triggerBegin,
       );
 
-      // attr: {} — SVG presentation attributes (Phase 2, minimal support for demo)
       this.buildAttrElements(
         target, buckets.attrs, fromBuckets?.attrs, totalDelay, { ease }, triggerBegin,
       );
@@ -185,6 +185,11 @@ export class SMILTween extends Animation {
         );
       }
     }
+
+    if (!this.isAbsent(stagger) && staggerDelays.length > 0) {
+      const maxStaggerDelay: number = Math.max(...staggerDelays);
+      this.durationSeconds += maxStaggerDelay;
+    }
   };
 
   // ===== Yoyo Build Path =====
@@ -195,44 +200,58 @@ export class SMILTween extends Animation {
     fromBuckets: PropertyBuckets | null,
     triggerBegin: string | null,
   ): void => {
-    const { delay = 0, ease, transformOrigin } = toVars;
+    const { delay = 0, ease, transformOrigin, stagger } = toVars;
 
     const totalPlays = this.repeatCount + 1;
     const durationSeconds = this.durationSeconds;
 
-    // Per-property yoyo encoding
-    for (const target of this.targetElements) {
+    const staggerDelays: number[] = this.isAbsent(stagger)
+      ? this.targetElements.map(() => 0)
+      : StaggerResolver.resolveDelays(this.targetElements.length, stagger);
+
+    const maxStaggerDelay: number = Math.max(...staggerDelays, 0);
+    const hasStagger: boolean = maxStaggerDelay > 0;
+    const groupDuration: number = durationSeconds * totalPlays + maxStaggerDelay;
+
+    for (const [index, target] of this.targetElements.entries()) {
+      const staggerDelay: number = staggerDelays[index] ?? 0;
+      const elementDelay: number = hasStagger ? delay : delay + staggerDelay;
+      const waitSeconds: number = hasStagger ? staggerDelay : 0;
+      const tailHold: number = hasStagger ? groupDuration - staggerDelay - durationSeconds * totalPlays : 0;
+
       // Direct properties
       for (const [attributeName, toValue] of Object.entries(buckets.direct)) {
         if (toValue === undefined) continue;
 
         const fromValue = target.getAttribute(attributeName) ?? "1";
 
-        const { values, dur, repeatCount } = SMILTween.computeYoyoEncoding(
+        const { values: baseValues, dur: baseDur, repeatCount: baseRepeatCount } = SMILTween.computeYoyoEncoding(
           fromValue, String(toValue), totalPlays, durationSeconds, this.repeatCount,
         );
 
+        const finalValues: string = hasStagger
+          ? SMILTween.applyStaggerPhasesToValues(baseValues, fromValue, String(toValue), waitSeconds, tailHold, totalPlays)
+          : baseValues;
+
+        const finalDur: number = hasStagger ? groupDuration : baseDur;
+        const finalRepeatCount: number | string = hasStagger ? 1 : baseRepeatCount;
+
         const animationOptions: AnimateOptions = {
           attributeName,
-          dur,
-          delay,
+          dur: finalDur,
+          delay: elementDelay,
           ease,
         };
-        // Override from/to with values
         const element = SMILBuilder.animate(animationOptions);
-        // Override SMILBuilder's repeatCount (GSAP off-by-one) with our computed yoyo value
-        element.setAttribute("repeatCount", String(repeatCount));
-        element.setAttribute("values", values);
+        element.setAttribute("repeatCount", String(finalRepeatCount));
+        element.setAttribute("values", finalValues);
         element.removeAttribute("from");
         element.removeAttribute("to");
 
-        // Recompute keyTimes for the actual interval count (values may have been overridden)
-        const yoyoIntervalCount = values.split(";").length - 1;
-        const keyTimes = Easing.resolveKeyTimes(yoyoIntervalCount);
-        element.setAttribute("keyTimes", keyTimes);
+        const yoyoIntervalCount: number = finalValues.split(";").length - 1;
+        element.setAttribute("keyTimes", Easing.resolveKeyTimes(yoyoIntervalCount));
 
-        // Yoyo easing: alternating forward/reversed keySplines
-        SMILTween.applyYoyoEasing(element, ease, values);
+        SMILTween.applyYoyoEasing(element, ease, finalValues);
 
         if (triggerBegin) {
           const existingBegin = element.getAttribute("begin");
@@ -247,7 +266,6 @@ export class SMILTween extends Animation {
       const hasTransforms = Object.keys(buckets.transforms).length > 0;
       if (!hasTransforms) continue;
 
-      // Build identity-to-to for yoyo encoding
       const fromTransforms: PropertyBuckets["transforms"] = {};
       const result = TransformComposer.compose({
         toTransforms: buckets.transforms,
@@ -260,7 +278,6 @@ export class SMILTween extends Animation {
         transformOrigin,
       });
 
-      // Get identity and target values
       for (const element of [...result.outerAnims, ...result.innerAnims]) {
         const from = element.getAttribute("from") ?? "";
         const to = element.getAttribute("to") ?? "";
@@ -286,9 +303,12 @@ export class SMILTween extends Animation {
         }
       }
 
-      // Inject into target (no pivot scaffold for yoyo yet)
       SMILBuilder.injectInto(target, ...result.outerAnims, ...result.innerAnims);
       this.animationElements.push(...result.outerAnims, ...result.innerAnims);
+    }
+
+    if (hasStagger) {
+      this.durationSeconds = groupDuration;
     }
   };
 
@@ -334,6 +354,30 @@ export class SMILTween extends Animation {
       dur: durationSeconds * totalPlays,
       repeatCount: 1,
     };
+  };
+
+  /**
+   * Prepends a wait phase and/or appends a hold phase to a yoyo `values` string.
+   *
+   * Used when stagger creates a group where elements don't all start and end at the same time.
+   * Elements with an early start get a hold at the end; elements with a late start get a wait at the front.
+   */
+  private static applyStaggerPhasesToValues = (
+    baseValues: string,
+    fromValue: string,
+    toValue: string,
+    waitSeconds: number,
+    tailHold: number,
+    totalPlays: number,
+  ): string => {
+    const isOddPlays: boolean = totalPlays % 2 !== 0;
+    const holdValue: string = isOddPlays ? toValue : fromValue;
+
+    const parts: string[] = baseValues.split("; ");
+    const withWait: string[] = waitSeconds > 0 ? [fromValue, ...parts] : parts;
+    const withHold: string[] = tailHold > 0 ? [...withWait, holdValue] : withWait;
+
+    return withHold.join("; ");
   };
 
   /** Applies alternating forward/reversed keySplines for yoyo. */

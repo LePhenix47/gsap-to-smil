@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
-  "ignorePatterns": ["lib/**"],
+  "ignorePatterns": ["lib/**", "debug-lib/**"],
   "health": {
     "ignore": ["tests/**", "update-project-version.ts"],
     "maxCyclomatic": 50,
