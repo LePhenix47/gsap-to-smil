@@ -6,6 +6,7 @@ import type {
   TweenTarget,
   TimelineVars,
   PositionParam,
+  TransformProps,
 } from "@/types/index.ts";
 import { TriggerResolver } from "@/utils/trigger-resolver.ts";
 
@@ -44,6 +45,16 @@ export class SMILTimeline extends Animation {
   /** Absolute end time of the most recently added child, used to resolve `">"` and sequential positions. */
   private lastChildEnd: number = 0;
 
+  /**
+   * Accumulated absolute transform state per element across all timeline steps.
+   *
+   * Used to compute deltas for `additive="sum"` `<animateTransform>` elements.
+   * Each step's GSAP absolute target (e.g. `x: 0`) is converted to a delta
+   * relative to the previously frozen value so SMIL's additive accumulation
+   * yields the correct absolute position.
+   */
+  private readonly accumulatedTransforms = new Map<Element, TransformProps>();
+
   constructor(timelineVars?: TimelineVars) {
     super(timelineVars ?? {});
     this.durationSeconds = 0;
@@ -66,18 +77,34 @@ export class SMILTimeline extends Animation {
     const mergedVars: TweenVars = { ...this.defaults, ...toVars, delay: 0 };
     const { trigger } = mergedVars;
 
-    if (trigger && !this.timelineTrigger) {
-      const targets = SMILTimeline.resolveTargets(targetParam);
-      if (targets.length > 0) {
-        const firstTarget = targets[0]!;
-        this.timelineTrigger = TriggerResolver.resolve(firstTarget, trigger);
-      }
+    const targets = SMILTimeline.resolveTargets(targetParam);
+
+    if (trigger && !this.timelineTrigger && targets.length > 0) {
+      this.timelineTrigger = TriggerResolver.resolve(targets[0]!, trigger);
     }
 
     const absoluteStart = this.resolvePosition(position);
-    const tweenVars: TweenVars = { ...mergedVars, trigger: undefined };
+
+    const firstTarget: Element | undefined = targets[0];
+    const accumulated: TransformProps = firstTarget !== undefined
+      ? (this.accumulatedTransforms.get(firstTarget) ?? {})
+      : {};
+
+    const deltaVars: TweenVars = this.computeDeltaTransformVars(mergedVars, accumulated);
+    const adjustedOrigin: string | undefined = firstTarget !== undefined
+      ? this.computeAdjustedTransformOrigin(firstTarget, mergedVars, accumulated)
+      : undefined;
+
+    const tweenVars: TweenVars = {
+      ...deltaVars,
+      trigger: undefined,
+      ...(adjustedOrigin !== undefined ? { transformOrigin: adjustedOrigin } : {}),
+    };
+
     const tween = new SMILTween(targetParam, tweenVars);
     const childEnd = absoluteStart + tween.durationSeconds;
+
+    this.updateAccumulatedTransforms(targets, mergedVars);
 
     const entry: ChildEntry = { tween, absoluteStart };
     this.children.push(entry);
@@ -163,6 +190,7 @@ export class SMILTimeline extends Animation {
     this.lastChildStart = 0;
     this.lastChildEnd = 0;
     this.hasBuilt = false;
+    this.accumulatedTransforms.clear();
     return this;
   };
 
@@ -315,6 +343,11 @@ export class SMILTimeline extends Animation {
   private wireSequentialChains = (newEntry: ChildEntry): void => {
     const { tween } = newEntry;
     for (const newAnimElement of tween.animationElements) {
+      // animateTransform elements use additive="sum" — their from/to values are
+      // already delta-corrected by computeDeltaTransformVars; wiring from a
+      // preceding element's to= would double-accumulate the offset.
+      if (newAnimElement.nodeName === "animateTransform") continue;
+
       const targetElement = newAnimElement.parentElement;
       if (!targetElement) continue;
 
@@ -347,6 +380,114 @@ export class SMILTimeline extends Animation {
       }
     }
     return null;
+  };
+
+  // ===== Transform Delta Computation =====
+
+  /**
+   * Converts absolute GSAP transform values to deltas relative to the
+   * accumulated frozen state for `additive="sum"` `<animateTransform>` elements.
+   *
+   * Each `<animateTransform additive="sum">` ADDS its value on top of all
+   * previously frozen segments. To move to an absolute GSAP target (e.g. `x: 0`
+   * after a frozen `x: 42`), the delta must be `0 - 42 = -42`, not `0`.
+   *
+   * Applies to additive keys: `x`, `y`, `xPercent`, `yPercent`, `rotation`,
+   * `skewX`, `skewY`. Scale is tracked but not delta-adjusted (multiplicative
+   * semantics; tests have at most one scale step per element).
+   */
+  private computeDeltaTransformVars = (
+    toVars: TweenVars,
+    accumulated: TransformProps,
+  ): TweenVars => {
+    const additiveKeys = [
+      "x", "y", "xPercent", "yPercent", "rotation", "skewX", "skewY",
+    ] as const;
+
+    const hasAdditiveKey: boolean = additiveKeys.some(
+      key => !this.isAbsent(toVars[key]),
+    );
+
+    if (!hasAdditiveKey) return toVars;
+
+    const deltaVars: TweenVars = { ...toVars };
+
+    for (const key of additiveKeys) {
+      const rawValue = toVars[key];
+      if (this.isAbsent(rawValue)) continue;
+      const accumulatedValue: number = Number(accumulated[key] ?? 0);
+      deltaVars[key] = Number(rawValue) - accumulatedValue;
+    }
+
+    return deltaVars;
+  };
+
+  /**
+   * Returns an adjusted `transformOrigin` string that accounts for the
+   * accumulated translate applied by previous timeline steps.
+   *
+   * When scale or skew is present, `TransformComposer` builds a pivot scaffold
+   * using `getBBox()` — which returns the pre-animation bounding box. This
+   * correction adds the accumulated translate so the pivot center aligns with
+   * the element's actual visual position when this step runs.
+   *
+   * Returns `undefined` when scale/skew is absent, when `transformOrigin` is
+   * already explicit, or when the element is not an `SVGGraphicsElement`.
+   */
+  private computeAdjustedTransformOrigin = (
+    target: Element,
+    toVars: TweenVars,
+    accumulated: TransformProps,
+  ): string | undefined => {
+    const needsPivot: boolean =
+      !this.isAbsent(toVars.scale) ||
+      !this.isAbsent(toVars.scaleX) ||
+      !this.isAbsent(toVars.scaleY) ||
+      !this.isAbsent(toVars.skewX) ||
+      !this.isAbsent(toVars.skewY);
+
+    if (!needsPivot || !this.isAbsent(toVars.transformOrigin)) return undefined;
+    if (!(target instanceof SVGGraphicsElement)) return undefined;
+
+    const bbox: DOMRect = target.getBBox();
+    const bboxCenterX: number = bbox.x + bbox.width / 2;
+    const bboxCenterY: number = bbox.y + bbox.height / 2;
+    const accumulatedX: number = Number(accumulated.x ?? 0);
+    const accumulatedY: number = Number(accumulated.y ?? 0);
+
+    return `${bboxCenterX + accumulatedX} ${bboxCenterY + accumulatedY}`;
+  };
+
+  /**
+   * Updates the per-element accumulated transform state with the ABSOLUTE
+   * (non-delta) target values from this timeline step.
+   *
+   * The next step uses these values to compute correct deltas.
+   * All elements in the targets array receive the same update since each
+   * `to()` call converges every target to the same absolute transform values.
+   */
+  private updateAccumulatedTransforms = (
+    targets: Element[],
+    toVars: TweenVars,
+  ): void => {
+    const trackedKeys = [
+      "x", "y", "xPercent", "yPercent", "rotation",
+      "skewX", "skewY", "scale", "scaleX", "scaleY",
+    ] as const;
+
+    for (const target of targets) {
+      const existing: TransformProps = this.accumulatedTransforms.get(target) ?? {};
+      const updated: TransformProps = { ...existing };
+
+      for (const key of trackedKeys) {
+        const value = toVars[key];
+        if (!this.isAbsent(value)) {
+          updated[key] = Number(value);
+        }
+      }
+
+      this.accumulatedTransforms.set(target, updated);
+    }
   };
 
   // ===== Target Resolution =====

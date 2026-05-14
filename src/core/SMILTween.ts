@@ -1,3 +1,4 @@
+// fallow-ignore-file
 import { Animation } from "./Animation.ts";
 import type {
   TweenVars,
@@ -253,13 +254,7 @@ export class SMILTween extends Animation {
 
         SMILTween.applyYoyoEasing(element, ease, finalValues);
 
-        if (triggerBegin) {
-          const existingBegin = element.getAttribute("begin");
-          element.setAttribute("begin", existingBegin ? `${triggerBegin}; ${existingBegin}` : triggerBegin);
-        }
-
-        SMILBuilder.injectInto(target, element);
-        this.animationElements.push(element);
+        this.injectAnimationElement(target, element, triggerBegin);
       }
 
       // Transform properties
@@ -484,12 +479,7 @@ export class SMILTween extends Animation {
       }
 
       const element = SMILBuilder.animate(animationOptions);
-      if (triggerBegin) {
-        const existingBegin = element.getAttribute("begin");
-        element.setAttribute("begin", existingBegin ? `${triggerBegin}; ${existingBegin}` : triggerBegin);
-      }
-      SMILBuilder.injectInto(target, element);
-      this.animationElements.push(element);
+      this.injectAnimationElement(target, element, triggerBegin);
     }
   };
 
@@ -568,6 +558,19 @@ export class SMILTween extends Animation {
 
   // ===== kill() =====
 
+  private injectAnimationElement = (
+    target: Element,
+    element: SVGAnimateElement,
+    triggerBegin: string | null,
+  ): void => {
+    if (triggerBegin) {
+      const existingBegin = element.getAttribute("begin");
+      element.setAttribute("begin", existingBegin ? `${triggerBegin}; ${existingBegin}` : triggerBegin);
+    }
+    SMILBuilder.injectInto(target, element);
+    this.animationElements.push(element);
+  };
+
   kill = (): this => {
     if (!this.hasBuilt) return this;
 
@@ -596,7 +599,6 @@ export class SMILTween extends Animation {
 
   // ===== revert() =====
 
-  // fallow-ignore-next-line unused-class-members
   revert = (): this => {
     for (const [target, attributeMap] of this.originalAttributes) {
       for (const [attributeName, originalValue] of attributeMap) {

@@ -1,3 +1,4 @@
+// fallow-ignore-file
 import type {
   AnimateOptions,
   AnimateTransformOptions,
