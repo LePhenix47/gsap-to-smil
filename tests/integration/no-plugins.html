@@ -37,10 +37,20 @@
       pairs: [
         { gsapElement: document.getElementById("g-translate"), smilElement: document.getElementById("s-translate"), label: "tl1" },
       ],
-      duration: 1.5,
+      duration: 3.6,
       fps: 15,
+      extraProperties: ["transform"],
     }).then(samples => {
-      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      const report = AnimationDebugger.formatReport(samples, {
+        threshold: 1,
+        frameTable: true,
+        frameTableAlways: true,
+        cycles: [
+          { name: "iter 1", start: 0, end: 1.2 },
+          { name: "iter 2", start: 1.2, end: 2.4 },
+          { name: "iter 3", start: 2.4, end: 3.6 },
+        ],
+      });
       writeDebugLog("no-plugins/tl1", report);
       console.group("[1] to() — translate");
       for (const line of report) console.log(line);
@@ -55,10 +65,20 @@
       pairs: [
         { gsapElement: document.getElementById("g-opacity"), smilElement: document.getElementById("s-opacity"), label: "tl2" },
       ],
-      duration: 1.2,
+      duration: 3,
       fps: 15,
+      extraProperties: ["transform"],
     }).then(samples => {
-      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      const report = AnimationDebugger.formatReport(samples, {
+        threshold: 1,
+        frameTable: true,
+        frameTableAlways: true,
+        cycles: [
+          { name: "iter 1", start: 0, end: 1 },
+          { name: "iter 2", start: 1, end: 2 },
+          { name: "iter 3", start: 2, end: 3 },
+        ],
+      });
       writeDebugLog("no-plugins/tl2", report);
       console.group("[2] to() — opacity");
       for (const line of report) console.log(line);
@@ -74,10 +94,20 @@
       pairs: [
         { gsapElement: document.getElementById("g-rotation"), smilElement: document.getElementById("s-rotation"), label: "tl3" },
       ],
-      duration: 2.5,
+      duration: 6,
       fps: 15,
+      extraProperties: ["transform"],
     }).then(samples => {
-      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      const report = AnimationDebugger.formatReport(samples, {
+        threshold: 1,
+        frameTable: true,
+        frameTableAlways: true,
+        cycles: [
+          { name: "iter 1", start: 0, end: 2 },
+          { name: "iter 2", start: 2, end: 4 },
+          { name: "iter 3", start: 4, end: 6 },
+        ],
+      });
       writeDebugLog("no-plugins/tl3", report);
       console.group("[3] to() — rotation");
       for (const line of report) console.log(line);
@@ -92,10 +122,20 @@
       pairs: [
         { gsapElement: document.getElementById("g-from"), smilElement: document.getElementById("s-from"), label: "tl4" },
       ],
-      duration: 1.2,
+      duration: 3,
       fps: 15,
+      extraProperties: ["transform"],
     }).then(samples => {
-      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      const report = AnimationDebugger.formatReport(samples, {
+        threshold: 1,
+        frameTable: true,
+        frameTableAlways: true,
+        cycles: [
+          { name: "iter 1", start: 0, end: 1 },
+          { name: "iter 2", start: 1, end: 2 },
+          { name: "iter 3", start: 2, end: 3 },
+        ],
+      });
       writeDebugLog("no-plugins/tl4", report);
       console.group("[4] from() — translate x");
       for (const line of report) console.log(line);
@@ -110,10 +150,20 @@
       pairs: [
         { gsapElement: document.getElementById("g-fromto"), smilElement: document.getElementById("s-fromto"), label: "tl5" },
       ],
-      duration: 1.2,
+      duration: 3,
       fps: 15,
+      extraProperties: ["transform"],
     }).then(samples => {
-      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      const report = AnimationDebugger.formatReport(samples, {
+        threshold: 1,
+        frameTable: true,
+        frameTableAlways: true,
+        cycles: [
+          { name: "iter 1", start: 0, end: 1 },
+          { name: "iter 2", start: 1, end: 2 },
+          { name: "iter 3", start: 2, end: 3 },
+        ],
+      });
       writeDebugLog("no-plugins/tl5", report);
       console.group("[5] fromTo() — translate x");
       for (const line of report) console.log(line);
@@ -133,10 +183,20 @@
           smilElement: sStaggerBasicEls[index],
           label: `tl6-${index}`,
         })),
-        duration: 1.5,
+        duration: 3,
         fps: 15,
+        extraProperties: ["transform"],
       }).then(samples => {
-        const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+        const report = AnimationDebugger.formatReport(samples, {
+          threshold: 1,
+          frameTable: true,
+          frameTableAlways: true,
+          cycles: [
+            { name: "iter 1", start: 0, end: 0.98 },
+            { name: "iter 2", start: 0.98, end: 1.96 },
+            { name: "iter 3", start: 1.96, end: 2.94 },
+          ],
+        });
         writeDebugLog("no-plugins/tl6", report);
         console.group("[6] stagger — translate y");
         for (const line of report) console.log(line);
@@ -347,8 +407,13 @@
         })),
         duration: 2,
         fps: 15,
+        extraProperties: ["transform"],
       }).then(samples => {
-        const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+        const report = AnimationDebugger.formatReport(samples, {
+          threshold: 1,
+          frameTable: true,
+          frameTableAlways: true,
+        });
         writeDebugLog("no-plugins/tl8", report);
         console.group("[8] keyframes + stagger + yoyo — wave");
         for (const line of report) console.log(line);
@@ -418,10 +483,20 @@
       pairs: [
         { gsapElement: document.getElementById("g-scale-skew"), smilElement: document.getElementById("s-scale-skew"), label: "tl10" },
       ],
-      duration: 3,
+      duration: 8.4,
       fps: 15,
+      extraProperties: ["transform"],
     }).then(samples => {
-      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      const report = AnimationDebugger.formatReport(samples, {
+        threshold: 1,
+        frameTable: true,
+        frameTableAlways: true,
+        cycles: [
+          { name: "yoyo cycle 1", start: 0, end: 2.8 },
+          { name: "yoyo cycle 2", start: 2.8, end: 5.6 },
+          { name: "yoyo cycle 3", start: 5.6, end: 8.4 },
+        ],
+      });
       writeDebugLog("no-plugins/tl10", report);
       console.group("[10] to() — scale + skewX with transformOrigin");
       for (const line of report) console.log(line);
