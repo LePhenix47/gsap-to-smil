@@ -271,6 +271,7 @@
       duration: 0.45,
       ease: "power1.inOut",
     }, ">");
+    sTlStagger.build();
 
     {
       const gStaggerEls = Array.from(document.querySelectorAll(".g-tl-stagger"));
@@ -364,6 +365,7 @@
       duration: 0.34,
       ease: "power1.inOut",
     }, ">");
+    sTlAlt.build();
 
     {
       const gAltEls = Array.from(document.querySelectorAll(".g-tl-alt"));
@@ -441,6 +443,7 @@
     sTl2.to("#s-tlkf-b", { x: 105, scale: 0.75, opacity: 0.35, fill: "#fb7185", duration: 0.55, ease: "power1.inOut" }, "cross+=0.15");
     sTl2.to("#s-tlkf-a", { opacity: 1, fill: "#a3e635", duration: 0.35, ease: "sine.inOut" }, ">-0.2");
     sTl2.to("#s-tlkf-b", { opacity: 1, fill: "#f97316", duration: 0.35, ease: "sine.inOut" }, "<");
+    sTl2.build();
 
     AnimationDebugger.sample({
       pairs: [
