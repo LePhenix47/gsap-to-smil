@@ -33,26 +33,116 @@
     gsap.to("#g-translate", { x: 210, duration: 1.2, repeat: -1, ease: "power1.inOut" });
     smil.to("#s-translate", { x: 210, duration: 1.2, repeat: -1, ease: "power1.inOut" });
 
+    AnimationDebugger.sample({
+      pairs: [
+        { gsapElement: document.getElementById("g-translate"), smilElement: document.getElementById("s-translate"), label: "tl1" },
+      ],
+      duration: 1.5,
+      fps: 15,
+    }).then(samples => {
+      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      writeDebugLog("no-plugins/tl1", report);
+      console.group("[1] to() — translate");
+      for (const line of report) console.log(line);
+      console.groupEnd();
+    });
+
     // 2. to() — opacity
     gsap.to("#g-opacity", { opacity: 0.1, duration: 1, repeat: -1, ease: "sine.inOut" });
     smil.to("#s-opacity", { opacity: 0.1, duration: 1, repeat: -1, ease: "sine.inOut" });
+
+    AnimationDebugger.sample({
+      pairs: [
+        { gsapElement: document.getElementById("g-opacity"), smilElement: document.getElementById("s-opacity"), label: "tl2" },
+      ],
+      duration: 1.2,
+      fps: 15,
+    }).then(samples => {
+      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      writeDebugLog("no-plugins/tl2", report);
+      console.group("[2] to() — opacity");
+      for (const line of report) console.log(line);
+      console.groupEnd();
+    });
 
     // 3. to() — rotation (continuous 360, no easing)
     gsap.to("#g-rotation", { rotation: 360, duration: 2, repeat: -1, ease: "linear", transformOrigin: "50% 50%" });
     // ! Issue: transform origin ain't referring to the element, but the parent container
     smil.to("#s-rotation", { rotation: 360, duration: 2, repeat: -1, ease: "linear", transformOrigin: "50% 50%" });
 
+    AnimationDebugger.sample({
+      pairs: [
+        { gsapElement: document.getElementById("g-rotation"), smilElement: document.getElementById("s-rotation"), label: "tl3" },
+      ],
+      duration: 2.5,
+      fps: 15,
+    }).then(samples => {
+      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      writeDebugLog("no-plugins/tl3", report);
+      console.group("[3] to() — rotation");
+      for (const line of report) console.log(line);
+      console.groupEnd();
+    });
+
     // 4. from() — dot slides in from x=-110 to its natural center position
     gsap.from("#g-from", { x: -110, duration: 1, repeat: -1, ease: "power2.out" });
     smil.from("#s-from", { x: -110, duration: 1, repeat: -1, ease: "power2.out" });
+
+    AnimationDebugger.sample({
+      pairs: [
+        { gsapElement: document.getElementById("g-from"), smilElement: document.getElementById("s-from"), label: "tl4" },
+      ],
+      duration: 1.2,
+      fps: 15,
+    }).then(samples => {
+      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      writeDebugLog("no-plugins/tl4", report);
+      console.group("[4] from() — translate x");
+      for (const line of report) console.log(line);
+      console.groupEnd();
+    });
 
     // 5. fromTo() — dot travels between two explicit x positions
     gsap.fromTo("#g-fromto", { x: -100 }, { x: 100, duration: 1, repeat: -1, ease: "power1.inOut" });
     smil.fromTo("#s-fromto", { x: -100 }, { x: 100, duration: 1, repeat: -1, ease: "power1.inOut" });
 
+    AnimationDebugger.sample({
+      pairs: [
+        { gsapElement: document.getElementById("g-fromto"), smilElement: document.getElementById("s-fromto"), label: "tl5" },
+      ],
+      duration: 1.2,
+      fps: 15,
+    }).then(samples => {
+      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      writeDebugLog("no-plugins/tl5", report);
+      console.group("[5] fromTo() — translate x");
+      for (const line of report) console.log(line);
+      console.groupEnd();
+    });
+
     // 6. stagger — dots pop up one by one
     gsap.to(".g-stagger", { y: -40, duration: 0.5, repeat: -1, stagger: 0.12, ease: "power1.out" });
     smil.to(".s-stagger", { y: -40, duration: 0.5, repeat: -1, stagger: 0.12, ease: "power1.out" });
+
+    {
+      const gStaggerBasicEls = Array.from(document.querySelectorAll(".g-stagger"));
+      const sStaggerBasicEls = Array.from(document.querySelectorAll(".s-stagger"));
+      AnimationDebugger.sample({
+        pairs: gStaggerBasicEls.map((el, index) => ({
+          gsapElement: el,
+          smilElement: sStaggerBasicEls[index],
+          label: `tl6-${index}`,
+        })),
+        duration: 1.5,
+        fps: 15,
+      }).then(samples => {
+        const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+        writeDebugLog("no-plugins/tl6", report);
+        console.group("[6] stagger — translate y");
+        for (const line of report) console.log(line);
+        console.groupEnd();
+      });
+    }
 
     // 7. timeline() — three circles fade in sequentially
     const gTl = gsap.timeline();
@@ -246,6 +336,26 @@
     gsap.to(".g-wave", { keyframes: waveKf, transformOrigin: "50% 50%", duration: 15, repeat: -1, yoyo: true, stagger: { amount: 3, from: "start" } });
     smil.to(".s-wave", { keyframes: waveKf, transformOrigin: "50% 50%", duration: 15, repeat: -1, yoyo: true, stagger: { amount: 3, from: "start" } });
 
+    {
+      const gWaveEls = Array.from(document.querySelectorAll(".g-wave"));
+      const sWaveEls = Array.from(document.querySelectorAll(".s-wave"));
+      AnimationDebugger.sample({
+        pairs: gWaveEls.slice(0, 3).map((el, index) => ({
+          gsapElement: el,
+          smilElement: sWaveEls[index],
+          label: `tl8-${index}`,
+        })),
+        duration: 2,
+        fps: 15,
+      }).then(samples => {
+        const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+        writeDebugLog("no-plugins/tl8", report);
+        console.group("[8] keyframes + stagger + yoyo — wave");
+        for (const line of report) console.log(line);
+        console.groupEnd();
+      });
+    }
+
     // 9. timeline() — labels, sequencing, overlaps, and mixed property changes
     const gTl2 = gsap.timeline();
     gTl2.addLabel("start");
@@ -302,6 +412,20 @@
       yoyo: true,
       ease: "power1.inOut",
       transformOrigin: "50% 50%",
+    });
+
+    AnimationDebugger.sample({
+      pairs: [
+        { gsapElement: document.getElementById("g-scale-skew"), smilElement: document.getElementById("s-scale-skew"), label: "tl10" },
+      ],
+      duration: 3,
+      fps: 15,
+    }).then(samples => {
+      const report = AnimationDebugger.formatReport(samples, { threshold: 1 });
+      writeDebugLog("no-plugins/tl10", report);
+      console.group("[10] to() — scale + skewX with transformOrigin");
+      for (const line of report) console.log(line);
+      console.groupEnd();
     });
   </script>
 
