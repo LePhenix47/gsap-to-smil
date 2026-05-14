@@ -27,7 +27,8 @@
       "mcp__plugin_claude-mem_mcp-search__get_observations",
       "Bash(bun build *)",
       "Bash(bunx fallow *)",
-      "Bash(echo \"exit:$?\")"
+      "Bash(echo \"exit:$?\")",
+      "Bash(powershell *)"
     ],
     "deny": [
       "Bash(rm -rf *)",
