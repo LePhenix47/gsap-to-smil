@@ -143,6 +143,13 @@ export class SMILTween extends Animation {
       return;
     }
 
+    const isGroupRepeat = this.repeatCount === -1 && !this.isAbsent(stagger);
+
+    if (isGroupRepeat) {
+      this.buildGroupRepeatElements(toVars, buckets, fromBuckets, triggerBegin);
+      return;
+    }
+
     let fromTransforms: PropertyBuckets["transforms"] | undefined;
     let toTransforms: PropertyBuckets["transforms"];
 
@@ -305,6 +312,236 @@ export class SMILTween extends Animation {
     if (hasStagger) {
       this.durationSeconds = groupDuration;
     }
+  };
+
+  // ===== Group-Repeat Build Path =====
+
+  /**
+   * Builds animations for `repeat:-1` + stagger (non-yoyo) by encoding each element's
+   * stagger offset as a wait/tail hold phase within a shared group-period cycle.
+   *
+   * GSAP repeats the entire stagger group as a unit (period = maxStaggerDelay + dur).
+   * SMIL cannot do this natively, so we encode the full group period into each element's
+   * `dur`, with `values`/`keyTimes` encoding the wait, active, and tail phases.
+   */
+  private buildGroupRepeatElements = (
+    toVars: TweenVars,
+    buckets: PropertyBuckets,
+    fromBuckets: PropertyBuckets | null,
+    triggerBegin: string | null,
+  ): void => {
+    const { delay = 0, ease, transformOrigin, stagger } = toVars;
+
+    if (this.isAbsent(stagger)) return;
+
+    const durationSeconds = this.durationSeconds;
+    const staggerDelays = StaggerResolver.resolveDelays(this.targetElements.length, stagger);
+    const maxStaggerDelay = Math.max(...staggerDelays);
+    const groupPeriod = maxStaggerDelay + durationSeconds;
+
+    const toTransforms = buckets.transforms;
+    const fromTransforms: PropertyBuckets["transforms"] = {};
+    const hasTransforms = Object.keys(toTransforms).length > 0;
+
+    for (const [index, target] of this.targetElements.entries()) {
+      const staggerOffset = staggerDelays[index] ?? 0;
+
+      // Direct properties
+      for (const [attributeName, toValue] of Object.entries(buckets.direct)) {
+        if (toValue === undefined) continue;
+
+        const domFromValue = target.getAttribute(attributeName) ?? "0";
+        const resolvedFromValue = fromBuckets?.direct[attributeName] !== undefined
+          ? String(fromBuckets.direct[attributeName])
+          : domFromValue;
+
+        const actualFromValue = this.isFromTween ? String(toValue) : resolvedFromValue;
+        const actualToValue = this.isFromTween ? resolvedFromValue : String(toValue);
+
+        const animationElement = document.createElementNS(
+          SMILBuilder.SVG_NS,
+          "animate",
+        ) as SVGAnimateElement;
+        animationElement.setAttribute("attributeName", attributeName);
+
+        SMILTween.applyGroupPeriodEncoding(
+          animationElement, actualFromValue, actualToValue,
+          staggerOffset, groupPeriod, durationSeconds, delay, ease,
+        );
+
+        this.injectAnimationElement(target, animationElement, triggerBegin);
+      }
+
+      // Attr properties
+      for (const [attributeName, toValue] of Object.entries(buckets.attrs)) {
+        if (toValue === undefined || toValue === null) continue;
+
+        const fromAttr = fromBuckets?.attrs[attributeName];
+        const resolvedFromValue = fromAttr !== undefined && fromAttr !== null
+          ? String(fromAttr)
+          : (target.getAttribute(attributeName) ?? "0");
+
+        const animationElement = document.createElementNS(
+          SMILBuilder.SVG_NS,
+          "animate",
+        ) as SVGAnimateElement;
+        animationElement.setAttribute("attributeName", attributeName);
+
+        SMILTween.applyGroupPeriodEncoding(
+          animationElement, resolvedFromValue, String(toValue),
+          staggerOffset, groupPeriod, durationSeconds, delay, ease,
+        );
+
+        this.injectAnimationElement(target, animationElement, triggerBegin);
+      }
+
+      if (!hasTransforms) continue;
+
+      const result = TransformComposer.compose({
+        toTransforms,
+        fromTransforms,
+        target,
+        dur: durationSeconds,
+        delay: 0,
+        repeat: 0,
+        ease,
+        transformOrigin,
+      });
+
+      if (this.isFromTween) {
+        for (const animationElement of [...result.outerAnims, ...result.innerAnims]) {
+          const fromAttribute = animationElement.getAttribute("from");
+          const toAttribute = animationElement.getAttribute("to");
+          if (fromAttribute !== null) animationElement.setAttribute("to", fromAttribute);
+          if (toAttribute !== null) animationElement.setAttribute("from", toAttribute);
+        }
+      }
+
+      for (const animationElement of [...result.outerAnims, ...result.innerAnims]) {
+        const fromValue = animationElement.getAttribute("from") ?? "0";
+        const toValue = animationElement.getAttribute("to") ?? "0";
+
+        SMILTween.applyGroupPeriodEncoding(
+          animationElement, fromValue, toValue,
+          staggerOffset, groupPeriod, durationSeconds, delay, ease,
+        );
+      }
+
+      if (result.needsWrapper) {
+        const scaffold = TransformComposer.buildPivotScaffold(
+          target,
+          result.origin.cx,
+          result.origin.cy,
+        );
+
+        if (scaffold) {
+          SMILBuilder.injectInto(scaffold.outer, ...result.outerAnims);
+          SMILBuilder.injectInto(scaffold.inner, ...result.innerAnims);
+
+          this.pivotScaffolds.push({
+            ...scaffold,
+            parent: target.parentNode!,
+            nextSibling: target.nextSibling,
+          });
+        } else {
+          SMILBuilder.injectInto(target, ...result.outerAnims, ...result.innerAnims);
+        }
+      } else {
+        SMILBuilder.injectInto(target, ...result.outerAnims);
+      }
+
+      this.animationElements.push(...result.outerAnims, ...result.innerAnims);
+    }
+
+    if (triggerBegin) {
+      for (const animationElement of this.animationElements) {
+        if (animationElement.tagName !== "animateTransform") continue;
+        const existingBegin = animationElement.getAttribute("begin");
+        animationElement.setAttribute(
+          "begin",
+          existingBegin ? `${triggerBegin}; ${existingBegin}` : triggerBegin,
+        );
+      }
+    }
+
+    this.durationSeconds = groupPeriod;
+  };
+
+  /**
+   * Rewrites an animation element's timing/values to use group-period encoding.
+   *
+   * Encodes stagger-offset as a hold-at-from wait phase and encodes post-animation
+   * idle time as a hold-at-to tail phase, both within a single `dur=groupPeriod`
+   * indefinite cycle. Works for both `<animate>` and `<animateTransform>`.
+   */
+  private static applyGroupPeriodEncoding = (
+    animationElement: SVGAnimationElement,
+    fromValue: string,
+    toValue: string,
+    staggerOffset: number,
+    groupPeriod: number,
+    durationSeconds: number,
+    delay: number,
+    ease: TweenVars["ease"],
+  ): void => {
+    const waitFraction = staggerOffset / groupPeriod;
+    const animationEndFraction = (staggerOffset + durationSeconds) / groupPeriod;
+    const hasWait = waitFraction > 0;
+    const hasTail = animationEndFraction < 1;
+
+    const valuesArray: string[] = [];
+    const keyTimesArray: number[] = [];
+
+    if (hasWait) {
+      valuesArray.push(fromValue, fromValue);
+      keyTimesArray.push(0, waitFraction);
+    } else {
+      valuesArray.push(fromValue);
+      keyTimesArray.push(0);
+    }
+
+    valuesArray.push(toValue);
+    keyTimesArray.push(animationEndFraction);
+
+    if (hasTail) {
+      valuesArray.push(toValue);
+      keyTimesArray.push(1);
+    }
+
+    const valuesString = valuesArray.join(";");
+    const keyTimesString = keyTimesArray
+      .map(time => Number(time.toFixed(6)))
+      .join(";");
+
+    animationElement.removeAttribute("from");
+    animationElement.removeAttribute("to");
+    animationElement.setAttribute("values", valuesString);
+    animationElement.setAttribute("keyTimes", keyTimesString);
+    animationElement.setAttribute("dur", `${groupPeriod}s`);
+    animationElement.setAttribute("repeatCount", "indefinite");
+    animationElement.setAttribute("fill", "freeze");
+
+    if (delay > 0) {
+      animationElement.setAttribute("begin", `${delay}s`);
+    } else {
+      animationElement.removeAttribute("begin");
+    }
+
+    const calcMode = Easing.resolveCalcMode(ease);
+    animationElement.setAttribute("calcMode", calcMode);
+
+    if (calcMode !== "spline") return;
+
+    const bezier = ease ? Easing.resolveEase(ease) : null;
+    const animationSpline = bezier ? bezier.join(" ") : "0 0 1 1";
+    const holdSpline = "0 0 1 1";
+
+    const keySplineSegments: string[] = [];
+    if (hasWait) keySplineSegments.push(holdSpline);
+    keySplineSegments.push(animationSpline);
+    if (hasTail) keySplineSegments.push(holdSpline);
+
+    animationElement.setAttribute("keySplines", keySplineSegments.join(";"));
   };
 
   /** Computes yoyo values, dur, and repeatCount for a single property. */

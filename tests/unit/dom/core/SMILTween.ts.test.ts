@@ -343,6 +343,26 @@ describe("SMILTween", () => {
       expect(animT.getAttribute("dur")).toBe("2s");
     });
 
+    it("HAPPY PATH: repeat:-1 + stagger → yoyo path used (not group-period encoding)", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+      el1.setAttribute("opacity", "1");
+      el2.setAttribute("opacity", "1");
+
+      new SMILTween([el1, el2], {
+        opacity: 0,
+        duration: 1,
+        repeat: -1,
+        yoyo: true,
+        stagger: 0.3,
+      });
+
+      // Yoyo path (not group-period): repeatCount is finite integer, not "indefinite"
+      const anim = el1.querySelector("animate")!;
+      expect(anim.getAttribute("repeatCount")).toBe("1");
+      expect(anim.getAttribute("values")).toBe("1; 0; 1; 1");
+    });
+
     it("HAPPY PATH: yoyo + stagger + odd total plays (repeat:2 = 3 plays) → full F/B/F sequence encoded per target", () => {
       const el1 = makeEl();
       const el2 = makeEl();
@@ -370,6 +390,181 @@ describe("SMILTween", () => {
       expect(anim1.getAttribute("values")).toBe("1; 0; 1; 0; 0");
       // el2 (last target) has a wait phase but fills exactly to groupDur → no hold
       expect(anim2.getAttribute("values")).toBe("1; 1; 0; 1; 0");
+    });
+  });
+
+  describe("build — stagger + repeat:-1 (group-period encoding)", () => {
+    // ===== HAPPY PATHS =====
+
+    it("HAPPY PATH: element 0 — no wait, has tail, dur=groupPeriod, repeatCount=indefinite", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+
+      // groupPeriod = maxStagger + dur = 0.5 + 0.5 = 1.0s
+      new SMILTween([el1, el2], {
+        opacity: 0.5,
+        duration: 0.5,
+        repeat: -1,
+        stagger: 0.5,
+      });
+
+      const animationElement = el1.querySelector("animate")!;
+      expect(animationElement.getAttribute("dur")).toBe("1s");
+      expect(animationElement.getAttribute("repeatCount")).toBe("indefinite");
+      // element 0: animEndFrac=0.5/1.0=0.5, hasTail=true → values has active+tail hold
+      expect(animationElement.getAttribute("values")).toBe("0;0.5;0.5");
+      expect(animationElement.getAttribute("keyTimes")).toBe("0;0.5;1");
+      // stagger offset encoded in values, not begin
+      expect(animationElement.getAttribute("begin")).toBeNull();
+      expect(animationElement.getAttribute("from")).toBeNull();
+      expect(animationElement.getAttribute("to")).toBeNull();
+    });
+
+    it("HAPPY PATH: last element — has wait, no tail, values+keyTimes encode wait phase", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+
+      new SMILTween([el1, el2], {
+        opacity: 0.5,
+        duration: 0.5,
+        repeat: -1,
+        stagger: 0.5,
+      });
+
+      const animationElement = el2.querySelector("animate")!;
+      // staggerOffset=0.5, animEndFrac=1.0/1.0=1 → no tail, has wait
+      expect(animationElement.getAttribute("values")).toBe("0;0;0.5");
+      expect(animationElement.getAttribute("keyTimes")).toBe("0;0.5;1");
+      expect(animationElement.getAttribute("dur")).toBe("1s");
+      expect(animationElement.getAttribute("repeatCount")).toBe("indefinite");
+    });
+
+    it("HAPPY PATH: middle element — both wait and tail phases present", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+      const el3 = makeEl();
+
+      // groupPeriod = 2×0.5 + 0.5 = 1.5s
+      new SMILTween([el1, el2, el3], {
+        opacity: 0.5,
+        duration: 0.5,
+        repeat: -1,
+        stagger: 0.5,
+      });
+
+      const animationElement = el2.querySelector("animate")!;
+      // staggerOffset=0.5, waitFrac=0.5/1.5≈0.333333, animEndFrac=1.0/1.5≈0.666667
+      expect(animationElement.getAttribute("values")).toBe("0;0;0.5;0.5");
+      expect(animationElement.getAttribute("keyTimes")).toBe("0;0.333333;0.666667;1");
+      expect(animationElement.getAttribute("dur")).toBe("1.5s");
+    });
+
+    it("HAPPY PATH: spline ease → hold intervals get 0 0 1 1, animation interval gets ease bezier", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+
+      new SMILTween([el1, el2], {
+        opacity: 0.5,
+        duration: 0.5,
+        repeat: -1,
+        stagger: 0.5,
+        ease: "power1.out",
+      });
+
+      // el1: no wait, has tail → 2 intervals (anim + tail)
+      const anim1 = el1.querySelector("animate")!;
+      expect(anim1.getAttribute("calcMode")).toBe("spline");
+      const splines1 = anim1.getAttribute("keySplines")!.split(";");
+      expect(splines1).toHaveLength(2);
+      expect(splines1[1]).toBe("0 0 1 1"); // tail hold
+
+      // el2: has wait, no tail → 2 intervals (wait + anim)
+      const anim2 = el2.querySelector("animate")!;
+      const splines2 = anim2.getAttribute("keySplines")!.split(";");
+      expect(splines2).toHaveLength(2);
+      expect(splines2[0]).toBe("0 0 1 1"); // wait hold
+    });
+
+    it("HAPPY PATH: linear ease → calcMode=linear, no keySplines", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+
+      new SMILTween([el1, el2], {
+        opacity: 0.5,
+        duration: 0.5,
+        repeat: -1,
+        stagger: 0.5,
+        ease: "none",
+      });
+
+      const animationElement = el1.querySelector("animate")!;
+      expect(animationElement.getAttribute("calcMode")).toBe("linear");
+      expect(animationElement.getAttribute("keySplines")).toBeNull();
+    });
+
+    it("HAPPY PATH: transform (y) → animateTransform values encode group-period phases", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+
+      // groupPeriod = 0.5 + 0.5 = 1.0s
+      new SMILTween([el1, el2], {
+        y: -40,
+        duration: 0.5,
+        repeat: -1,
+        stagger: 0.5,
+      });
+
+      const animT1 = el1.querySelector("animateTransform")!;
+      expect(animT1.getAttribute("values")).toBe("0 0;0 -40;0 -40");
+      expect(animT1.getAttribute("keyTimes")).toBe("0;0.5;1");
+      expect(animT1.getAttribute("dur")).toBe("1s");
+      expect(animT1.getAttribute("repeatCount")).toBe("indefinite");
+
+      const animT2 = el2.querySelector("animateTransform")!;
+      expect(animT2.getAttribute("values")).toBe("0 0;0 0;0 -40");
+      expect(animT2.getAttribute("keyTimes")).toBe("0;0.5;1");
+    });
+
+    it("HAPPY PATH: base delay propagates to begin attribute on all elements", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+
+      new SMILTween([el1, el2], {
+        opacity: 0.5,
+        duration: 0.5,
+        repeat: -1,
+        stagger: 0.5,
+        delay: 1,
+      });
+
+      const anim1 = el1.querySelector("animate")!;
+      const anim2 = el2.querySelector("animate")!;
+      expect(anim1.getAttribute("begin")).toBe("1s");
+      expect(anim2.getAttribute("begin")).toBe("1s");
+    });
+
+    // ===== GUARD RAILS =====
+
+    it("GUARD RAIL: finite repeat + stagger → normal path (per-element begin, individual dur)", () => {
+      const el1 = makeEl();
+      const el2 = makeEl();
+
+      new SMILTween([el1, el2], {
+        opacity: 0.5,
+        duration: 0.5,
+        repeat: 2,
+        stagger: 0.5,
+      });
+
+      const anim1 = el1.querySelector("animate")!;
+      const anim2 = el2.querySelector("animate")!;
+      // Normal path: each element repeats independently, no group-period values
+      expect(anim1.getAttribute("dur")).toBe("0.5s");
+      expect(anim2.getAttribute("dur")).toBe("0.5s");
+      expect(anim1.getAttribute("repeatCount")).toBe("3");
+      expect(anim1.getAttribute("values")).toBeNull(); // uses from/to, not values
+      // el2 gets stagger offset as its begin
+      expect(anim2.getAttribute("begin")).toBe("0.5s");
     });
   });
 
