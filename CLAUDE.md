@@ -18,12 +18,12 @@ GSAP interpolates values every frame via rAF. This library runs **once** — gen
 
 Based on the file you're working on, read **ALL** skills in the category:
 
-| File Type | Skills to Read (ALL of them) |
-|-----------|------------------------------|
-| `.ts` files (src/) | Read ALL files in `.claude/skills/typescript/` |
-| `.ts` files (tests/) | Read ALL files in `.claude/skills/typescript/` |
-| `.html` test files | Follow existing test patterns — no skill files needed |
-| Git commits | Read `.claude/skills/git/commit-message-format/SKILL.md` |
+| File Type            | Skills to Read (ALL of them)                             |
+| -------------------- | -------------------------------------------------------- |
+| `.ts` files (src/)   | Read ALL files in `.claude/skills/typescript/`           |
+| `.ts` files (tests/) | Read ALL files in `.claude/skills/typescript/`           |
+| `.html` test files   | Follow existing test patterns — no skill files needed    |
+| Git commits          | Read `.claude/skills/git/commit-message-format/SKILL.md` |
 
 **You MUST read ALL skills in the category, not pick and choose. Reading 6/8 skills means you'll miss 2 important conventions.**
 
@@ -124,6 +124,24 @@ tests/
   motionpath.html           — MotionPath plugin
   morphsvg.html             — MorphSVG plugin
 ```
+
+## SMIL bug fixes
+
+I am QA. You are the engineer. Deliver fixes that pass on first try.
+
+### Process
+
+1. **Model the mismatch.** What does GSAP do mathematically? What does our SMIL output do? Where's the gap?
+
+2. **Fix the model, not the test.** A fix must handle ALL cases in the integration test file, not just the failing one. Simulate every stagger/repeat/yoyo combination before writing code.
+
+3. **Respect SMIL limits.** We cannot replicate GSAP perfectly. Known gaps: custom easing curves (SMIL only supports cubic bezier keySplines, no elastic/bounce/step), no procedural state-holding between repeats. If a test delta is caused by an unfixable SMIL limitation, state it explicitly and move on.
+
+4. **Implement.** Map the corrected model to SMIL attributes. Use our documented hacks where needed (g wrapping, additive sum/replace, trigger patterns).
+
+### If I reject
+
+You skipped step 2. Re-simulate against the full test file. Don't patch — fix the model.
 
 ## Current phase
 
