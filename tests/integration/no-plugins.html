@@ -294,7 +294,7 @@
     }
 
     // 7c. timeline() + alternating stagger / non-stagger steps
-    const gTlAlt = gsap.timeline({ repeatDelay: 0.35 });
+    const gTlAlt = gsap.timeline({ repeat: -1, repeatDelay: 0.35 });
     gTlAlt.to(".g-tl-alt", {
       x: 42,
       duration: 0.35,

@@ -164,9 +164,9 @@ describe("transform-composer", () => {
       expect(allAnims).toHaveLength(5);
       expect(allAnims[0].getAttribute("type")).toBe("translate");
       expect(allAnims[1].getAttribute("type")).toBe("rotate");
-      expect(allAnims[2].getAttribute("type")).toBe("scale");
-      expect(allAnims[3].getAttribute("type")).toBe("skewX");
-      expect(allAnims[4].getAttribute("type")).toBe("skewY");
+      expect(allAnims[2].getAttribute("type")).toBe("skewX");
+      expect(allAnims[3].getAttribute("type")).toBe("skewY");
+      expect(allAnims[4].getAttribute("type")).toBe("scale");
     });
 
     it("HAPPY PATH: fromTransforms omitted → from values default to zero / one", () => {

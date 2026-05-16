@@ -522,9 +522,9 @@ export class TransformComposer {
 
       const innerPairs = [
         rotatePair,
-        TransformComposer.resolveScale(from, to),
         TransformComposer.resolveSkewX(from, to),
         TransformComposer.resolveSkewY(from, to),
+        TransformComposer.resolveScale(from, to),
       ].filter((pair): pair is TransformPair => pair !== null);
 
       const innerAnimationElements = innerPairs.map(buildAnimationElement);
